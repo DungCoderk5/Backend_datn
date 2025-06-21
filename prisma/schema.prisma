@@ -1,0 +1,274 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ----- Models -----
+
+model brands {
+  brand_id Int     @id @default(autoincrement())
+  name     String
+  slug     String?
+  logo_url String?
+
+  products products[]
+}
+
+model categories {
+  categories_id Int     @id @default(autoincrement())
+  name          String
+  slug          String?
+  parent_id     Int?
+
+  parent        categories?  @relation("CategoryToSub", fields: [parent_id], references: [categories_id])
+  subcategories categories[] @relation("CategoryToSub")
+  products      products[]
+}
+
+model categories_post {
+  category_post_id Int    @id @default(autoincrement())
+  name             String
+  slug             String @unique
+  parent_id        Int?
+
+  parent        categories_post?  @relation("PostCatToSub", fields: [parent_id], references: [category_post_id])
+  subcategories categories_post[] @relation("PostCatToSub")
+  posts         posts[]
+}
+
+model colors {
+  id         Int     @id @default(autoincrement())
+  code_color String?
+  name_color String?
+
+  product_variants product_variants[]
+}
+
+model coupons {
+  coupons_id     Int          @id @default(autoincrement())
+  code           String       @unique
+  discount_type  DiscountType
+  discount_value Float
+  start_date     DateTime?
+  end_date       DateTime?
+  usage_limit    Int?
+  used_count     Int          @default(0)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  orders orders[]
+}
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+model genders {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  products products[]
+}
+
+model images {
+  images_id  Int     @id @default(autoincrement())
+  url        String?
+  alt_text   String?
+  type       String?
+  product_id Int?
+  post_id    Int?
+
+  product products? @relation(fields: [product_id], references: [products_id])
+  post    posts?    @relation(fields: [post_id], references: [post_id])
+}
+
+model orders {
+  orders_id           Int      @id @default(autoincrement())
+  user_id             Int
+  status              String
+  total_amount        Float
+  payment_method_id   Int?
+  shipping_address_id Int?
+  coupons_id          Int?
+  comment             String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  user           users           @relation(fields: [user_id], references: [user_id])
+  coupons        coupons?        @relation(fields: [coupons_id], references: [coupons_id])
+  payment_method payment_method? @relation(fields: [payment_method_id], references: [id])
+  ship_address   ship_address?   @relation(fields: [shipping_address_id], references: [ship_address_id])
+  order_items    order_items[]
+}
+
+model order_items {
+  order_items_id Int    @id @default(autoincrement())
+  variant_id     Int
+  order_id       Int
+  quantity       Int
+  unit_price     Float?
+
+  order            orders           @relation(fields: [order_id], references: [orders_id])
+  product_variants product_variants @relation(fields: [variant_id], references: [product_variants_id])
+}
+
+model payment_method {
+  id          Int     @id @default(autoincrement())
+  name_method String
+  description String?
+  is_active   Boolean @default(true)
+
+  orders orders[]
+}
+
+model posts {
+  post_id          Int      @id @default(autoincrement())
+  title            String
+  slug             String   @unique
+  content          String?
+  thumbnail        String?
+  status           Boolean  @default(true)
+  category_post_id Int?
+  author_id        Int?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  category_post categories_post? @relation(fields: [category_post_id], references: [category_post_id])
+  author        users?           @relation(fields: [author_id], references: [user_id])
+  images        images[]
+}
+
+model products {
+  products_id   Int      @id @default(autoincrement())
+  name          String
+  slug          String?
+  description   String?
+  short_desc    String?
+  price         Float?
+  sale_price    Float?
+  categories_id Int?
+  brand_id      Int?
+  status        Boolean  @default(true)
+  gender_id     Int?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  category       categories?        @relation(fields: [categories_id], references: [categories_id])
+  brand          brands?            @relation(fields: [brand_id], references: [brand_id])
+  gender         genders?           @relation(fields: [gender_id], references: [id])
+  images         images[]
+  variants       product_variants[]
+  reviews        product_reviews[]
+  wishlist_items wishlist_items[]
+}
+
+model product_reviews {
+  product_reviews_id Int      @id @default(autoincrement())
+  user_id            Int
+  product_id         Int
+  rating             Int?
+  content            String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  user    users    @relation(fields: [user_id], references: [user_id])
+  product products @relation(fields: [product_id], references: [products_id])
+
+  @@unique([user_id, product_id])
+}
+
+model product_variants {
+  product_variants_id Int     @id @default(autoincrement())
+  product_id          Int?
+  color_id            Int?
+  size_id             Int?
+  stock_quantity      Int?
+  sku                 String?
+  image               String?
+
+  product     products?     @relation(fields: [product_id], references: [products_id])
+  color       colors?       @relation(fields: [color_id], references: [id])
+  size        sizes?        @relation(fields: [size_id], references: [id])
+  order_items order_items[]
+  cart_items  cart_items[]
+}
+
+model ship_address {
+  ship_address_id Int     @id @default(autoincrement())
+  user_id         Int
+  full_name       String?
+  phone           String?
+  address_line    String?
+  is_default      Boolean @default(false)
+
+  user   users    @relation(fields: [user_id], references: [user_id])
+  orders orders[]
+}
+
+model sizes {
+  id          Int     @id @default(autoincrement())
+  number_size String?
+
+  product_variants product_variants[]
+}
+
+model users {
+  user_id    Int      @id @default(autoincrement())
+  name       String?
+  email      String?  @unique
+  password   String?
+  phone      String?
+  address    String?
+  role       String?
+  status     Boolean  @default(true)
+  avatar     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  carts           carts[]
+  wishlist_items  wishlist_items[]
+  orders          orders[]
+  posts           posts[]
+  product_reviews product_reviews[]
+  ship_addresses  ship_address[]
+}
+
+model carts {
+  carts_id   Int      @id @default(autoincrement())
+  user_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user       users        @relation(fields: [user_id], references: [user_id])
+  cart_items cart_items[]
+}
+
+model cart_items {
+  cart_items_id Int      @id @default(autoincrement())
+  cart_id       Int
+  variant_id    Int
+  quantity      Int
+  price         Float?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  cart            carts            @relation(fields: [cart_id], references: [carts_id])
+  product_variant product_variants @relation(fields: [variant_id], references: [product_variants_id])
+}
+
+model wishlist_items {
+  wishlist_items_id Int      @id @default(autoincrement())
+  user_id           Int
+  product_id        Int
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  user    users    @relation(fields: [user_id], references: [user_id])
+  product products @relation(fields: [product_id], references: [products_id])
+}
