@@ -27,20 +27,36 @@ async function getAllProductsHandler(req, res) {
 
 async function getProductDetailHandler(req, res) {
   try {
-    const { id } = req.params;
-    const { slug } = req.query;
+    const { param } = req.params;
 
-    const identifier = {};
-    if (id) identifier.id = Number(id);
-    if (slug) identifier.slug = slug;
+    if (!param) {
+      return res.status(400).json({ error: 'Thiếu param trong URL.' });
+    }
+
+    // Tách id và slug từ param
+    const [idStr, ...slugParts] = param.split('-');
+    const id = Number(idStr);
+    const slug = slugParts.join('-');
+
+    if (isNaN(id) || !slug) {
+      return res.status(400).json({ error: 'URL không hợp lệ (id hoặc slug sai).' });
+    }
+
+    const identifier = { id, slug };
 
     const product = await getProductDetailUsecase(identifier);
+
+    if (!product) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm.' });
+    }
+
     res.status(200).json(product);
   } catch (error) {
     console.error('[Handler] Lỗi getProductDetail:', error.message);
-    res.status(404).json({ error: error.message });
+    res.status(500).json({ error: 'Lỗi máy chủ khi lấy chi tiết sản phẩm.' });
   }
 }
+
 
 async function getBestSellingHandler(req, res) {
   try {
