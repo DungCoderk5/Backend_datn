@@ -144,7 +144,7 @@ const productRepository = {
       },
     });
 
-    // Lọc sản phẩm có ít nhất 5 review và rating trung bình ≥ 4
+    // Lọc sản phẩm có ít nhất 1 review và rating trung bình ≥ 4
     return products.filter((product) => {
       const reviews = product.reviews || [];
       if (reviews.length < 1) return false;

@@ -86,7 +86,7 @@ async function getNewestProductsHandler(req, res) {
 async function getFeaturedProductsHandler(req, res) {
   try {
     const result = await getFeaturedProductsUsecase();
-    res.status(200).json(result);
+    res.status(200).json({products:result});
   } catch (err) {
     console.error('Lỗi khi lấy sản phẩm nổi bật:', err);
     res.status(500).json({ error: 'Server Error' });
