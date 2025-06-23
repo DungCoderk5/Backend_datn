@@ -34,20 +34,13 @@ const productRepository = {
     };
   },
   async findByIdOrSlug({ id, slug }) {
-    const conditions = [];
-    if (id !== undefined && id !== null) {
-      conditions.push({ products_id: Number(id) });
-    }
-    if (slug) {
-      conditions.push({ slug });
-    }
-
-    if (conditions.length === 0) {
-      throw new Error("Phải truyền id hoặc slug");
-    }
-
     return await prisma.products.findFirst({
-      where: { OR: conditions },
+      where: {
+        OR: [
+          id ? { products_id: Number(id) } : undefined,
+          slug ? { slug } : undefined,
+        ].filter(Boolean),
+      },
       include: {
         brand: true,
         category: true,

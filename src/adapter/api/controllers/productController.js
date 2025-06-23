@@ -21,12 +21,12 @@ router.get('/products/category', getProductsByCategoryHandler);
 router.get('/products/deals', getDealProductsHandler);
 router.get('/products/related', getRelatedProductsHandler);
 router.get('/products/gender', getProductsByGenderHandler);
-router.get('/products/slug/detail', getProductDetailHandler);
+router.get('/products/slug/:slug', getProductDetailHandler);
 
 router.get('/products', getAllProductsHandler);
 
 // 👉 Route động để cuối cùng
-router.get('/products/:param', getProductDetailHandler);
+router.get('/products/:id', getProductDetailHandler);
 
 
 
