@@ -4,11 +4,20 @@ const loginUsecase = require("../../infrastructure/usecase/user/loginUsecase");
 const registerUsecase = require("../../infrastructure/usecase/user/registerUsecase");
 const updateUserUsecase = require("../../infrastructure/usecase/user/updateUserUsecase");
 const addAddressUsecase = require('../../infrastructure/usecase/user/addAddressUsecase');
+const checkTokenUsecase = require('../../infrastructure/usecase/user/checkTokenUsecase');
 
 async function loginHandler(req, res) {
   try {
     const { usernameOrEmail, password } = req.body;
     const result = await loginUsecase({ usernameOrEmail, password }, res);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(401).json({ error: err.message });
+  }
+}
+async function checkTokenHandler(req, res) {
+  try {
+    const result = await checkTokenUsecase(req);
     res.status(200).json(result);
   } catch (err) {
     res.status(401).json({ error: err.message });
@@ -70,4 +79,5 @@ module.exports = {
   registerHandler,
   updateUserHandler,
   addAddressHandler,
+  checkTokenHandler
 };
