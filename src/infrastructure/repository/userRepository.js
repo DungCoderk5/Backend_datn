@@ -10,6 +10,11 @@ async function findByUsernameOrEmail(usernameOrEmail) {
     },
   });
 }
+async function create(data) {
+    return await prisma.users.create({
+      data
+    });
+  }
 async function findById(userId) {
   return await prisma.users.findUnique({
     where: { user_id: userId },
@@ -28,5 +33,6 @@ const createAddress = async (userId, addressData) => {
 module.exports = {
   findByUsernameOrEmail,
   createAddress,
-  findById
+  findById,
+  create
 };
