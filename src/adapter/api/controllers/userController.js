@@ -15,7 +15,7 @@ router.post("/logout", logoutHandler);
 router.post("/register", registerHandler);
 router.put("/update", updateUserHandler);
 router.post("/add-address", addAddressHandler);
-router.post("/check-token", checkTokenHandler);
+router.get("/check-token", checkTokenHandler);
 router.post("/google/callback",googleCallback);
 
 module.exports = router;
