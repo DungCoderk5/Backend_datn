@@ -36,6 +36,8 @@ class GoogleAuthUsecase {
         userId: userFromDB.user_id,
         email: userInfo.email,
         name: userInfo.name,
+        phone: userInfo.phone,
+        address: userInfo.address,
       },
       jwtSecret,
       { expiresIn: "1h" }

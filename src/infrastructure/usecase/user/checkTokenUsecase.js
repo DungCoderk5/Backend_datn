@@ -34,6 +34,7 @@ async function checkTokenUsecase(req) {
         avatar: user.avatar || user.picture,
         role: user.role,
         phone: user.phone,
+        address: user.address,
       },
     };
   } catch (err) {
