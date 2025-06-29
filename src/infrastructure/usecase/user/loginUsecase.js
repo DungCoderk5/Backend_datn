@@ -18,6 +18,8 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
       name: user.name,
       email: user.email,
       role: user.role,
+      address: user.address
+
     },
     JWT_SECRET,
     { expiresIn: "9999 years" } // không hết hạn
@@ -32,6 +34,7 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
 
   return {
     message: "Đăng nhập thành công",
+    token,
     user: {
       id: user.user_id,
       name: user.name,
@@ -39,6 +42,7 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
       avatar: user.avatar,
       role: user.role,
       phone: user.phone,
+      address: user.address
     },
   };
 }
