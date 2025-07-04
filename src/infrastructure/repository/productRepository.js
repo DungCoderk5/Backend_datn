@@ -74,7 +74,7 @@ const productRepository = {
         },
       },
     });
-
+console.log('All products:', products.length);
     const withSoldCount = products.map((p) => {
       const reviewCount = p.reviews?.length || 0;
       const sold_count = reviewCount * 10 + Math.floor(Math.random() * 20);
