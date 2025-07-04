@@ -95,10 +95,10 @@ const productRepository = {
           brand: true,
           category: true,
           gender: true,
-          images: true,
+          // images: true,
           variants: {
             include: {
-              color: true,
+              // color: true,
               size: true,
             },
           },
