@@ -15,6 +15,7 @@ const {
   searchProductsHandler,
   getAllCouponsHandler,
   addToWishlistHandler,
+  getReviewsByProductHandler,
 } = require('../../../application/product/productHttpHandler');
 
 
@@ -32,5 +33,6 @@ router.post('/add-product', addProductHandler);
 router.get('/search', searchProductsHandler);
 router.get('/coupons', getAllCouponsHandler);
 router.post('/wishlist', addToWishlistHandler);
+router.get('/:productId/reviews', getReviewsByProductHandler);
 
 module.exports = router;

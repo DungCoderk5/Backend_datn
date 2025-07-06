@@ -14,6 +14,7 @@ const {
   updateAddressHandler,
   deleteAddressHandler,
   getUserProfileHandler,
+  getReviewsByUserHandler,
 } = require("../../../application/user/userHttpHandler");
 
 router.post("/login", loginHandler);
@@ -29,4 +30,5 @@ router.get('/addresses/:userId', getAddressesByUserHandler);
 router.put('/addresses/:addressId', updateAddressHandler);
 router.delete('/addresses/:addressId', deleteAddressHandler);
 router.get('/profile/:userId', getUserProfileHandler);
+router.get('/reviews/:userId', getReviewsByUserHandler);
 module.exports = router;

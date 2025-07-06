@@ -13,6 +13,7 @@ const getAddressesByUserUsecase = require('../../infrastructure/usecase/user/get
 const updateAddressUsecase = require('../../infrastructure/usecase/user/updateAddressUsecase');
 const deleteAddressUsecase = require('../../infrastructure/usecase/user/deleteAddressUsecase');
 const getUserProfileUsecase = require('../../infrastructure/usecase/user/getUserProfileUsecase');
+const getReviewsByUserUsecase = require('../../infrastructure/usecase/user/getReviewsByUserUsecase');
 
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
@@ -198,6 +199,17 @@ async function getUserProfileHandler(req, res) {
     res.status(500).json({ error: 'Lỗi khi lấy thông tin người dùng.' });
   }
 }
+
+async function getReviewsByUserHandler(req, res) {
+  try {
+    const userId = parseInt(req.params.userId);
+    const result = await getReviewsByUserUsecase({ userId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getReviewsByUser:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy đánh giá của người dùng.' });
+  }
+}
 module.exports = {
   loginHandler,
   logoutHandler,
@@ -212,5 +224,5 @@ module.exports = {
   updateAddressHandler,
   deleteAddressHandler,
   getUserProfileHandler,
-
+  getReviewsByUserHandler 
 };

@@ -500,6 +500,21 @@ const productRepository = {
 
     return { message: 'Đã thêm vào danh sách yêu thích.', data: wishlistItem };
   },
+  async findReviewsByProductId(productId) {
+    return await prisma.product_reviews.findMany({
+      where: { product_id: productId },
+      orderBy: { created_at: 'desc' },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  },
 };
 
 

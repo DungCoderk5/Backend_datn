@@ -147,6 +147,24 @@ async function findBasicInfo(userId) {
     },
   });
 }
+
+async function findReviewsByUserId(userId) {
+    return await prisma.product_reviews.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' },
+      include: {
+        product: {
+          select: {
+            products_id: true,
+            name: true,
+            images: {
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+}
 module.exports = {
   findByUsernameOrEmail,
   createAddress,
@@ -158,5 +176,6 @@ module.exports = {
   deleteAddress,
   updateAddress,
   findAddressByUserId,
-  findBasicInfo
+  findBasicInfo,
+  findReviewsByUserId
 };

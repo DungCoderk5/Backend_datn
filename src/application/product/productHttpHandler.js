@@ -12,6 +12,7 @@ const addToCartUsecase = require('../../infrastructure/usecase/product/addToCart
 const searchProductsUsecase = require('../../infrastructure/usecase/product/searchProductsUsecase');
 const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAllCouponsUsecase');
 const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
+const getReviewsByProductUsecase = require('../../infrastructure/usecase/product/getReviewsByProductUsecase');
 
 
 
@@ -230,6 +231,16 @@ async function addToWishlistHandler(req, res) {
   }
 }
 
+async function getReviewsByProductHandler(req, res) {
+  try {
+    const productId = parseInt(req.params.productId);
+    const result = await getReviewsByProductUsecase({ productId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getReviewsByProduct:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy đánh giá theo sản phẩm.' });
+  }
+}
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -244,5 +255,6 @@ module.exports = {
   addToCart,
   searchProductsHandler,
   getAllCouponsHandler,
-  addToWishlistHandler
+  addToWishlistHandler,
+  getReviewsByProductHandler
 };
