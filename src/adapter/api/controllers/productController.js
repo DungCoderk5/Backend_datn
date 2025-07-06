@@ -33,6 +33,6 @@ router.post('/add-product', addProductHandler);
 router.get('/search', searchProductsHandler);
 router.get('/coupons', getAllCouponsHandler);
 router.post('/wishlist', addToWishlistHandler);
-router.get('/:productId/reviews', getReviewsByProductHandler);
+router.get('/reviews/:productId', getReviewsByProductHandler);
 
 module.exports = router;
