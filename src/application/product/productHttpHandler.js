@@ -127,27 +127,19 @@ async function getDealProductsHandler(req, res) {
 
 async function getRelatedProductsHandler(req, res) {
   try {
-    const categoryId = parseInt(req.query.categoryId);
+    const productId = parseInt(req.params.productId);
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 8;
 
-    if (isNaN(categoryId)) {
-      return res.status(400).json({ error: 'categoryId phải là số nguyên' });
-    }
+    const result = await getRelatedProductsUsecase({ productId, page, limit });
 
-    const result = await getRelatedProductsUsecase({ categoryId, page, limit });
-
-    res.json({
-      products: result.products,
-      total: result.total,
-      page,
-      limit,
-    });
-  } catch (error) {
-    console.error('Lỗi lấy sản phẩm liên quan:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('[Handler] Lỗi getRelatedProducts:', err);
+    res.status(500).json({ error: 'Lỗi khi lấy sản phẩm cùng loại.' });
   }
-} 
+}
+
 
 async function getProductsByGenderHandler(req, res) {
   try {

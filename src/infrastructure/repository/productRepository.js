@@ -231,42 +231,47 @@ const productRepository = {
 
     return { products, total };
   },
-  async findRelatedProductsByCategory({ categoryId, page = 1, limit = 20 }) {
+  async findRelatedProducts(productId, page = 1, limit = 8) {
+    const product = await prisma.products.findUnique({
+      where: { products_id: productId },
+      select: { categories_id: true },
+    });
+
+    if (!product || !product.categories_id) return { relatedProducts: [], total: 0 };
+
     const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
+    const [relatedProducts, total] = await Promise.all([
       prisma.products.findMany({
         where: {
+          categories_id: product.categories_id,
+          products_id: { not: productId },
           status: true,
-          categories_id: categoryId,
-        },
-        include: {
-          brand: true,
-          category: true,
-          gender: true,
-          images: true,
-          variants: {
-            include: {
-              color: true,
-              size: true,
-            },
-          },
         },
         skip,
         take: limit,
-        orderBy: {
-          created_at: 'desc',
+        orderBy: { created_at: 'desc' },
+        include: {
+          images: true,
+          brand: true,
+          category: true,
         },
       }),
       prisma.products.count({
         where: {
+          categories_id: product.categories_id,
+          products_id: { not: productId },
           status: true,
-          categories_id: categoryId,
         },
       }),
     ]);
 
-    return { products, total };
+    return {
+      relatedProducts,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
   },
   async findProductsByGender({ genderName, page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;

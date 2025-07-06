@@ -27,7 +27,7 @@ router.get('/newest', getNewestProductsHandler);
 router.get('/featured', getFeaturedProductsHandler);
 router.get('/category', getProductsByCategoryHandler);
 router.get('/deals', getDealProductsHandler);
-router.get('/related', getRelatedProductsHandler);
+router.get('/related/:productId', getRelatedProductsHandler);
 router.get('/gender', getProductsByGenderHandler);
 router.post('/add-product', addProductHandler);
 router.get('/search', searchProductsHandler);
