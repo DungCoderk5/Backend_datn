@@ -7,8 +7,6 @@ const addAddressUsecase = require("../../infrastructure/usecase/user/addAddressU
 const checkTokenUsecase = require("../../infrastructure/usecase/user/checkTokenUsecase");
 const GoogleAuthUsecase = require("../../infrastructure/usecase/user/googleAuthUsecase");
 const GoogleAuthRepository = require("../../infrastructure/repository/googleAuthRepository");
-
-// Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
 async function googleCallback(req, res) {
