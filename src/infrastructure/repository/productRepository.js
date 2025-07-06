@@ -520,6 +520,17 @@ const productRepository = {
       },
     });
   },
+  async createReview({ user_id, product_id, rating, content }) {
+  return await prisma.product_reviews.create({
+    data: {
+      user_id,
+      product_id,
+      rating,
+      content,
+    },
+  });
+  }
+
 };
 
 

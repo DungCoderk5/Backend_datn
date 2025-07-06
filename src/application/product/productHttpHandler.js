@@ -13,7 +13,7 @@ const searchProductsUsecase = require('../../infrastructure/usecase/product/sear
 const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAllCouponsUsecase');
 const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
 const getReviewsByProductUsecase = require('../../infrastructure/usecase/product/getReviewsByProductUsecase');
-
+const createProductReviewUsecase = require('../../infrastructure/usecase/product/createProductReviewUsecase');
 
 
 async function getAllProductsHandler(req, res) {
@@ -233,6 +233,29 @@ async function getReviewsByProductHandler(req, res) {
     res.status(500).json({ error: 'Lỗi khi lấy đánh giá theo sản phẩm.' });
   }
 }
+
+async function createProductReviewHandler(req, res) {
+  try {
+    const product_id = parseInt(req.params.productId);
+    const { user_id, rating, content } = req.body;
+
+    if (!user_id || !rating || !product_id) {
+      return res.status(400).json({ error: 'Thiếu thông tin đánh giá.' });
+    }
+
+    const review = await createProductReviewUsecase({ user_id, product_id, rating, content });
+    res.status(201).json(review);
+  } catch (err) {
+    console.error('[Handler] Lỗi createProductReview:', err);
+
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Bạn đã đánh giá sản phẩm này rồi.' });
+    }
+
+    res.status(500).json({ error: 'Lỗi khi gửi đánh giá.' });
+  }
+}
+
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -248,5 +271,6 @@ module.exports = {
   searchProductsHandler,
   getAllCouponsHandler,
   addToWishlistHandler,
-  getReviewsByProductHandler
+  getReviewsByProductHandler,
+  createProductReviewHandler
 };
