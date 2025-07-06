@@ -7,6 +7,7 @@ const addAddressUsecase = require("../../infrastructure/usecase/user/addAddressU
 const checkTokenUsecase = require("../../infrastructure/usecase/user/checkTokenUsecase");
 const GoogleAuthUsecase = require("../../infrastructure/usecase/user/googleAuthUsecase");
 const GoogleAuthRepository = require("../../infrastructure/repository/googleAuthRepository");
+const changePasswordUsecase = require('../../infrastructure/usecase/user/changePasswordUsecase');
 
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
@@ -96,7 +97,7 @@ async function updateUserHandler(req, res) {
   }
 }
 
-const addAddressHandler = async (req, res) => {
+async function addAddressHandler(req, res) {
   const userId = req.user?.user_id || req.body.user_id; // tuỳ vào middleware xác thực
   const { full_name, phone, address_line, is_default } = req.body;
 
@@ -116,7 +117,25 @@ const addAddressHandler = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message || "Lỗi server" });
   }
-};
+}
+
+async function changePasswordHandler(req, res) {
+  try {
+    // const userId = req.body?.user_id; // hoặc lấy từ JWT decode
+    const {userId, oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ error: 'Thiếu mật khẩu cũ hoặc mới' });
+    }
+
+    const result = await changePasswordUsecase({ userId, oldPassword, newPassword });
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('[Handler] Lỗi đổi mật khẩu:', err);
+    res.status(400).json({ error: err.message || 'Đổi mật khẩu thất bại' });
+  }
+}
 
 module.exports = {
   loginHandler,
@@ -124,6 +143,5 @@ module.exports = {
   registerHandler,
   updateUserHandler,
   addAddressHandler,
-  checkTokenHandler,
-  googleCallback,
+  changePasswordHandler,
 };

@@ -11,23 +11,20 @@ const {
   getDealProductsHandler,
   getRelatedProductsHandler,  
   getProductsByGenderHandler,
+  addProductHandler,
 } = require('../../../application/product/productHttpHandler');
 
 
-router.get('/products/best-selling', getBestSellingHandler);
-router.get('/products/newest', getNewestProductsHandler);
-router.get('/products/featured', getFeaturedProductsHandler);
-router.get('/products/category', getProductsByCategoryHandler);
-router.get('/products/deals', getDealProductsHandler);
-router.get('/products/related', getRelatedProductsHandler);
-router.get('/products/gender', getProductsByGenderHandler);
-router.get('/products/slug/:slug', getProductDetailHandler);
-
-router.get('/products', getAllProductsHandler);
-
-// 👉 Route động để cuối cùng
-router.get('/products/:id', getProductDetailHandler);
-
-
+router.get('/', getAllProductsHandler);
+router.get('/detail/:id', getProductDetailHandler);
+router.get('/detail/slug', getProductDetailHandler);
+router.get('/best-selling', getBestSellingHandler);
+router.get('/newest', getNewestProductsHandler);
+router.get('/featured', getFeaturedProductsHandler);
+router.get('/category', getProductsByCategoryHandler);
+router.get('/deals', getDealProductsHandler);
+router.get('/related', getRelatedProductsHandler);
+router.get('/gender', getProductsByGenderHandler);
+router.post('/add-product', addProductHandler);
 
 module.exports = router;

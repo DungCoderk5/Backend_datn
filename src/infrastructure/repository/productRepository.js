@@ -75,7 +75,7 @@ const productRepository = {
       },
     });
 
-    const withSoldCount = products.map((p) => {
+    const withSoldCount = products.map(p => {
       const reviewCount = p.reviews?.length || 0;
       const sold_count = reviewCount * 10 + Math.floor(Math.random() * 20);
       return { ...p, sold_count };
@@ -119,7 +119,7 @@ const productRepository = {
       where: {
         status: true,
         reviews: {
-          some: {}, // Lấy sản phẩm có ít nhất 1 review
+          some: {},
         },
       },
       include: {
@@ -137,35 +137,29 @@ const productRepository = {
       },
     });
 
-    // Lọc sản phẩm có ít nhất 1 review và rating trung bình ≥ 4
+    // Lọc các sản phẩm có ít nhất 5 review và rating trung bình ≥ 4
     return products.filter((product) => {
       const reviews = product.reviews || [];
-      if (reviews.length < 1) return false;
-
       const avgRating =
-        reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) /
-        reviews.length;
+        reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
 
-      return avgRating >= 4;
+      return reviews.length >= 5 && avgRating >= 4;
     });
   },
-
   async findProductsByCategory({ categoryName, page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
-    const where = {
-      status: true,
-      category: {
-        OR: [
-          { name: categoryName.toLowerCase() },
-          { slug: categoryName.toLowerCase() },
-        ],
-      },
-    };
-
     const [products, total] = await Promise.all([
       prisma.products.findMany({
-        where,
+        where: {
+          status: true,
+          category: {
+            OR: [
+              { name: { equals: categoryName } },
+              { slug: { equals: categoryName } },
+            ],
+          },
+        },
         include: {
           brand: true,
           category: true,
@@ -180,16 +174,25 @@ const productRepository = {
         },
         skip,
         take: limit,
-        orderBy: { created_at: "desc" },
+        orderBy: {
+          created_at: 'desc',
+        },
       }),
       prisma.products.count({
-        where,
+        where: {
+          status: true,
+          category: {
+            OR: [
+              { name: { equals: categoryName } },
+              { slug: { equals: categoryName } },
+            ],
+          },
+        },
       }),
     ]);
 
     return { products, total };
   },
-
   async findDealProducts({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -215,7 +218,7 @@ const productRepository = {
         skip,
         take: limit,
         orderBy: {
-          created_at: "desc",
+          created_at: 'desc',
         },
       }),
       prisma.products.count({
@@ -253,7 +256,7 @@ const productRepository = {
         skip,
         take: limit,
         orderBy: {
-          created_at: "desc",
+          created_at: 'desc',
         },
       }),
       prisma.products.count({
@@ -275,12 +278,11 @@ const productRepository = {
           status: true,
           gender: {
             name: {
-              in:
-                genderName === "male_or_unisex"
-                  ? ["Male", "Unisex"]
-                  : genderName === "female_or_unisex"
-                  ? ["Female", "Unisex"]
-                  : [genderName],
+              in: genderName === 'male_or_unisex'
+                ? ['Male', 'Unisex']
+                : genderName === 'female_or_unisex'
+                ? ['Female', 'Unisex']
+                : [genderName],
             },
           },
         },
@@ -299,7 +301,7 @@ const productRepository = {
         skip,
         take: limit,
         orderBy: {
-          created_at: "desc",
+          created_at: 'desc',
         },
       }),
       prisma.products.count({
@@ -307,12 +309,11 @@ const productRepository = {
           status: true,
           gender: {
             name: {
-              in:
-                genderName === "male_or_unisex"
-                  ? ["Male", "Unisex"]
-                  : genderName === "female_or_unisex"
-                  ? ["Female", "Unisex"]
-                  : [genderName],
+              in: genderName === 'male_or_unisex'
+                ? ['Male', 'Unisex']
+                : genderName === 'female_or_unisex'
+                ? ['Female', 'Unisex']
+                : [genderName],
             },
           },
         },
@@ -321,6 +322,58 @@ const productRepository = {
 
     return { products, total };
   },
+  async create(data) {
+  const {
+    name,
+    slug,
+    description,
+    short_desc,
+    price,
+    sale_price,
+    categories_id,
+    brand_id,
+    gender_id,
+    images = [],
+    variants = [],
+  } = data;
+
+  const newProduct = await prisma.products.create({
+    data: {
+      name,
+      slug,
+      description,
+      short_desc,
+      price,
+      sale_price,
+      categories_id,
+      brand_id,
+      gender_id,
+      status: true,
+      images: {
+        create: images, // mảng: [{ url, alt_text, type }]
+      },
+      variants: {
+        create: variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
+      },
+    },
+    include: {
+      images: true,
+      variants: true,
+    },
+  });
+
+
+      return newProduct;
+  },
+  async addToCart(data) {
+    const {
+      product:{
+
+      },
+      
+    } = data; 
+  }
 };
+
 
 module.exports = productRepository;

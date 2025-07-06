@@ -7,6 +7,8 @@ const getProductsByCategoryUsecase = require('../../infrastructure/usecase/produ
 const getDealProductsUsecase = require('../../infrastructure/usecase/product/getDealProductsUsecase');
 const getRelatedProductsUsecase = require('../../infrastructure/usecase/product/getRelatedProductsUsecase');
 const getProductsByGenderUsecase = require('../../infrastructure/usecase/product/getProductsByGenderUsecase');
+const addProductUsecase = require('../../infrastructure/usecase/product/addProductUsecase');
+const addToCartUsecase = require('../../infrastructure/usecase/product/addToCartUsecase');
 
 
 
@@ -27,7 +29,8 @@ async function getAllProductsHandler(req, res) {
 
 async function getProductDetailHandler(req, res) {
   try {
-    const { id,slug } = req.params;
+    const { id } = req.params;
+    const { slug } = req.query;
 
     const identifier = {};
     if (id) identifier.id = Number(id);
@@ -40,7 +43,6 @@ async function getProductDetailHandler(req, res) {
     res.status(404).json({ error: error.message });
   }
 }
-
 
 async function getBestSellingHandler(req, res) {
   try {
@@ -70,12 +72,13 @@ async function getNewestProductsHandler(req, res) {
 async function getFeaturedProductsHandler(req, res) {
   try {
     const result = await getFeaturedProductsUsecase();
-    res.status(200).json({products:result});
+    res.status(200).json(result);
   } catch (err) {
     console.error('Lỗi khi lấy sản phẩm nổi bật:', err);
     res.status(500).json({ error: 'Server Error' });
   }
 }
+
 async function getProductsByCategoryHandler(req, res) {
   try {
     const categoryName = req.query.category;
@@ -141,7 +144,7 @@ async function getRelatedProductsHandler(req, res) {
     console.error('Lỗi lấy sản phẩm liên quan:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
-}
+} 
 
 async function getProductsByGenderHandler(req, res) {
   try {
@@ -166,6 +169,29 @@ async function getProductsByGenderHandler(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+async function addProductHandler(req, res) {
+  try {
+    const data = req.body;
+    const create = await addProductUsecase(data);
+    res.status(200).json({message: 'tạo sản phẩm thành công', product: create})
+  } catch (error) {
+    console.error('Lỗi khi lấy thêm sản phẩm:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function addToCart(req, res) {
+  try {
+      const data = req.body;
+      const cart = await addProductToCart(data);
+      res.status(200).json({message: 'thêm sản phẩm vào giỏ hàng thành công', cart: cart})
+  } catch (error) {
+    console.error('Lỗi khi lấy thêm sản phẩm:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -176,5 +202,6 @@ module.exports = {
   getDealProductsHandler,
   getRelatedProductsHandler,
   getProductsByGenderHandler,
-  
+  addProductHandler,
+  addToCart
 };
