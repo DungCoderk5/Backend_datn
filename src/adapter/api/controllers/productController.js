@@ -12,6 +12,9 @@ const {
   getRelatedProductsHandler,  
   getProductsByGenderHandler,
   addProductHandler,
+  searchProductsHandler,
+  getAllCouponsHandler,
+  addToWishlistHandler,
 } = require('../../../application/product/productHttpHandler');
 
 
@@ -26,5 +29,8 @@ router.get('/deals', getDealProductsHandler);
 router.get('/related', getRelatedProductsHandler);
 router.get('/gender', getProductsByGenderHandler);
 router.post('/add-product', addProductHandler);
+router.get('/search', searchProductsHandler);
+router.get('/coupons', getAllCouponsHandler);
+router.post('/wishlist', addToWishlistHandler);
 
 module.exports = router;

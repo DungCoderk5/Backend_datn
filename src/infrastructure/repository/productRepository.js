@@ -56,8 +56,7 @@ const productRepository = {
       },
     });
   },
-
-  async getBestSelling(top = 3) {
+  async getBestSelling(top = 4) {
     const products = await prisma.products.findMany({
       where: { status: true },
       include: {
@@ -365,14 +364,142 @@ const productRepository = {
 
       return newProduct;
   },
-  async addToCart(data) {
-    const {
-      product:{
+  async addToCart({ user_id, variant_id, quantity }) {
+    let cart = await prisma.carts.findFirst({
+      where: { user_id },
+    });
 
+    if (!cart) {
+      cart = await prisma.carts.create({
+        data: {
+          user_id,
+        },
+      });
+    }
+
+    const existingItem = await prisma.cart_items.findFirst({
+      where: {
+        cart_id: cart.carts_id,
+        variant_id,
       },
-      
-    } = data; 
-  }
+    });
+
+    if (existingItem) {
+      await prisma.cart_items.update({
+        where: { cart_items_id: existingItem.cart_items_id },
+        data: {
+          quantity: existingItem.quantity + quantity,
+          updated_at: new Date(),
+        },
+      });
+    } else {
+      const variant = await prisma.product_variants.findUnique({
+        where: { product_variants_id: variant_id },
+        include: {
+          product: true,
+        },
+      });
+
+      if (!variant) {
+        throw new Error('Product variant not found');
+      }
+
+      await prisma.cart_items.create({
+        data: {
+          cart_id: cart.carts_id,
+          variant_id,
+          quantity,
+          price: variant.product?.price || 0,
+        },
+      });
+    }
+
+    const updatedCartItems = await prisma.cart_items.findMany({
+      where: { cart_id: cart.carts_id },
+      include: {
+        variant: {
+          include: {
+            product: true,
+            color: true,
+            size: true,
+          },
+        },
+      },
+    });
+
+    return updatedCartItems;
+  },
+  async searchByKeyword({ keyword, page = 1, limit = 20 }) {
+    const skip = (page - 1) * limit;
+
+    const whereClause = {
+      status: true,
+      name: {
+        contains: keyword,
+        mode: 'insensitive', // không phân biệt hoa thường
+      },
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: {
+          brand: true,
+          category: true,
+          gender: true,
+          images: true,
+          product_variants: {
+            include: {
+              color: true,
+              size: true,
+            },
+          },
+        },
+      }),
+      prisma.products.count({ where: whereClause }),
+    ]);
+
+    return {
+      products,
+      total,
+      keyword,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
+  async findAllCoupons() {
+    return await prisma.coupons.findMany({
+      where: {
+        end_date: {
+          gte: new Date(),
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+  },
+  async addToWishlist({ user_id, product_id }) {
+    const existing = await prisma.wishlist_items.findFirst({
+      where: { user_id, product_id },
+    });
+
+    if (existing) {
+      return { message: 'Sản phẩm đã có trong danh sách yêu thích.' };
+    }
+
+    const wishlistItem = await prisma.wishlist_items.create({
+      data: {
+        user_id,
+        product_id,
+      },
+    });
+
+    return { message: 'Đã thêm vào danh sách yêu thích.', data: wishlistItem };
+  },
 };
 
 

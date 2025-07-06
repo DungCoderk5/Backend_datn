@@ -9,7 +9,9 @@ const getRelatedProductsUsecase = require('../../infrastructure/usecase/product/
 const getProductsByGenderUsecase = require('../../infrastructure/usecase/product/getProductsByGenderUsecase');
 const addProductUsecase = require('../../infrastructure/usecase/product/addProductUsecase');
 const addToCartUsecase = require('../../infrastructure/usecase/product/addToCartUsecase');
-
+const searchProductsUsecase = require('../../infrastructure/usecase/product/searchProductsUsecase');
+const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAllCouponsUsecase');
+const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
 
 
 
@@ -184,11 +186,47 @@ async function addProductHandler(req, res) {
 async function addToCart(req, res) {
   try {
       const data = req.body;
-      const cart = await addProductToCart(data);
+      const cart = await addToCartUsecase(data);
       res.status(200).json({message: 'thêm sản phẩm vào giỏ hàng thành công', cart: cart})
   } catch (error) {
     console.error('Lỗi khi lấy thêm sản phẩm:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function searchProductsHandler(req, res) {
+  try {
+    const keyword = req.query.q || '';
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await searchProductsUsecase({ keyword, page, limit });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi searchProducts:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi tìm kiếm sản phẩm.' });
+  }
+}
+
+async function getAllCouponsHandler(req, res) {
+  try {
+    const result = await getAllCouponsUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getAllCoupons:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách mã giảm giá.' });
+  }
+}
+
+async function addToWishlistHandler(req, res) {
+  try {
+    const { user_id, product_id } = req.body;
+
+    const result = await addToWishlistUsecase({ user_id, product_id });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi addToWishlist:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi thêm sản phẩm vào danh sách yêu thích.' });
   }
 }
 
@@ -203,5 +241,8 @@ module.exports = {
   getRelatedProductsHandler,
   getProductsByGenderHandler,
   addProductHandler,
-  addToCart
+  addToCart,
+  searchProductsHandler,
+  getAllCouponsHandler,
+  addToWishlistHandler
 };

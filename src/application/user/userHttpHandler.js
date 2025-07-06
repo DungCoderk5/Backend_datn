@@ -8,6 +8,11 @@ const checkTokenUsecase = require("../../infrastructure/usecase/user/checkTokenU
 const GoogleAuthUsecase = require("../../infrastructure/usecase/user/googleAuthUsecase");
 const GoogleAuthRepository = require("../../infrastructure/repository/googleAuthRepository");
 const changePasswordUsecase = require('../../infrastructure/usecase/user/changePasswordUsecase');
+const getCartByUserUsecase = require('../../infrastructure/usecase/user/getCartByUserUsecase');
+const getAddressesByUserUsecase = require('../../infrastructure/usecase/user/getAddressesByUserUsecase');
+const updateAddressUsecase = require('../../infrastructure/usecase/user/updateAddressUsecase');
+const deleteAddressUsecase = require('../../infrastructure/usecase/user/deleteAddressUsecase');
+const getUserProfileUsecase = require('../../infrastructure/usecase/user/getUserProfileUsecase');
 
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
@@ -43,6 +48,7 @@ async function googleCallback(req, res) {
       .json({ message: err.message || "Đăng nhập Google thất bại" });
   }
 }
+
 async function loginHandler(req, res) {
   try {
     const { usernameOrEmail, password } = req.body;
@@ -52,6 +58,7 @@ async function loginHandler(req, res) {
     res.status(401).json({ error: err.message });
   }
 }
+
 async function checkTokenHandler(req, res) {
   try {
     const result = await checkTokenUsecase(req);
@@ -68,7 +75,6 @@ async function checkTokenHandler(req, res) {
     });
   }
 }
-
 
 async function logoutHandler(req, res) {
   res.clearCookie("token");
@@ -137,6 +143,61 @@ async function changePasswordHandler(req, res) {
   }
 }
 
+async function getCartByUserHandler(req, res) {
+  try {
+    const userId = parseInt(req.params.userId);
+    const result = await getCartByUserUsecase({ userId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getCartByUser:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi lấy giỏ hàng.' });
+  }
+}
+
+async function getAddressesByUserHandler(req, res) {
+  try {
+    const userId = parseInt(req.params.userId);
+    const result = await getAddressesByUserUsecase({ userId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getAddressesByUser:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy danh sách địa chỉ.' });
+  }
+}
+
+async function updateAddressHandler(req, res) {
+  try {
+    const addressId = parseInt(req.params.addressId);
+    const payload = req.body;
+    const result = await updateAddressUsecase({ addressId, payload });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi updateAddress:', error);
+    res.status(500).json({ error: 'Lỗi khi cập nhật địa chỉ.' });
+  }
+}
+
+async function deleteAddressHandler(req, res) {
+  try {
+    const addressId = parseInt(req.params.addressId);
+    const result = await deleteAddressUsecase({ addressId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi deleteAddress:', error);
+    res.status(500).json({ error: 'Lỗi khi xóa địa chỉ.' });
+  }
+}
+
+async function getUserProfileHandler(req, res) {
+  try {
+    const userId = parseInt(req.params.userId);
+    const result = await getUserProfileUsecase({ userId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getUserProfile:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy thông tin người dùng.' });
+  }
+}
 module.exports = {
   loginHandler,
   logoutHandler,
@@ -144,4 +205,12 @@ module.exports = {
   updateUserHandler,
   addAddressHandler,
   changePasswordHandler,
+  googleCallback,
+  checkTokenHandler,
+  getCartByUserHandler,
+  getAddressesByUserHandler,
+  updateAddressHandler,
+  deleteAddressHandler,
+  getUserProfileHandler,
+
 };
