@@ -89,7 +89,7 @@ const productRepository = {
 
     const [data, total] = await Promise.all([
       prisma.products.findMany({
-        where: { status: true },
+        where: { status: 1 },
         include: {
           brand: true,
           category: true,
@@ -107,7 +107,7 @@ const productRepository = {
         take: limit,
       }),
       prisma.products.count({
-        where: { status: true },
+        where: { status: 1 },
       }),
     ]);
 
