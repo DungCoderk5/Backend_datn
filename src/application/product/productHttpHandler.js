@@ -7,8 +7,13 @@ const getProductsByCategoryUsecase = require('../../infrastructure/usecase/produ
 const getDealProductsUsecase = require('../../infrastructure/usecase/product/getDealProductsUsecase');
 const getRelatedProductsUsecase = require('../../infrastructure/usecase/product/getRelatedProductsUsecase');
 const getProductsByGenderUsecase = require('../../infrastructure/usecase/product/getProductsByGenderUsecase');
-
-
+const addProductUsecase = require('../../infrastructure/usecase/product/addProductUsecase');
+const addToCartUsecase = require('../../infrastructure/usecase/product/addToCartUsecase');
+const searchProductsUsecase = require('../../infrastructure/usecase/product/searchProductsUsecase');
+const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAllCouponsUsecase');
+const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
+const getReviewsByProductUsecase = require('../../infrastructure/usecase/product/getReviewsByProductUsecase');
+const createProductReviewUsecase = require('../../infrastructure/usecase/product/createProductReviewUsecase');
 
 
 async function getAllProductsHandler(req, res) {
@@ -27,7 +32,8 @@ async function getAllProductsHandler(req, res) {
 
 async function getProductDetailHandler(req, res) {
   try {
-    const { id,slug } = req.params;
+    const { id } = req.params;
+    const { slug } = req.query;
 
     const identifier = {};
     if (id) identifier.id = Number(id);
@@ -40,7 +46,6 @@ async function getProductDetailHandler(req, res) {
     res.status(404).json({ error: error.message });
   }
 }
-
 
 async function getBestSellingHandler(req, res) {
   try {
@@ -72,12 +77,13 @@ async function getNewestProductsHandler(req, res) {
 async function getFeaturedProductsHandler(req, res) {
   try {
     const result = await getFeaturedProductsUsecase();
-    res.status(200).json({products:result});
+    res.status(200).json(result);
   } catch (err) {
     console.error('Lỗi khi lấy sản phẩm nổi bật:', err);
     res.status(500).json({ error: 'Server Error' });
   }
 }
+
 async function getProductsByCategoryHandler(req, res) {
   try {
     const categoryName = req.query.category;
@@ -123,27 +129,19 @@ async function getDealProductsHandler(req, res) {
 
 async function getRelatedProductsHandler(req, res) {
   try {
-    const categoryId = parseInt(req.query.categoryId);
+    const productId = parseInt(req.params.productId);
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 8;
 
-    if (isNaN(categoryId)) {
-      return res.status(400).json({ error: 'categoryId phải là số nguyên' });
-    }
+    const result = await getRelatedProductsUsecase({ productId, page, limit });
 
-    const result = await getRelatedProductsUsecase({ categoryId, page, limit });
-
-    res.json({
-      products: result.products,
-      total: result.total,
-      page,
-      limit,
-    });
-  } catch (error) {
-    console.error('Lỗi lấy sản phẩm liên quan:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('[Handler] Lỗi getRelatedProducts:', err);
+    res.status(500).json({ error: 'Lỗi khi lấy sản phẩm cùng loại.' });
   }
 }
+
 
 async function getProductsByGenderHandler(req, res) {
   try {
@@ -168,6 +166,98 @@ async function getProductsByGenderHandler(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+async function addProductHandler(req, res) {
+  try {
+    const data = req.body;
+    const create = await addProductUsecase(data);
+    res.status(200).json({message: 'tạo sản phẩm thành công', product: create})
+  } catch (error) {
+    console.error('Lỗi khi lấy thêm sản phẩm:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function addToCart(req, res) {
+  try {
+      const data = req.body;
+      const cart = await addToCartUsecase(data);
+      res.status(200).json({message: 'thêm sản phẩm vào giỏ hàng thành công', cart: cart})
+  } catch (error) {
+    console.error('Lỗi khi lấy thêm sản phẩm:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function searchProductsHandler(req, res) {
+  try {
+    const keyword = req.query.q || '';
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await searchProductsUsecase({ keyword, page, limit });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi searchProducts:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi tìm kiếm sản phẩm.' });
+  }
+}
+
+async function getAllCouponsHandler(req, res) {
+  try {
+    const result = await getAllCouponsUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getAllCoupons:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách mã giảm giá.' });
+  }
+}
+
+async function addToWishlistHandler(req, res) {
+  try {
+    const { user_id, product_id } = req.body;
+
+    const result = await addToWishlistUsecase({ user_id, product_id });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi addToWishlist:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi thêm sản phẩm vào danh sách yêu thích.' });
+  }
+}
+
+async function getReviewsByProductHandler(req, res) {
+  try {
+    const productId = parseInt(req.params.productId);
+    const result = await getReviewsByProductUsecase({ productId });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getReviewsByProduct:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy đánh giá theo sản phẩm.' });
+  }
+}
+
+async function createProductReviewHandler(req, res) {
+  try {
+    const product_id = parseInt(req.params.productId);
+    const { user_id, rating, content } = req.body;
+
+    if (!user_id || !rating || !product_id) {
+      return res.status(400).json({ error: 'Thiếu thông tin đánh giá.' });
+    }
+
+    const review = await createProductReviewUsecase({ user_id, product_id, rating, content });
+    res.status(201).json(review);
+  } catch (err) {
+    console.error('[Handler] Lỗi createProductReview:', err);
+
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Bạn đã đánh giá sản phẩm này rồi.' });
+    }
+
+    res.status(500).json({ error: 'Lỗi khi gửi đánh giá.' });
+  }
+}
+
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -178,5 +268,11 @@ module.exports = {
   getDealProductsHandler,
   getRelatedProductsHandler,
   getProductsByGenderHandler,
-  
+  addProductHandler,
+  addToCart,
+  searchProductsHandler,
+  getAllCouponsHandler,
+  addToWishlistHandler,
+  getReviewsByProductHandler,
+  createProductReviewHandler
 };
