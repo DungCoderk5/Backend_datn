@@ -6,7 +6,7 @@ const productRepository = {
 
     const [products, total] = await Promise.all([
       prisma.products.findMany({
-        where: { status: true },
+        where: { status: 1 },
         skip,
         take: limit,
         orderBy: { created_at: "desc" },
@@ -15,7 +15,7 @@ const productRepository = {
           category: true,
           gender: true,
           images: true,
-          variants: {
+          product_variants: {
             include: {
               color: true,
               size: true,
@@ -23,7 +23,7 @@ const productRepository = {
           },
         },
       }),
-      prisma.products.count({ where: { status: true } }),
+      prisma.products.count({ where: { status: 1 } }),
     ]);
 
     return {
@@ -46,7 +46,7 @@ const productRepository = {
         category: true,
         gender: true,
         images: true,
-        variants: {
+        product_variants: {
           include: {
             color: true,
             size: true,
@@ -58,14 +58,14 @@ const productRepository = {
   },
   async getBestSelling(top = 4) {
     const products = await prisma.products.findMany({
-      where: { status: true },
+      where: { status: 1 },
       include: {
         reviews: true,
         brand: true,
         category: true,
         gender: true,
         images: true,
-        variants: {
+        product_variants: {
           include: {
             color: true,
             size: true,
@@ -95,7 +95,7 @@ const productRepository = {
           category: true,
           gender: true,
           images: true,
-          variants: {
+          product_variants: {
             include: {
               color: true,
               size: true,
@@ -107,7 +107,7 @@ const productRepository = {
         take: limit,
       }),
       prisma.products.count({
-        where: { status: true },
+        where: { status: 1 },
       }),
     ]);
 
@@ -116,7 +116,7 @@ const productRepository = {
   async getFeaturedProducts() {
     const products = await prisma.products.findMany({
       where: {
-        status: true,
+        status: 1,
         reviews: {
           some: {},
         },
@@ -127,7 +127,7 @@ const productRepository = {
         gender: true,
         images: true,
         reviews: true,
-        variants: {
+        product_variants: {
           include: {
             color: true,
             size: true,
@@ -151,7 +151,7 @@ const productRepository = {
     const [products, total] = await Promise.all([
       prisma.products.findMany({
         where: {
-          status: true,
+          status: 1,
           category: {
             OR: [
               { name: { equals: categoryName } },
@@ -164,7 +164,7 @@ const productRepository = {
           category: true,
           gender: true,
           images: true,
-          variants: {
+          product_variants: {
             include: {
               color: true,
               size: true,
@@ -179,7 +179,7 @@ const productRepository = {
       }),
       prisma.products.count({
         where: {
-          status: true,
+          status: 1,
           category: {
             OR: [
               { name: { equals: categoryName } },
@@ -198,7 +198,7 @@ const productRepository = {
     const [products, total] = await Promise.all([
       prisma.products.findMany({
         where: {
-          status: true,
+          status: 1,
           NOT: [{ sale_price: null }],
           AND: [{ sale_price: { lt: prisma.products.fields.price } }],
         },
@@ -207,7 +207,7 @@ const productRepository = {
           category: true,
           gender: true,
           images: true,
-          variants: {
+          product_variants: {
             include: {
               color: true,
               size: true,
@@ -222,7 +222,7 @@ const productRepository = {
       }),
       prisma.products.count({
         where: {
-          status: true,
+          status: 1,
           NOT: [{ sale_price: null }],
           AND: [{ sale_price: { lt: prisma.products.fields.price } }],
         },
@@ -246,7 +246,7 @@ const productRepository = {
         where: {
           categories_id: product.categories_id,
           products_id: { not: productId },
-          status: true,
+          status: 1,
         },
         skip,
         take: limit,
@@ -261,7 +261,7 @@ const productRepository = {
         where: {
           categories_id: product.categories_id,
           products_id: { not: productId },
-          status: true,
+          status: 1,
         },
       }),
     ]);
@@ -279,7 +279,7 @@ const productRepository = {
     const [products, total] = await Promise.all([
       prisma.products.findMany({
         where: {
-          status: true,
+          status: 1,
           gender: {
             name: {
               in: genderName === 'male_or_unisex'
@@ -295,7 +295,7 @@ const productRepository = {
           category: true,
           gender: true,
           images: true,
-          variants: {
+          product_variants: {
             include: {
               color: true,
               size: true,
@@ -310,7 +310,7 @@ const productRepository = {
       }),
       prisma.products.count({
         where: {
-          status: true,
+          status: 1,
           gender: {
             name: {
               in: genderName === 'male_or_unisex'
@@ -338,7 +338,7 @@ const productRepository = {
     brand_id,
     gender_id,
     images = [],
-    variants = [],
+    product_variants = [],
   } = data;
 
   const newProduct = await prisma.products.create({
@@ -352,18 +352,18 @@ const productRepository = {
       categories_id,
       brand_id,
       gender_id,
-      status: true,
+      status: 1,
       images: {
         create: images, // mảng: [{ url, alt_text, type }]
       },
-      variants: {
-        create: variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
+      product_variants: {
+        create: product_variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
       },
     },
     include: {
       images: true,
-      variants: true,
-    },
+      product_variants: true,
+    },    
   });
 
 
