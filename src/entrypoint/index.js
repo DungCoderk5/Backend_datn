@@ -29,7 +29,7 @@ app.use('/category', categoryController);
 
 app.use('/post', postController);
 
-app.use('/dashboar', dashboarController);
+app.use('/dashboard', dashboarController);
 
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 

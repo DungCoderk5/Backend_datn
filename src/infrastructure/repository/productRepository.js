@@ -52,7 +52,7 @@ const productRepository = {
             size: true,
           },
         },
-        reviews: true,
+        product_reviews: true,
       },
     });
   },
@@ -60,7 +60,7 @@ const productRepository = {
     const products = await prisma.products.findMany({
       where: { status: 1 },
       include: {
-        reviews: true,
+        product_reviews: true,
         brand: true,
         category: true,
         gender: true,
@@ -90,7 +90,7 @@ const productRepository = {
 
     const [data, total] = await Promise.all([
       prisma.products.findMany({
-        where: { status: true },
+        where: { status: 1 },
         include: {
           brand: true,
           category: true,
@@ -118,7 +118,7 @@ const productRepository = {
     const products = await prisma.products.findMany({
       where: {
         status: 1,
-        reviews: {
+        product_reviews: {
           some: {},
         },
       },
@@ -127,7 +127,7 @@ const productRepository = {
         category: true,
         gender: true,
         images: true,
-        reviews: true,
+        product_reviews: true,
         product_variants: {
           include: {
             color: true,
@@ -139,7 +139,7 @@ const productRepository = {
 
     // Lọc các sản phẩm có ít nhất 5 review và rating trung bình ≥ 4
     return products.filter((product) => {
-      const reviews = product.reviews || [];
+      const reviews = product.product_reviews || [];
       const avgRating =
         reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
 
