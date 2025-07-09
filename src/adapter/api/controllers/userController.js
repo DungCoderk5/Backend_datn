@@ -7,7 +7,14 @@ const {
   updateUserHandler,
   addAddressHandler,
   checkTokenHandler,
-  googleCallback
+  googleCallback,
+  changePasswordHandler,
+  getCartByUserHandler,
+  getAddressesByUserHandler,
+  updateAddressHandler,
+  deleteAddressHandler,
+  getUserProfileHandler,
+  getReviewsByUserHandler,
 } = require("../../../application/user/userHttpHandler");
 
 router.post("/login", loginHandler);
@@ -17,5 +24,11 @@ router.put("/update", updateUserHandler);
 router.post("/add-address", addAddressHandler);
 router.get("/check-token", checkTokenHandler);
 router.post("/google/callback",googleCallback);
-
+router.put("/change-pass", changePasswordHandler);
+router.get('/get-cart/:userId', getCartByUserHandler);
+router.get('/addresses/:userId', getAddressesByUserHandler);
+router.put('/addresses/:addressId', updateAddressHandler);
+router.delete('/addresses/:addressId', deleteAddressHandler);
+router.get('/profile/:userId', getUserProfileHandler);
+router.get('/reviews/:userId', getReviewsByUserHandler);
 module.exports = router;

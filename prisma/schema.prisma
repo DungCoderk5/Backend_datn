@@ -1,276 +1,288 @@
-    // schema.prisma
-    generator client {
-      provider = "prisma-client-js"
-    }
 
+generator client {
+  provider = "prisma-client-js"
+}
     datasource db {
       provider = "mysql"
       url      = env("DATABASE_URL")
     }
+model users {
+  user_id    Int      @id @default(autoincrement())
+  name       String?  @db.VarChar(191)
+  email      String?  @unique @db.VarChar(191)
+  password   String?  @db.VarChar(191)
+  phone      String?  @db.VarChar(191)
+  address    String?  @db.Text
+  role       String?  @db.VarChar(191)
+  status     Int?     @default(1) @db.TinyInt
+  avatar     String?  @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
 
-    // ----- Models -----
+  // Relations
+  carts           carts[]
+  orders          orders[]
+  posts           posts[]
+  product_reviews product_reviews[]
+  ship_addresses  ship_address[]
+  wishlist_items  wishlist_items[]
+}
 
-    model brands {
-      brand_id Int     @id @default(autoincrement())
-      name     String
-      slug     String?
-      logo_url String?
+model brands {
+  brand_id Int     @id @default(autoincrement())
+  name     String  @db.VarChar(191)
+  slug     String? @db.VarChar(191)
+  logo_url String? @db.Text
 
-      products products[]
-    }
+  // Relations
+  products products[]
+}
 
-    model categories {
-      categories_id Int     @id @default(autoincrement())
-      name          String
-      slug          String?
-      parent_id     Int?
+model categories {
+  categories_id Int     @id @default(autoincrement())
+  name          String  @db.VarChar(191)
+  slug          String? @db.VarChar(191)
+  parent_id     Int?
 
-      parent        categories?  @relation("CategoryToSub", fields: [parent_id], references: [categories_id])
-      subcategories categories[] @relation("CategoryToSub")
-      products      products[]
-    }
+  // Relations
+  parent   categories?  @relation("CategoryChildren", fields: [parent_id], references: [categories_id])
+  children categories[] @relation("CategoryChildren")
+  products products[]
+}
 
-    model categories_post {
-      category_post_id Int    @id @default(autoincrement())
-      name             String
-      slug             String @unique
-      parent_id        Int?
+model genders {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(50)
 
-      parent        categories_post?  @relation("PostCatToSub", fields: [parent_id], references: [category_post_id])
-      subcategories categories_post[] @relation("PostCatToSub")
-      posts         posts[]
-    }
+  // Relations
+  products products[]
+}
 
-    model colors {
-      id         Int     @id @default(autoincrement())
-      code_color String?
-      name_color String?
-      image               String?
-      
-      product_variants product_variants[]
-    }
+model colors {
+  id         Int     @id @default(autoincrement())
+  code_color String? @db.VarChar(50)
+  name_color String? @db.VarChar(100)
+  images     String? @db.VarChar(191)
 
-    model coupons {
-      coupons_id     Int          @id @default(autoincrement())
-      code           String       @unique
-      discount_type  DiscountType
-      discount_value Float
-      start_date     DateTime?
-      end_date       DateTime?
-      usage_limit    Int?
-      used_count     Int          @default(0)
-      created_at     DateTime     @default(now())
-      updated_at     DateTime     @updatedAt
+  // Relations
+  product_variants product_variants[]
+}
 
-      orders orders[]
-    }
+model sizes {
+  id          Int     @id @default(autoincrement())
+  number_size String? @db.VarChar(50)
 
-    enum DiscountType {
-      percentage
-      fixed
-    }
+  // Relations
+  product_variants product_variants[]
+}
 
-    model genders {
-      id   Int    @id @default(autoincrement())
-      name String
+model products {
+  products_id   Int      @id @default(autoincrement())
+  name          String   @db.VarChar(191)
+  slug          String?  @db.VarChar(191)
+  description   String?  @db.Text
+  short_desc    String?  @db.Text
+  price         Decimal? @db.Decimal(10, 2)
+  sale_price    Decimal? @db.Decimal(10, 2)
+  categories_id Int?
+  brand_id      Int?
+  gender_id     Int?
+  status        Int?     @default(1) @db.TinyInt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
 
-      products products[]
-    }
+  // Relations
+  category         categories?       @relation(fields: [categories_id], references: [categories_id])
+  brand            brands?           @relation(fields: [brand_id], references: [brand_id])
+  gender           genders?          @relation(fields: [gender_id], references: [id])
+  images           images[]
+  product_reviews  product_reviews[]
+  product_variants product_variants[]
+  wishlist_items   wishlist_items[]
+}
 
-    model images {
-      images_id  Int     @id @default(autoincrement())
-      url        String?
-      alt_text   String?
-      type       String?
-      product_id Int?
-      post_id    Int?
+model product_variants {
+  product_variants_id Int     @id @default(autoincrement())
+  product_id          Int?
+  color_id            Int?
+  size_id             Int?
+  stock_quantity      Int?
+  sku                 String? @db.VarChar(100)
 
-      product products? @relation(fields: [product_id], references: [products_id])
-      post    posts?    @relation(fields: [post_id], references: [post_id])
-    }
+  // Relations
+  product     products?    @relation(fields: [product_id], references: [products_id])
+  color       colors?      @relation(fields: [color_id], references: [id])
+  size        sizes?       @relation(fields: [size_id], references: [id])
+  cart_items  cart_items[]
+  order_items order_items[]
+}
 
-    model orders {
-      orders_id           Int      @id @default(autoincrement())
-      user_id             Int
-      status              String
-      total_amount        Float
-      payment_method_id   Int?
-      shipping_address_id Int?
-      coupons_id          Int?
-      comment             String?
-      created_at          DateTime @default(now())
-      updated_at          DateTime @updatedAt
+model images {
+  images_id  Int     @id @default(autoincrement())
+  url        String? @db.Text
+  alt_text   String? @db.VarChar(191)
+  type       String? @db.VarChar(50)
+  product_id Int?
 
-      user           users           @relation(fields: [user_id], references: [user_id])
-      coupons        coupons?        @relation(fields: [coupons_id], references: [coupons_id])
-      payment_method payment_method? @relation(fields: [payment_method_id], references: [id])
-      ship_address   ship_address?   @relation(fields: [shipping_address_id], references: [ship_address_id])
-      order_items    order_items[]
-    }
+  // Relations
+  product products? @relation(fields: [product_id], references: [products_id])
+}
 
-    model order_items {
-      order_items_id Int    @id @default(autoincrement())
-      variant_id     Int
-      order_id       Int
-      quantity       Int
-      unit_price     Float?
+model product_reviews {
+  product_reviews_id Int       @id @default(autoincrement())
+  user_id            Int
+  product_id         Int
+  rating             Int?
+  content            String?   @db.Text
+  created_at         DateTime? @default(now()) @db.Timestamp(0)
+  updated_at         DateTime? @default(now()) @updatedAt @db.Timestamp(0)
 
-      order            orders           @relation(fields: [order_id], references: [orders_id])
-      product_variants product_variants @relation(fields: [variant_id], references: [product_variants_id])
-    }
+  // Relations
+  user    users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  product products @relation(fields: [product_id], references: [products_id], onDelete: Cascade)
 
-    model payment_method {
-      id          Int     @id @default(autoincrement())
-      name_method String
-      description String?
-      is_active   Boolean @default(true)
+  @@unique([user_id, product_id], name: "unique_user_product")
+}
 
-      orders orders[]
-    }
+model carts {
+  carts_id   Int      @id @default(autoincrement())
+  user_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
 
-    model posts {
-      post_id          Int      @id @default(autoincrement())
-      title            String
-      slug             String   @unique
-      content          String?
-      thumbnail        String?
-      status           Boolean  @default(true)
-      category_post_id Int?
-      author_id        Int?
-      created_at       DateTime @default(now())
-      updated_at       DateTime @updatedAt
-      image               String?
+  // Relations
+  user       users        @relation(fields: [user_id], references: [user_id])
+  cart_items cart_items[]
+}
 
-      category_post categories_post? @relation(fields: [category_post_id], references: [category_post_id])
-      author        users?           @relation(fields: [author_id], references: [user_id])
-      images        images[]
-    }
+model cart_items {
+  cart_items_id Int      @id @default(autoincrement())
+  cart_id       Int
+  variant_id    Int
+  quantity      Int
+  price         Decimal? @db.Decimal(10, 2)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
 
-    model products {
-      products_id   Int      @id @default(autoincrement())
-      name          String
-      slug          String?
-      description   String?
-      short_desc    String?
-      price         Float?
-      sale_price    Float?
-      categories_id Int?
-      brand_id      Int?
-      status        Boolean  @default(true)
-      gender_id     Int?
-      created_at    DateTime @default(now())
-      updated_at    DateTime @updatedAt
+  // Relations
+  cart    carts           @relation(fields: [cart_id], references: [carts_id])
+  variant product_variants @relation(fields: [variant_id], references: [product_variants_id])
+}
 
-      category       categories?        @relation(fields: [categories_id], references: [categories_id])
-      brand          brands?            @relation(fields: [brand_id], references: [brand_id])
-      gender         genders?           @relation(fields: [gender_id], references: [id])
-      images         images[]
-      variants       product_variants[]
-      reviews        product_reviews[]
-      wishlist_items wishlist_items[]
-    }
+model payment_method {
+  id          Int     @id @default(autoincrement())
+  name_method String  @db.VarChar(100)
+  description String? @db.Text
+  is_active   Boolean @default(true) @db.TinyInt
 
-    model product_reviews {
-      product_reviews_id Int      @id @default(autoincrement())
-      user_id            Int
-      product_id         Int
-      rating             Int?
-      content            String?
-      created_at         DateTime @default(now())
-      updated_at         DateTime @updatedAt
+  // Relations
+  orders orders[]
+}
 
-      user    users    @relation(fields: [user_id], references: [user_id])
-      product products @relation(fields: [product_id], references: [products_id])
+model coupons {
+  coupons_id     Int                    @id @default(autoincrement())
+  code           String                 @unique @db.VarChar(100)
+  discount_type  CouponDiscountType
+  discount_value Decimal                @db.Decimal(10, 2)
+  start_date     DateTime?              @db.Date
+  end_date       DateTime?              @db.Date
+  usage_limit    Int?
+  used_count     Int                    @default(0)
+  created_at     DateTime               @default(now())
+  updated_at     DateTime               @default(now()) @updatedAt
 
-      @@unique([user_id, product_id])
-    }
+  // Relations
+  orders orders[]
+}
 
-    model product_variants {
-      product_variants_id Int     @id @default(autoincrement())
-      product_id          Int?
-      color_id            Int?
-      size_id             Int?
-      stock_quantity      Int?
-      sku                 String?
+enum CouponDiscountType {
+  percentage
+  fixed
+}
 
-      product     products?     @relation(fields: [product_id], references: [products_id])
-      color       colors?       @relation(fields: [color_id], references: [id])
-      size        sizes?        @relation(fields: [size_id], references: [id])
-      order_items order_items[]
-      cart_items  cart_items[]
-    }
+model ship_address {
+  ship_address_id Int     @id @default(autoincrement())
+  user_id         Int
+  full_name       String? @db.VarChar(191)
+  phone           String? @db.VarChar(191)
+  address_line    String? @db.Text
+  is_default      Boolean @default(false) @db.TinyInt
 
-    model ship_address {
-      ship_address_id Int     @id @default(autoincrement())
-      user_id         Int
-      full_name       String?
-      phone           String?
-      address_line    String?
-      is_default      Boolean @default(false)
+  // Relations
+  user   users    @relation(fields: [user_id], references: [user_id])
+  orders orders[]
+}
 
-      user   users    @relation(fields: [user_id], references: [user_id])
-      orders orders[]
-    }
+model orders {
+  orders_id           Int      @id @default(autoincrement())
+  user_id             Int
+  status              String   @db.VarChar(50)
+  total_amount        Decimal  @db.Decimal(10, 2)
+  payment_method_id   Int?
+  shipping_address_id Int?
+  coupons_id          Int?
+  comment             String?  @db.Text
+  created_at          DateTime @default(now())
+  updated_at          DateTime @default(now()) @updatedAt
 
-    model sizes {
-      id          Int     @id @default(autoincrement())
-      number_size String?
+  // Relations
+  user             users          @relation(fields: [user_id], references: [user_id])
+  payment_method   payment_method? @relation(fields: [payment_method_id], references: [id])
+  shipping_address ship_address?   @relation(fields: [shipping_address_id], references: [ship_address_id])
+  coupon           coupons?        @relation(fields: [coupons_id], references: [coupons_id])
+  order_items      order_items[]
+}
 
-      product_variants product_variants[]
-    }
+model order_items {
+  order_items_id Int      @id @default(autoincrement())
+  variant_id     Int
+  order_id       Int
+  quantity       Int
+  unit_price     Decimal? @db.Decimal(10, 2)
 
-    model users {
-      user_id    Int      @id @default(autoincrement())
-      name       String?
-      email      String?  @unique
-      password   String?
-      phone      String?
-      address    String?
-      role       String?
-      status     Boolean  @default(true)
-      avatar     String?
-      created_at DateTime @default(now())
-      updated_at DateTime @updatedAt
+  // Relations
+  variant product_variants @relation(fields: [variant_id], references: [product_variants_id])
+  order   orders           @relation(fields: [order_id], references: [orders_id])
+}
 
-      carts           carts[]
-      wishlist_items  wishlist_items[]
-      orders          orders[]
-      posts           posts[]
-      product_reviews product_reviews[]
-      ship_addresses  ship_address[]
-    }
+model wishlist_items {
+  wishlist_items_id Int      @id @default(autoincrement())
+  user_id           Int
+  product_id        Int
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now()) @updatedAt
 
-    model carts {
-      carts_id   Int      @id @default(autoincrement())
-      user_id    Int
-      created_at DateTime @default(now())
-      updated_at DateTime @updatedAt
+  // Relations
+  user    users    @relation(fields: [user_id], references: [user_id])
+  product products @relation(fields: [product_id], references: [products_id])
+}
 
-      user       users        @relation(fields: [user_id], references: [user_id])
-      cart_items cart_items[]
-    }
+model categories_post {
+  category_post_id Int     @id @default(autoincrement())
+  name             String  @db.VarChar(191)
+  slug             String  @unique @db.VarChar(191)
+  parent_id        Int?
 
-    model cart_items {
-      cart_items_id Int      @id @default(autoincrement())
-      cart_id       Int
-      variant_id    Int
-      quantity      Int
-      price         Float?
-      created_at    DateTime @default(now())
-      updated_at    DateTime @updatedAt
+  // Relations
+  parent   categories_post? @relation("CategoryPostChildren", fields: [parent_id], references: [category_post_id])
+  children categories_post[] @relation("CategoryPostChildren")
+  posts    posts[]
+}
 
-      cart            carts            @relation(fields: [cart_id], references: [carts_id])
-      product_variant product_variants @relation(fields: [variant_id], references: [product_variants_id])
-    }
+model posts {
+  post_id          Int      @id @default(autoincrement())
+  title            String   @db.VarChar(191)
+  slug             String   @unique @db.VarChar(191)
+  content          String?  @db.Text
+  thumbnail        String?  @db.Text
+  images           String?  @db.VarChar(191)
+  status           Int?     @default(1) @db.TinyInt
+  category_post_id Int?
+  author_id        Int?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now()) @updatedAt
 
-    model wishlist_items {
-      wishlist_items_id Int      @id @default(autoincrement())
-      user_id           Int
-      product_id        Int
-      created_at        DateTime @default(now())
-      updated_at        DateTime @updatedAt
-
-      user    users    @relation(fields: [user_id], references: [user_id])
-      product products @relation(fields: [product_id], references: [products_id])
-    }
-
+  // Relations
+  category_post categories_post? @relation(fields: [category_post_id], references: [category_post_id])
+  author        users?           @relation(fields: [author_id], references: [user_id])
+}

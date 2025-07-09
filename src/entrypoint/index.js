@@ -4,6 +4,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const userController = require('../adapter/api/controllers/userController');
 const productController = require('../adapter/api/controllers/productController');
+const categoryController = require('../adapter/api/controllers/categoryController');
+const postController = require('../adapter/api/controllers/postController');
+const dashboarController = require('../adapter/api/controllers/dashboarController');
 const cookieParser = require("cookie-parser"); 
 const cors = require('cors');
 const path = require("path")
@@ -21,6 +24,12 @@ app.use(bodyParser.json());
 app.use('/', userController);
 
 app.use('/product', productController);
+
+app.use('/category', categoryController);
+
+app.use('/post', postController);
+
+app.use('/dashboar', dashboarController);
 
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
