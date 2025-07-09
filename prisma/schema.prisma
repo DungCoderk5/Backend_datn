@@ -224,7 +224,6 @@ model users {
   email      String?  @unique
   password   String?
   phone      String?
-  address    String?
   role       String?
   status     Boolean  @default(true)
   avatar     String?

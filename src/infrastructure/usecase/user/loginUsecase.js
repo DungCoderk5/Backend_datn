@@ -18,7 +18,7 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
       name: user.name,
       email: user.email,
       role: user.role,
-      address: user.address
+      // address: user.address
 
     },
     JWT_SECRET,
@@ -42,7 +42,7 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
       avatar: user.avatar,
       role: user.role,
       phone: user.phone,
-      address: user.address
+      // address: user.address
     },
   };
 }
