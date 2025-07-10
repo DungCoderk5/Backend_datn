@@ -13,7 +13,6 @@ model users {
   email      String?  @unique @db.VarChar(191)
   password   String?  @db.VarChar(191)
   phone      String?  @db.VarChar(191)
-  address    String?  @db.Text
   role       String?  @db.VarChar(191)
   status     Int?     @default(1) @db.TinyInt
   avatar     String?  @db.Text

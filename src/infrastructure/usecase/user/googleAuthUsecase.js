@@ -27,7 +27,7 @@ class GoogleAuthUsecase {
         email: userInfo.email,
         name: userInfo.name,
         avatar: userInfo.picture,
-        status: true,
+        status: 1,
         role: "user",
       });
     }
