@@ -1,8 +1,9 @@
 const prisma = require("../../../shared/prisma");
 
 async function updateUserUsecase(userId, data) {
+  const id = parseInt(userId, 10);
   const existingUser = await prisma.users.findUnique({
-    where: { user_id: userId },
+    where: { user_id: id },
   });
 
   if (!existingUser) {
@@ -10,11 +11,10 @@ async function updateUserUsecase(userId, data) {
   }
 
   const updatedUser = await prisma.users.update({
-    where: { user_id: userId },
+    where: { user_id: id },
     data: {
       name: data.name ?? existingUser.name,
       phone: data.phone ?? existingUser.phone,
-      address: data.address ?? existingUser.address,
       avatar: data.avatar ?? existingUser.avatar,
       status: data.status ?? existingUser.status,
     },
@@ -27,7 +27,6 @@ async function updateUserUsecase(userId, data) {
       name: updatedUser.name,
       email: updatedUser.email,
       phone: updatedUser.phone,
-      address: updatedUser.address,
       avatar: updatedUser.avatar,
       status: updatedUser.status,
     },
