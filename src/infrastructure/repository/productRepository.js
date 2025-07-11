@@ -75,6 +75,7 @@ const productRepository = {
     });
 
     const withSoldCount = products.map(p => {
+
       const reviewCount = p.reviews?.length || 0;
       const sold_count = reviewCount * 10 + Math.floor(Math.random() * 20);
       return { ...p, sold_count };
@@ -138,7 +139,7 @@ const productRepository = {
 
     // Lọc các sản phẩm có ít nhất 5 review và rating trung bình ≥ 4
     return products.filter((product) => {
-      const reviews = product.reviews || [];
+      const reviews = product.product_reviews || [];
       const avgRating =
         reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
 
