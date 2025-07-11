@@ -14,6 +14,7 @@ const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAl
 const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
 const getReviewsByProductUsecase = require('../../infrastructure/usecase/product/getReviewsByProductUsecase');
 const createProductReviewUsecase = require('../../infrastructure/usecase/product/createProductReviewUsecase');
+const getProductsByBrandUsecase = require('../../infrastructure/usecase/product/getProductsByBrandUsecase');
 
 
 async function getAllProductsHandler(req, res) {
@@ -258,6 +259,20 @@ async function createProductReviewHandler(req, res) {
   }
 }
 
+async function getProductsByBrandHandler(req, res) {
+  try {
+    const brandId = parseInt(req.params.brandId);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await getProductsByBrandUsecase({ brandId, page, limit });
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('[Handler] Lỗi getProductsByBrand:', err);
+    res.status(500).json({ error: 'Lỗi khi lấy sản phẩm theo nhãn hàng.' });
+  }
+}
+
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -274,5 +289,6 @@ module.exports = {
   getAllCouponsHandler,
   addToWishlistHandler,
   getReviewsByProductHandler,
-  createProductReviewHandler
+  createProductReviewHandler,
+  getProductsByBrandHandler
 };
