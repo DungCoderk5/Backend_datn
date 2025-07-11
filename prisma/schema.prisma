@@ -19,6 +19,7 @@ model users {
   updated_at DateTime @default(now()) @updatedAt
 
   // Relations
+  product_compares product_compares[] @relation("UserProductCompares")
   carts           carts[]
   orders          orders[]
   posts           posts[]
@@ -91,6 +92,7 @@ model products {
   updated_at    DateTime @default(now()) @updatedAt
 
   // Relations
+  product_compares product_compares[] @relation("ProductCompares")
   category         categories?       @relation(fields: [categories_id], references: [categories_id])
   brand            brands?           @relation(fields: [brand_id], references: [brand_id])
   gender           genders?          @relation(fields: [gender_id], references: [id])
@@ -286,3 +288,17 @@ model posts {
   category_post categories_post? @relation(fields: [category_post_id], references: [category_post_id])
   author        users?           @relation(fields: [author_id], references: [user_id])
 }
+
+model product_compares {
+  product_compare_id Int      @id @default(autoincrement())
+  user_id            Int
+  product_id         Int
+  created_at         DateTime @default(now())
+
+  // Relations
+  user    users    @relation("UserProductCompares", fields: [user_id], references: [user_id], onDelete: Cascade)
+  product products @relation("ProductCompares", fields: [product_id], references: [products_id], onDelete: Cascade)
+
+  @@unique([user_id, product_id], name: "unique_user_product")
+}
+
