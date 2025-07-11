@@ -50,7 +50,9 @@ async function getProductDetailHandler(req, res) {
 async function getBestSellingHandler(req, res) {
   try {
     const top = parseInt(req.query.top) || 3;
+    console.log('Top best selling products:', top);
     const result = await getBestSellingUsecase(top);
+    console.log('Best Selling Products:', result);
     res.status(200).json(result);
   } catch (err) {
     console.error('Lỗi lấy sản phẩm bán chạy:', err);
