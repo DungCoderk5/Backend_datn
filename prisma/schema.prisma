@@ -12,7 +12,6 @@ model users {
   email      String?  @unique @db.VarChar(191)
   password   String?  @db.VarChar(191)
   phone      String?  @db.VarChar(191)
-  address    String?  @db.Text
   role       String?  @db.VarChar(191)
   status     Int?     @default(1) @db.TinyInt
   avatar     String?  @db.Text
@@ -140,6 +139,7 @@ model product_reviews {
   // Relations
   user    users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   product products @relation(fields: [product_id], references: [products_id], onDelete: Cascade)
+
 
   @@unique([user_id, product_id], name: "unique_user_product")
 }
