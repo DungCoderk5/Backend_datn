@@ -83,8 +83,8 @@ model products {
   slug          String?  @db.VarChar(191)
   description   String?  @db.Text
   short_desc    String?  @db.Text
-  price         Decimal? @db.Decimal(10, 2)
-  sale_price    Decimal? @db.Decimal(10, 2)
+  price         Int?
+  sale_price    Int?
   categories_id Int?
   brand_id      Int?
   gender_id     Int?
@@ -163,7 +163,7 @@ model cart_items {
   cart_id       Int
   variant_id    Int
   quantity      Int
-  price         Decimal? @db.Decimal(10, 2)
+  price         Int
   created_at    DateTime @default(now())
   updated_at    DateTime @default(now()) @updatedAt
 
@@ -241,7 +241,7 @@ model order_items {
   variant_id     Int
   order_id       Int
   quantity       Int
-  unit_price     Decimal? @db.Decimal(10, 2)
+  unit_price     Int
 
   // Relations
   variant product_variants @relation(fields: [variant_id], references: [product_variants_id])
