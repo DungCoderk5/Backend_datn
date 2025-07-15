@@ -45,7 +45,7 @@ async function findAll({ page = 1, limit = 20 }) {
           name: true,
           email: true,
           phone: true,
-          status: true,
+          status: 1,
           created_at: true,
         },
       }),
@@ -142,7 +142,7 @@ async function findBasicInfo(userId) {
       avatar: true,
       address: true,
       role: true,
-      status: true,
+      status: 1,
       created_at: true,
     },
   });
