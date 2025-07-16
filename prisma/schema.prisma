@@ -185,7 +185,7 @@ model coupons {
   coupons_id     Int                    @id @default(autoincrement())
   code           String                 @unique @db.VarChar(100)
   discount_type  CouponDiscountType
-  discount_value Decimal                @db.Decimal(10, 2)
+  discount_value Int
   start_date     DateTime?              @db.Date
   end_date       DateTime?              @db.Date
   usage_limit    Int?
@@ -219,7 +219,7 @@ model orders {
   orders_id           Int      @id @default(autoincrement())
   user_id             Int
   status              String   @db.VarChar(50)
-  total_amount        Decimal  @db.Decimal(10, 2)
+  total_amount        Int
   payment_method_id   Int?
   shipping_address_id Int?
   coupons_id          Int?
