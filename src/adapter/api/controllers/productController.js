@@ -16,11 +16,13 @@ const {
   getAllCouponsHandler,
   addToWishlistHandler,
   getReviewsByProductHandler,
-  createProductReviewHandler
+  createProductReviewHandler,
+  getProductsByBrandHandler
 } = require('../../../application/product/productHttpHandler');
 
 
 router.get('/', getAllProductsHandler);
+router.get('/brand/:brandId', getProductsByBrandHandler);
 router.get('/detail/:id', getProductDetailHandler);
 router.get('/detail/slug', getProductDetailHandler);
 router.get('/best-selling', getBestSellingHandler);

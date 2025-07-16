@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { upload, validateRealImage } = require("../../middlewares/upload");
 const {
   loginHandler,
   logoutHandler,
@@ -20,7 +21,7 @@ const {
 router.post("/login", loginHandler);
 router.post("/logout", logoutHandler);
 router.post("/register", registerHandler);
-router.put("/update", updateUserHandler);
+router.put("/update" , upload.single('avatar'), validateRealImage, updateUserHandler);
 router.post("/add-address", addAddressHandler);
 router.get("/check-token", checkTokenHandler);
 router.post("/google/callback",googleCallback);

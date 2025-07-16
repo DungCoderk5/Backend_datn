@@ -98,6 +98,10 @@ async function updateUserHandler(req, res) {
 
     if (!userId) return res.status(400).json({ error: "Thiếu userId" });
 
+    if (req.file) {
+      userData.avatar = req.file.filename;
+    }
+    
     const result = await updateUserUsecase(userId, userData);
     res.json(result);
   } catch (err) {
