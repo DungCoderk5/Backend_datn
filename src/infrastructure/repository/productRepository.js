@@ -98,7 +98,7 @@ const productRepository = {
           images: true,
           product_variants: {
             include: {
-              color: true,
+              // color: true,
               size: true,
             },
           },
