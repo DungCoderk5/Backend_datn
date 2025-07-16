@@ -8,6 +8,7 @@ const productController = require('../adapter/api/controllers/productController'
 const categoryController = require('../adapter/api/controllers/categoryController');
 const postController = require('../adapter/api/controllers/postController');
 const dashboarController = require('../adapter/api/controllers/dashboarController');
+const brandController = require('../adapter/api/controllers/brandController');
 const cookieParser = require("cookie-parser"); 
 const cors = require('cors');
 const path = require("path")
@@ -33,6 +34,8 @@ app.use('/category', categoryController);
 app.use('/post', postController);
 
 app.use('/dashboard', dashboarController);
+
+app.use('/brand', brandController);
 
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 

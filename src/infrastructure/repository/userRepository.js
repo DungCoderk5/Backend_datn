@@ -120,8 +120,7 @@ async function updateAddress(addressId, payload) {
   return await prisma.ship_address.update({
     where: { ship_address_id: addressId },
     data: {
-      ...payload,
-      updated_at: new Date(),
+      ...payload
     },
   });
 }

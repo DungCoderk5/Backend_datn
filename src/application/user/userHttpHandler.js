@@ -101,6 +101,10 @@ async function updateUserHandler(req, res) {
 
     if (!userId) return res.status(400).json({ error: "Thiếu userId" });
 
+    if (req.file) {
+      userData.avatar = req.file.filename;
+    }
+    
     const result = await updateUserUsecase(userId, userData);
     res.json(result);
   } catch (err) {
@@ -138,7 +142,7 @@ async function changePasswordHandler(req, res) {
   try {
     // const userId = req.body?.user_id; // hoặc lấy từ JWT decode
     const {userId, oldPassword, newPassword } = req.body;
-
+console.log('[DEBUG] req.body:', req.body);
     if (!oldPassword || !newPassword) {
       return res.status(400).json({ error: 'Thiếu mật khẩu cũ hoặc mới' });
     }
