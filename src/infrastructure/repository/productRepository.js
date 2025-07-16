@@ -439,10 +439,10 @@ const productRepository = {
     const skip = (page - 1) * limit;
 
     const whereClause = {
-      status: true,
+      status: 1,
       name: {
         contains: keyword,
-        mode: 'insensitive', // không phân biệt hoa thường
+        lte: 'insensitive', // không phân biệt hoa thường
       },
     };
 

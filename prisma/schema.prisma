@@ -83,8 +83,8 @@ model products {
   slug          String?  @db.VarChar(191)
   description   String?  @db.Text
   short_desc    String?  @db.Text
-  price         Decimal? @db.Decimal(10, 2)
-  sale_price    Decimal? @db.Decimal(10, 2)
+  price         Int?
+  sale_price    Int?
   categories_id Int?
   brand_id      Int?
   gender_id     Int?
@@ -143,6 +143,7 @@ model product_reviews {
   user    users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   product products @relation(fields: [product_id], references: [products_id], onDelete: Cascade)
 
+
   @@unique([user_id, product_id], name: "unique_user_product")
 }
 
@@ -162,7 +163,7 @@ model cart_items {
   cart_id       Int
   variant_id    Int
   quantity      Int
-  price         Decimal? @db.Decimal(10, 2)
+  price         Int
   created_at    DateTime @default(now())
   updated_at    DateTime @default(now()) @updatedAt
 
@@ -240,7 +241,7 @@ model order_items {
   variant_id     Int
   order_id       Int
   quantity       Int
-  unit_price     Decimal? @db.Decimal(10, 2)
+  unit_price     Int
 
   // Relations
   variant product_variants @relation(fields: [variant_id], references: [product_variants_id])
