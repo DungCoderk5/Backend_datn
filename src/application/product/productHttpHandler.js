@@ -22,6 +22,7 @@ const getCartUsecase = require('../../infrastructure/usecase/product/getCartUsec
 const updateCartUsecase = require('../../infrastructure/usecase/product/updateCartUsecase');
 const removeFromCartUsecase = require('../../infrastructure/usecase/product/removeFromCartUsecase');
 const checkoutUsecase = require('../../infrastructure/usecase/product/checkoutUsecase');
+const filterProductsUsecase = require('../../infrastructure/usecase/product/filterProductsUsecase');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -36,6 +37,37 @@ async function getAllProductsHandler(req, res) {
     res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách sản phẩm.' });
   }
 }
+
+async function filterProductsHandler(req, res, next) {
+  try {
+    const {
+      keyword,
+      gender,
+      brand,
+      minPrice,
+      maxPrice,
+      sort,
+      page,
+      limit,
+    } = req.query;
+
+    const result = await filterProductsUsecase({
+      keyword,
+      gender,
+      brand,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      sort,
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+    });
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
 
 async function getCompareProductsHandler(req, res) {
   const user_id = parseInt(req.query.user_id);
@@ -417,5 +449,5 @@ module.exports = {
   updateCartHandler,
   removeFromCartHandler,
   checkoutHandler,
-
+  filterProductsHandler,
 };

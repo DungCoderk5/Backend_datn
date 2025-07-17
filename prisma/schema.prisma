@@ -1,12 +1,11 @@
+
 generator client {
   provider = "prisma-client-js"
 }
-
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
+    datasource db {
+      provider = "mysql"
+      url      = env("DATABASE_URL")
+    }
 model users {
   user_id    Int      @id @default(autoincrement())
   name       String?  @db.VarChar(191)
@@ -83,8 +82,8 @@ model products {
   slug          String?  @db.VarChar(191)
   description   String?  @db.Text
   short_desc    String?  @db.Text
-  price         Decimal? @db.Decimal(10, 2)
-  sale_price    Decimal? @db.Decimal(10, 2)
+  price         Int?
+  sale_price    Int?
   categories_id Int?
   brand_id      Int?
   gender_id     Int?
@@ -143,6 +142,7 @@ model product_reviews {
   user    users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   product products @relation(fields: [product_id], references: [products_id], onDelete: Cascade)
 
+
   @@unique([user_id, product_id], name: "unique_user_product")
 }
 
@@ -162,7 +162,7 @@ model cart_items {
   cart_id       Int
   variant_id    Int
   quantity      Int
-  price         Decimal? @db.Decimal(10, 2)
+  price         Int
   created_at    DateTime @default(now())
   updated_at    DateTime @default(now()) @updatedAt
 
@@ -185,7 +185,7 @@ model coupons {
   coupons_id     Int                    @id @default(autoincrement())
   code           String                 @unique @db.VarChar(100)
   discount_type  CouponDiscountType
-  discount_value Decimal                @db.Decimal(10, 2)
+  discount_value Int
   start_date     DateTime?              @db.Date
   end_date       DateTime?              @db.Date
   usage_limit    Int?
@@ -219,7 +219,7 @@ model orders {
   orders_id           Int      @id @default(autoincrement())
   user_id             Int
   status              String   @db.VarChar(50)
-  total_amount        Decimal  @db.Decimal(10, 2)
+  total_amount        Int
   payment_method_id   Int?
   shipping_address_id Int?
   coupons_id          Int?
@@ -240,7 +240,7 @@ model order_items {
   variant_id     Int
   order_id       Int
   quantity       Int
-  unit_price     Decimal? @db.Decimal(10, 2)
+  unit_price     Int
 
   // Relations
   variant product_variants @relation(fields: [variant_id], references: [product_variants_id])

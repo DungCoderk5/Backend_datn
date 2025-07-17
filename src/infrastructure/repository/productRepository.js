@@ -287,8 +287,8 @@ const productRepository = {
                 genderName === "male_or_unisex"
                   ? ["Male", "Unisex"]
                   : genderName === "female_or_unisex"
-                  ? ["Female", "Unisex"]
-                  : [genderName],
+                    ? ["Female", "Unisex"]
+                    : [genderName],
             },
           },
         },
@@ -319,8 +319,8 @@ const productRepository = {
                 genderName === "male_or_unisex"
                   ? ["Male", "Unisex"]
                   : genderName === "female_or_unisex"
-                  ? ["Female", "Unisex"]
-                  : [genderName],
+                    ? ["Female", "Unisex"]
+                    : [genderName],
             },
           },
         },
@@ -612,6 +612,57 @@ const productRepository = {
 
     return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
   },
+  async filteredProducts({
+      keyword = "",
+      gender = null,
+      brand = null,
+      minPrice = 0,
+      maxPrice = Number.MAX_SAFE_INTEGER,
+      status = 1,
+      limit = 12,
+      offset = 0,
+    }) {
+      return prisma.products.findMany({
+        where: {
+          status,
+          name: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+          price: {
+            gte: minPrice,
+            lte: maxPrice,
+          },
+          gender: gender
+            ? {
+                name: {
+                  equals: gender,
+                  mode: "insensitive",
+                },
+              }
+            : undefined,
+          brand: brand
+            ? {
+                name: {
+                  equals: brand,
+                  mode: "insensitive",
+                },
+              }
+            : undefined,
+        },
+        include: {
+          brand: true,
+          gender: true,
+          category: true,
+        },
+        take: limit,
+        skip: offset,
+        orderBy: {
+          created_at: "desc",
+        },
+      });
+    },
+
   async findByBrand(brandId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 
