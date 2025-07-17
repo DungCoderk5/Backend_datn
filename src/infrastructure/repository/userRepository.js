@@ -32,6 +32,36 @@ async function createAddress(userId, addressData) {
   });
 }
 
+async function getOrderDetailById(orderId) {
+    return prisma.orders.findUnique({
+      where: { orders_id: orderId },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        shipping_address: true,
+        payment_method: true,
+        coupon: true,
+        order_items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+                color: true,
+                size: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
 async function findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -177,5 +207,6 @@ module.exports = {
   updateAddress,
   findAddressByUserId,
   findBasicInfo,
-  findReviewsByUserId
+  findReviewsByUserId,
+  getOrderDetailById
 };
