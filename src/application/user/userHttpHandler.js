@@ -14,6 +14,7 @@ const updateAddressUsecase = require('../../infrastructure/usecase/user/updateAd
 const deleteAddressUsecase = require('../../infrastructure/usecase/user/deleteAddressUsecase');
 const getUserProfileUsecase = require('../../infrastructure/usecase/user/getUserProfileUsecase');
 const getReviewsByUserUsecase = require('../../infrastructure/usecase/user/getReviewsByUserUsecase');
+const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendContactEmailUsecase');
 
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
@@ -214,6 +215,24 @@ async function getReviewsByUserHandler(req, res) {
     res.status(500).json({ error: 'Lỗi khi lấy đánh giá của người dùng.' });
   }
 }
+
+async function sendContactEmailHandler(req, res) {
+  const { name, email, subject, message } = req.body;
+
+  const result = await sendContactEmailUsecase({
+    name,
+    email,
+    subject,
+    message,
+  });
+
+  if (result?.error) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  return res.status(200).json(result);
+}
+
 module.exports = {
   loginHandler,
   logoutHandler,
@@ -228,5 +247,6 @@ module.exports = {
   updateAddressHandler,
   deleteAddressHandler,
   getUserProfileHandler,
-  getReviewsByUserHandler 
+  getReviewsByUserHandler,
+  sendContactEmailHandler
 };

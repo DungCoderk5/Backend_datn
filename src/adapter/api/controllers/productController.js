@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { upload, validateRealImage } = require("../../middlewares/upload");
 
 const {
   getAllProductsHandler,
@@ -17,7 +18,15 @@ const {
   addToWishlistHandler,
   getReviewsByProductHandler,
   createProductReviewHandler,
-  getProductsByBrandHandler
+  getProductsByBrandHandler,
+  addToCart,
+  addToCompareHandler,
+  removeFromCompareHandler,
+  getCompareProductsHandler,
+  getCartHandler,
+  updateCartHandler,
+  removeFromCartHandler,
+  checkoutHandler
 } = require('../../../application/product/productHttpHandler');
 
 
@@ -32,11 +41,20 @@ router.get('/category', getProductsByCategoryHandler);
 router.get('/deals', getDealProductsHandler);
 router.get('/related/:productId', getRelatedProductsHandler);
 router.get('/gender', getProductsByGenderHandler);
-router.post('/add-product', addProductHandler);
+router.post('/add-product', validateRealImage, upload.single('product_img'),  addProductHandler);
+router.post('/addToCart', addToCart);
+router.post('/compare/add', addToCompareHandler);
 router.get('/search', searchProductsHandler);
 router.get('/coupons', getAllCouponsHandler);
 router.post('/wishlist', addToWishlistHandler);
 router.get('/reviews/:productId', getReviewsByProductHandler);
 router.post('/reviews/:productId', createProductReviewHandler);
+router.delete('/compare/remove', removeFromCompareHandler);
+router.get('/compare', getCompareProductsHandler);
+router.get('/cart', getCartHandler);
+router.put('/cart/update', updateCartHandler);
+router.delete('/cart/remove', removeFromCartHandler);
+router.post('/checkout', checkoutHandler);
+
 
 module.exports = router;
