@@ -17,7 +17,8 @@ const {
   getUserProfileHandler,
   getReviewsByUserHandler,
   sendContactEmailHandler,
-  getOrderDetailHandler
+  getOrderDetailHandler,
+  getWishlistByUserHandler,
 } = require("../../../application/user/userHttpHandler");
 
 router.post("/login", loginHandler);
@@ -36,5 +37,6 @@ router.get('/profile/:userId', getUserProfileHandler);
 router.get('/reviews/:userId', getReviewsByUserHandler);
 router.post('/contact', sendContactEmailHandler);
 router.get('/orders/:orderId', getOrderDetailHandler);
+router.get('/wishlist/:userId', getWishlistByUserHandler);
 
 module.exports = router;
