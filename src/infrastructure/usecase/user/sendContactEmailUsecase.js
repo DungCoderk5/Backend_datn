@@ -10,7 +10,7 @@ async function sendContactEmailUsecase({ name, email, phone, message }) {
     <h3>Liên hệ mới từ khách hàng</h3>
     <p><strong>Họ tên:</strong> ${name}</p>
     <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Chủ đề:</strong> ${phone}</p>
+    <p><strong>Số điện thoại:</strong> ${phone}</p>
     <p><strong>Nội dung:</strong><br>${message}</p>
   `;
 
