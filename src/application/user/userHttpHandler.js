@@ -251,12 +251,12 @@ async function getReviewsByUserHandler(req, res) {
 }
 
 async function sendContactEmailHandler(req, res) {
-  const { name, email, subject, message } = req.body;
+  const { name, email, phone, message } = req.body;
 
   const result = await sendContactEmailUsecase({
     name,
     email,
-    subject,
+    phone,
     message,
   });
 
