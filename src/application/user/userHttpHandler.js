@@ -80,9 +80,7 @@ const getOrderDetailHandler = async (req, res) => {
 
 const getWishlistByUserHandler = async (req, res) => {
   const user_id = parseInt(req.params.userId);
-
   const result = await getWishlistByUserUsecase(user_id);
-
   if (result.error) {
     if (result.error === 'wishlist not found.') {
       return res.status(404).json({ error: result.error });
@@ -93,7 +91,6 @@ const getWishlistByUserHandler = async (req, res) => {
   if (!result.data || result.data.length === 0) {
     return res.status(200).json({ message: 'wishlist is empty', data: [] });
   }
-
   return res.json(result.data);
 };
 
