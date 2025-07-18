@@ -88,10 +88,11 @@ const getWishlistByUserHandler = async (req, res) => {
     return res.status(400).json({ error: result.error });
   }
 
-  if (!result.data || result.data.length === 0) {
-    return res.status(200).json({ message: 'wishlist is empty', data: [] });
+  if (!result || result.length === 0) {
+    return res.status(200).json({ message: 'wishlist is empty', result: [] });
   }
-  return res.json(result.data);
+
+  return res.json(result);
 };
 
 async function checkTokenHandler(req, res) {
