@@ -1,4 +1,15 @@
 const prisma = require("../../shared/prisma");
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST || 'smtp.gmail.com',
+  port: 587,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
 
 async function findByUsernameOrEmail(usernameOrEmail) {
   return await prisma.users.findFirst({
@@ -7,6 +18,15 @@ async function findByUsernameOrEmail(usernameOrEmail) {
     },
   });
 }
+
+  async function sendMail({ to, subject, html }) {
+    return await transporter.sendMail({
+      from: `"DATN Store" <${process.env.MAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  }
 
 async function create(data) {
   return await prisma.users.create({
@@ -231,5 +251,6 @@ module.exports = {
   findBasicInfo,
   findReviewsByUserId,
   getOrderDetailById,
-  findWishlistByUserId
+  findWishlistByUserId,
+  sendMail,
 };
