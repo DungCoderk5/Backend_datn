@@ -3,18 +3,15 @@ const prisma = require("../../shared/prisma");
 async function findByUsernameOrEmail(usernameOrEmail) {
   return await prisma.users.findFirst({
     where: {
-      OR: [
-        { email: usernameOrEmail },
-        { name: usernameOrEmail },
-      ],
+      OR: [{ email: usernameOrEmail }, { name: usernameOrEmail }],
     },
   });
 }
 
 async function create(data) {
-    return await prisma.users.create({
-      data
-    });
+  return await prisma.users.create({
+    data,
+  });
 }
 
 async function findById(userId) {
@@ -27,82 +24,82 @@ async function createAddress(userId, addressData) {
   return await prisma.ship_address.create({
     data: {
       user_id: userId,
-      ...addressData
-    }
+      ...addressData,
+    },
   });
 }
 
 async function getOrderDetailById(orderId) {
-    return prisma.orders.findUnique({
-      where: { orders_id: orderId },
-      include: {
-        user: {
-          select: {
-            user_id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-        shipping_address: true,
-        payment_method: true,
-        coupon: true,
-        order_items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
-                color: true,
-                size: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
-async function findAll({ page = 1, limit = 20 }) {
-    const skip = (page - 1) * limit;
-
-    const [users, total] = await Promise.all([
-      prisma.users.findMany({
-        skip,
-        take: limit,
-        orderBy: { created_at: 'desc' },
+  return prisma.orders.findUnique({
+    where: { orders_id: orderId },
+    include: {
+      user: {
         select: {
           user_id: true,
           name: true,
           email: true,
           phone: true,
-          status: true,
-          created_at: true,
         },
-      }),
-      prisma.users.count(),
-    ]);
+      },
+      shipping_address: true,
+      payment_method: true,
+      coupon: true,
+      order_items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
+              color: true,
+              size: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
 
-    return {
-      users,
-      total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-    };
+async function findAll({ page = 1, limit = 20 }) {
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    prisma.users.findMany({
+      skip,
+      take: limit,
+      orderBy: { created_at: "desc" },
+      select: {
+        user_id: true,
+        name: true,
+        email: true,
+        phone: true,
+        status: true,
+        created_at: true,
+      },
+    }),
+    prisma.users.count(),
+  ]);
+
+  return {
+    users,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 async function updatePassword(userId, newHashedPassword) {
-    return await prisma.users.update({
-      where: { user_id: userId },
-      data: {
-        password: newHashedPassword,
-        updated_at: new Date(),
-      },
-    });
+  return await prisma.users.update({
+    where: { user_id: userId },
+    data: {
+      password: newHashedPassword,
+      updated_at: new Date(),
+    },
+  });
 }
 
 async function findById(userId) {
   if (!userId) {
-    throw new Error('Thiếu userId');
+    throw new Error("Thiếu userId");
   }
 
   return await prisma.users.findUnique({
@@ -110,37 +107,62 @@ async function findById(userId) {
   });
 }
 
-async function findByUserId(userId) {
-    const cart = await prisma.carts.findFirst({
-      where: { user_id: userId },
+async function findWishlistByUserId(user_id) {
+  if (!user_id || isNaN(user_id)) {
+    throw new Error("Invalid userId passed to findWishlistByUserId");
+  }
+  
+  try {
+    const wishlist = await prisma.wishlist_items.findMany({
+      where: { user_id },
       include: {
-        cart_items: {
+        product: {
           include: {
-            variant: {
-              include: {
-                product: {
-                  include: {
-                    images: {
-                      take: 1,
-                    },
+            brand: true,
+            category: true,
+            gender: true,
+            images: true,
+          },
+        },
+      }
+    });
+    return wishlist;
+  } catch (error) {
+    throw new Error(`Error fetching wishlist: ${error.message}`);
+  }
+}
+
+async function findByUserId(userId) {
+  const cart = await prisma.carts.findFirst({
+    where: { user_id: userId },
+    include: {
+      cart_items: {
+        include: {
+          variant: {
+            include: {
+              product: {
+                include: {
+                  images: {
+                    take: 1,
                   },
                 },
-                color: true,
-                size: true,
               },
+              color: true,
+              size: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
-    return cart;
+  return cart;
 }
 
 async function findAddressByUserId(userId) {
   return await prisma.ship_address.findMany({
     where: { user_id: userId },
-    orderBy: { is_default: 'desc' },
+    orderBy: { is_default: "desc" },
   });
 }
 
@@ -158,7 +180,7 @@ async function deleteAddress(addressId) {
   await prisma.ship_address.delete({
     where: { ship_address_id: addressId },
   });
-  return { message: 'Đã xóa địa chỉ thành công.' };
+  return { message: "Đã xóa địa chỉ thành công." };
 }
 
 async function findBasicInfo(userId) {
@@ -179,21 +201,21 @@ async function findBasicInfo(userId) {
 }
 
 async function findReviewsByUserId(userId) {
-    return await prisma.product_reviews.findMany({
-      where: { user_id: userId },
-      orderBy: { created_at: 'desc' },
-      include: {
-        product: {
-          select: {
-            products_id: true,
-            name: true,
-            images: {
-              take: 1,
-            },
+  return await prisma.product_reviews.findMany({
+    where: { user_id: userId },
+    orderBy: { created_at: "desc" },
+    include: {
+      product: {
+        select: {
+          products_id: true,
+          name: true,
+          images: {
+            take: 1,
           },
         },
       },
-    });
+    },
+  });
 }
 module.exports = {
   findByUsernameOrEmail,
@@ -208,5 +230,6 @@ module.exports = {
   findAddressByUserId,
   findBasicInfo,
   findReviewsByUserId,
-  getOrderDetailById
+  getOrderDetailById,
+  findWishlistByUserId
 };
