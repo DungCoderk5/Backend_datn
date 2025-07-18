@@ -17,6 +17,7 @@ const getUserProfileUsecase = require('../../infrastructure/usecase/user/getUser
 const getReviewsByUserUsecase = require('../../infrastructure/usecase/user/getReviewsByUserUsecase');
 const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendContactEmailUsecase');
 const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetailUseCase');
+const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -72,6 +73,25 @@ const getOrderDetailHandler = async (req, res) => {
       return res.status(404).json({ error: result.error });
     }
     return res.status(400).json({ error: result.error });
+  }
+
+  return res.json(result.data);
+};
+
+const getWishlistByUserHandler = async (req, res) => {
+  const user_id = parseInt(req.params.userId);
+
+  const result = await getWishlistByUserUsecase(user_id);
+
+  if (result.error) {
+    if (result.error === 'wishlist not found.') {
+      return res.status(404).json({ error: result.error });
+    }
+    return res.status(400).json({ error: result.error });
+  }
+
+  if (!result.data || result.data.length === 0) {
+    return res.status(200).json({ message: 'wishlist is empty', data: [] });
   }
 
   return res.json(result.data);
@@ -265,5 +285,6 @@ module.exports = {
   getUserProfileHandler,
   getReviewsByUserHandler,
   sendContactEmailHandler,
-  getOrderDetailHandler
+  getOrderDetailHandler,
+  getWishlistByUserHandler
 };
