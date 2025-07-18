@@ -74,8 +74,7 @@ const productRepository = {
       },
     });
 
-    const withSoldCount = products.map(p => {
-
+    const withSoldCount = products.map((p) => {
       const reviewCount = p.reviews?.length || 0;
       const sold_count = reviewCount * 10 + Math.floor(Math.random() * 20);
       return { ...p, sold_count };
@@ -175,7 +174,7 @@ const productRepository = {
         skip,
         take: limit,
         orderBy: {
-          created_at: 'desc',
+          created_at: "desc",
         },
       }),
       prisma.products.count({
@@ -218,7 +217,7 @@ const productRepository = {
         skip,
         take: limit,
         orderBy: {
-          created_at: 'desc',
+          created_at: "desc",
         },
       }),
       prisma.products.count({
@@ -238,7 +237,8 @@ const productRepository = {
       select: { categories_id: true },
     });
 
-    if (!product || !product.categories_id) return { relatedProducts: [], total: 0 };
+    if (!product || !product.categories_id)
+      return { relatedProducts: [], total: 0 };
 
     const skip = (page - 1) * limit;
 
@@ -251,7 +251,7 @@ const productRepository = {
         },
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         include: {
           images: true,
           brand: true,
@@ -283,11 +283,12 @@ const productRepository = {
           status: 1,
           gender: {
             name: {
-              in: genderName === 'male_or_unisex'
-                ? ['Male', 'Unisex']
-                : genderName === 'female_or_unisex'
-                ? ['Female', 'Unisex']
-                : [genderName],
+              in:
+                genderName === "male_or_unisex"
+                  ? ["Male", "Unisex"]
+                  : genderName === "female_or_unisex"
+                    ? ["Female", "Unisex"]
+                    : [genderName],
             },
           },
         },
@@ -306,7 +307,7 @@ const productRepository = {
         skip,
         take: limit,
         orderBy: {
-          created_at: 'desc',
+          created_at: "desc",
         },
       }),
       prisma.products.count({
@@ -314,11 +315,12 @@ const productRepository = {
           status: 1,
           gender: {
             name: {
-              in: genderName === 'male_or_unisex'
-                ? ['Male', 'Unisex']
-                : genderName === 'female_or_unisex'
-                ? ['Female', 'Unisex']
-                : [genderName],
+              in:
+                genderName === "male_or_unisex"
+                  ? ["Male", "Unisex"]
+                  : genderName === "female_or_unisex"
+                    ? ["Female", "Unisex"]
+                    : [genderName],
             },
           },
         },
@@ -328,22 +330,7 @@ const productRepository = {
     return { products, total };
   },
   async create(data) {
-  const {
-    name,
-    slug,
-    description,
-    short_desc,
-    price,
-    sale_price,
-    categories_id,
-    brand_id,
-    gender_id,
-    images = [],
-    product_variants = [],
-  } = data;
-
-  const newProduct = await prisma.products.create({
-    data: {
+    const {
       name,
       slug,
       description,
@@ -353,22 +340,36 @@ const productRepository = {
       categories_id,
       brand_id,
       gender_id,
-      status: 1,
-      images: {
-        create: images, // mảng: [{ url, alt_text, type }]
-      },
-      product_variants: {
-        create: product_variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
-      },
-    },
-    include: {
-      images: true,
-      product_variants: true,
-    },    
-  });
+      images = [],
+      product_variants = [],
+    } = data;
 
+    const newProduct = await prisma.products.create({
+      data: {
+        name,
+        slug,
+        description,
+        short_desc,
+        price,
+        sale_price,
+        categories_id,
+        brand_id,
+        gender_id,
+        status: 1,
+        images: {
+          create: images, // mảng: [{ url, alt_text, type }]
+        },
+        product_variants: {
+          create: product_variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
+        },
+      },
+      include: {
+        images: true,
+        product_variants: true,
+      },
+    });
 
-      return newProduct;
+    return newProduct;
   },
   async addToCart({ user_id, variant_id, quantity }) {
     let cart = await prisma.carts.findFirst({
@@ -407,7 +408,7 @@ const productRepository = {
       });
 
       if (!variant) {
-        throw new Error('Product variant not found');
+        throw new Error("Product variant not found");
       }
 
       await prisma.cart_items.create({
@@ -442,7 +443,7 @@ const productRepository = {
       status: 1,
       name: {
         contains: keyword,
-        lte: 'insensitive', // không phân biệt hoa thường
+        mode: "insensitive", // không phân biệt hoa thường
       },
     };
 
@@ -451,7 +452,7 @@ const productRepository = {
         where: whereClause,
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         include: {
           brand: true,
           category: true,
@@ -484,7 +485,7 @@ const productRepository = {
         },
       },
       orderBy: {
-        created_at: 'desc',
+        created_at: "desc",
       },
     });
   },
@@ -494,7 +495,7 @@ const productRepository = {
     });
 
     if (existing) {
-      return { message: 'Sản phẩm đã có trong danh sách yêu thích.' };
+      return { message: "Sản phẩm đã có trong danh sách yêu thích." };
     }
 
     const wishlistItem = await prisma.wishlist_items.create({
@@ -504,12 +505,74 @@ const productRepository = {
       },
     });
 
-    return { message: 'Đã thêm vào danh sách yêu thích.', data: wishlistItem };
+    return { message: "Đã thêm vào danh sách yêu thích.", data: wishlistItem };
+  },
+  async deleteFromCompare({ user_id, product_id }) {
+    const existing = await prisma.product_compares.findUnique({
+      where: {
+        unique_user_product: {
+          user_id,
+          product_id,
+        },
+      },
+    });
+
+    if (!existing) {
+      return { message: "Sản phẩm không tồn tại trong danh sách so sánh." };
+    }
+
+    const deleted = await prisma.product_compares.delete({
+      where: {
+        unique_user_product: {
+          user_id,
+          product_id,
+        },
+      },
+    });
+
+    return {
+      message: "Đã xóa sản phẩm khỏi danh sách so sánh.",
+      data: deleted,
+    };
+  },
+  async getCompareProductsByUser(user_id) {
+    // Lấy danh sách product_compares theo user_id kèm dữ liệu sản phẩm
+    const compareItems = await prisma.product_compares.findMany({
+      where: { user_id },
+      include: {
+        product: {
+          include: {
+            brand: true,
+            category: true,
+            gender: true,
+            images: true,
+            product_variants: true,
+          },
+        },
+      },
+    });
+
+    return compareItems;
+  },
+  async getCartItemsByUserId(user_id) {
+    return await prisma.cart.findMany({
+      where: { user_id },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            image: true,
+          },
+        },
+      },
+    });
   },
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
       where: { product_id: productId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       include: {
         user: {
           select: {
@@ -522,73 +585,173 @@ const productRepository = {
     });
   },
   async createReview({ user_id, product_id, rating, content }) {
-  return await prisma.product_reviews.create({
-    data: {
-      user_id,
-      product_id,
-      rating,
-      content,
-    },
-  });
+    return await prisma.product_reviews.create({
+      data: {
+        user_id,
+        product_id,
+        rating,
+        content,
+      },
+    });
   },
-    async addToComparelist({ user_id, product_id }) {
-    const existing = await prisma.wishlist_items.findFirst({
+  async addToComparelist({ user_id, product_id }) {
+    const existing = await prisma.product_compares.findFirst({
       where: { user_id, product_id },
     });
 
     if (existing) {
-      return { message: 'Sản phẩm đã có trong danh sách so sánh.' };
+      return { message: "Sản phẩm đã có trong danh sách so sánh." };
     }
 
-    const comparelistItem = await prisma.wishlist_items.create({
+    const comparelistItem = await prisma.product_compares.create({
       data: {
         user_id,
         product_id,
       },
     });
 
-    return { message: 'Đã thêm vào danh sách so sánh.', data: comparelistItem };
+    return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
   },
+  async filteredProducts({
+      keyword = "",
+      gender = null,
+      brand = null,
+      minPrice = 0,
+      maxPrice = Number.MAX_SAFE_INTEGER,
+      status = 1,
+      limit = 12,
+      offset = 0,
+    }) {
+      return prisma.products.findMany({
+        where: {
+          status,
+          name: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+          price: {
+            gte: minPrice,
+            lte: maxPrice,
+          },
+          gender: gender
+            ? {
+                name: {
+                  equals: gender,
+                  mode: "insensitive",
+                },
+              }
+            : undefined,
+          brand: brand
+            ? {
+                name: {
+                  equals: brand,
+                  mode: "insensitive",
+                },
+              }
+            : undefined,
+        },
+        include: {
+          brand: true,
+          gender: true,
+          category: true,
+        },
+        take: limit,
+        skip: offset,
+        orderBy: {
+          created_at: "desc",
+        },
+      });
+    },
 
   async findByBrand(brandId, page = 1, limit = 20) {
-  const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-  const [products, total] = await Promise.all([
-    prisma.products.findMany({
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where: {
+          brand_id: brandId,
+          status: 1,
+        },
+        skip,
+        take: limit,
+        orderBy: { created_at: "desc" },
+        include: {
+          brand: true,
+          category: true,
+          gender: true,
+          images: true,
+          product_variants: {
+            include: { color: true, size: true },
+          },
+        },
+      }),
+      prisma.products.count({
+        where: {
+          brand_id: brandId,
+          status: 1,
+        },
+      }),
+    ]);
+
+    return {
+      products,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
+  async updateCart({ user_id, product_id, quantity }) {
+    return await prisma.cart.upsert({
       where: {
-        brand_id: brandId,
-        status: 1,
-      },
-      skip,
-      take: limit,
-      orderBy: { created_at: 'desc' },
-      include: {
-        brand: true,
-        category: true,
-        gender: true,
-        images: true,
-        product_variants: {
-          include: { color: true, size: true },
+        user_id_product_id: {
+          user_id,
+          product_id,
         },
       },
-    }),
-    prisma.products.count({
-      where: {
-        brand_id: brandId,
-        status: 1,
+      update: { quantity },
+      create: {
+        user_id,
+        product_id,
+        quantity,
       },
-    }),
-  ]);
+    });
+  },
+  async removeFromCart({ user_id, product_id }) {
+    return await prisma.cart.deleteMany({
+      where: { user_id, product_id },
+    });
+  },
+  async createOrder({
+    user_id,
+    total_price,
+    shipping_address,
+    payment_method,
+    items,
+  }) {
+    return await prisma.orders.create({
+      data: {
+        user_id,
+        total_price,
+        shipping_address,
+        payment_method,
+        status: "pending",
+        order_items: {
+          create: items.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.product.price,
+          })),
+        },
+      },
+      include: {
+        order_items: true,
+      },
+    });
+  },
 
-  return {
-    products,
-    total,
-    currentPage: page,
-    totalPages: Math.ceil(total / limit),
-  };
-}
-
+  async clearCart(user_id) {
+    return await prisma.cart.deleteMany({ where: { user_id } });
+  },
 };
-
 
 module.exports = productRepository;
