@@ -701,7 +701,7 @@ const productRepository = {
     };
   },
   async updateCart({ user_id, product_id, quantity }) {
-    return await prisma.cart.upsert({
+    return await prisma.carts.upsert({
       where: {
         user_id_product_id: {
           user_id,
@@ -717,7 +717,7 @@ const productRepository = {
     });
   },
   async removeFromCart({ user_id, product_id }) {
-    return await prisma.cart.deleteMany({
+    return await prisma.carts.deleteMany({
       where: { user_id, product_id },
     });
   },
