@@ -18,6 +18,7 @@ const getReviewsByUserUsecase = require('../../infrastructure/usecase/user/getRe
 const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendContactEmailUsecase');
 const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetailUseCase');
 const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
+const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -251,12 +252,12 @@ async function getReviewsByUserHandler(req, res) {
 }
 
 async function sendContactEmailHandler(req, res) {
-  const { name, email, subject, message } = req.body;
+  const { name, email, phone, message } = req.body;
 
   const result = await sendContactEmailUsecase({
     name,
     email,
-    subject,
+    phone,
     message,
   });
 
@@ -265,6 +266,17 @@ async function sendContactEmailHandler(req, res) {
   }
 
   return res.status(200).json(result);
+}
+async function sendMailHandler(req, res) {
+  const { to, subject, html } = req.body;
+
+  try {
+    await sendMailUsecase({ to, subject, html });
+    res.status(200).json({ message: 'Gửi email thành công.' });
+  } catch (error) {
+    console.error('[Handler] Lỗi gửi email:', error);
+    res.status(500).json({ error: 'Không thể gửi email.' });
+  }
 }
 
 module.exports = {
@@ -284,5 +296,6 @@ module.exports = {
   getReviewsByUserHandler,
   sendContactEmailHandler,
   getOrderDetailHandler,
-  getWishlistByUserHandler
+  getWishlistByUserHandler,
+  sendMailHandler
 };

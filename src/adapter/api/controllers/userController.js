@@ -19,6 +19,8 @@ const {
   sendContactEmailHandler,
   getOrderDetailHandler,
   getWishlistByUserHandler,
+  sendMailHandler ,
+  
 } = require("../../../application/user/userHttpHandler");
 
 router.post("/login", loginHandler);
@@ -38,5 +40,6 @@ router.get('/reviews/:userId', getReviewsByUserHandler);
 router.post('/contact', sendContactEmailHandler);
 router.get('/orders/:orderId', getOrderDetailHandler);
 router.get('/wishlist/:userId', getWishlistByUserHandler);
+router.post('/send', sendMailHandler);
 
 module.exports = router;

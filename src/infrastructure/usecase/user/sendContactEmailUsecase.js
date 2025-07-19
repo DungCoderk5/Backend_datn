@@ -1,8 +1,8 @@
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function sendContactEmailUsecase({ name, email, subject, message }) {
-  if (!name || !email || !subject || !message) {
+async function sendContactEmailUsecase({ name, email, phone, message }) {
+  if (!name || !email || !phone || !message) {
     return { error: 'Thiếu thông tin liên hệ.' };
   }
 
@@ -10,7 +10,7 @@ async function sendContactEmailUsecase({ name, email, subject, message }) {
     <h3>Liên hệ mới từ khách hàng</h3>
     <p><strong>Họ tên:</strong> ${name}</p>
     <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Chủ đề:</strong> ${subject}</p>
+    <p><strong>Số điện thoại:</strong> ${phone}</p>
     <p><strong>Nội dung:</strong><br>${message}</p>
   `;
 
