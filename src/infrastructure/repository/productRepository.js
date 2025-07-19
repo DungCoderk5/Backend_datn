@@ -554,21 +554,37 @@ const productRepository = {
 
     return compareItems;
   },
-  async getCartItemsByUserId(user_id) {
-    return await prisma.cart.findMany({
-      where: { user_id },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            image: true,
+ async getCartItemsByUserId(user_id) {
+  const cart = await prisma.carts.findFirst({
+    where: { user_id },
+  });
+  if (!cart) return [];
+
+  return await prisma.cart_items.findMany({
+    where: { cart_id: cart.carts_id },
+    include: {
+      variant: {
+        include: {
+          product: {
+            select: {
+              products_id: true,
+              name: true,
+              price: true,
+              images: {
+                select: {
+                  url: true,
+                },
+                take: 1,
+              },
+            },
           },
         },
       },
-    });
-  },
+    },
+  });
+},
+
+
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
       where: { product_id: productId },
@@ -721,37 +737,61 @@ const productRepository = {
       where: { user_id, product_id },
     });
   },
-  async createOrder({
-    user_id,
-    total_price,
-    shipping_address,
-    payment_method,
-    items,
-  }) {
-    return await prisma.orders.create({
-      data: {
-        user_id,
-        total_price,
-        shipping_address,
-        payment_method,
-        status: "pending",
-        order_items: {
-          create: items.map((item) => ({
-            product_id: item.product_id,
-            quantity: item.quantity,
-            price: item.product.price,
-          })),
+async createOrder({
+  user_id,
+  total_price,
+  shipping_address,
+  payment_method,
+  items,
+}) {
+  return await prisma.orders.create({
+    data: {
+      user_id,
+      total_amount: total_price,
+      status: "pending",
+      comment: shipping_address,
+      payment_method_id: payment_method, // ✅ Sửa tại đây
+      order_items: {
+        create: items.map((item) => ({
+          variant: {
+            connect: { product_variants_id: item.variant_id },
+          },
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
+      },
+    },
+    include: {
+      order_items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
+            },
+          },
         },
       },
-      include: {
-        order_items: true,
-      },
-    });
-  },
+    },
+  });
+},
+
+
 
   async clearCart(user_id) {
-    return await prisma.cart.deleteMany({ where: { user_id } });
-  },
+  const cart = await prisma.carts.findFirst({ where: { user_id } });
+  if (!cart) return;
+
+  // Xoá tất cả cart_items trước
+  await prisma.cart_items.deleteMany({
+    where: { cart_id: cart.carts_id },
+  });
+
+  // Sau đó mới xoá cart (nếu thực sự muốn)
+  await prisma.carts.delete({
+    where: { carts_id: cart.carts_id },
+  });
+}
+
 };
 
 module.exports = productRepository;
