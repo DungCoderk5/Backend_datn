@@ -613,56 +613,55 @@ const productRepository = {
     return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
   },
   async filteredProducts({
-      keyword = "",
-      gender = null,
-      brand = null,
-      minPrice = 0,
-      maxPrice = Number.MAX_SAFE_INTEGER,
-      status = 1,
-      limit = 12,
-      offset = 0,
-    }) {
-      return prisma.products.findMany({
-        where: {
-          status,
-          name: {
-            contains: keyword,
-            mode: "insensitive",
-          },
-          price: {
-            gte: minPrice,
-            lte: maxPrice,
-          },
-          gender: gender
-            ? {
-                name: {
-                  equals: gender,
-                  mode: "insensitive",
-                },
-              }
-            : undefined,
-          brand: brand
-            ? {
-                name: {
-                  equals: brand,
-                  mode: "insensitive",
-                },
-              }
-            : undefined,
+    keyword = "",
+    gender,
+    brand,
+    minPrice = 0,
+    maxPrice = Number.MAX_SAFE_INTEGER,
+    status = 1,
+    limit = 12,
+    offset = 0,
+  }) {
+    return prisma.products.findMany({
+      where: {
+        status,
+        name: {
+          contains: keyword,
+          mode: "insensitive",
         },
-        include: {
-          brand: true,
-          gender: true,
-          category: true,
+        price: {
+          gte: minPrice,
+          lte: maxPrice,
         },
-        take: limit,
-        skip: offset,
-        orderBy: {
-          created_at: "desc",
-        },
-      });
-    },
-
+        gender: gender
+          ? {
+              name: {
+                equals: gender,
+                mode: "insensitive",
+              },
+            }
+          : undefined,
+        brand: brand
+          ? {
+              name: {
+                equals: brand,
+                mode: "insensitive",
+              },
+            }
+          : undefined,
+      },
+      include: {
+        brand: true,
+        gender: true,
+        category: true,
+      },
+      take: limit,
+      skip: offset,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  },
   async findByBrand(brandId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 
@@ -717,8 +716,8 @@ const productRepository = {
     });
   },
   async removeFromCart({ user_id, product_id }) {
-    return await prisma.cart.deleteMany({
-      where: { user_id, product_id },
+    return await prisma.carts.deleteMany({
+      where: { user_id },
     });
   },
   async createOrder({
@@ -748,9 +747,50 @@ const productRepository = {
       },
     });
   },
-
   async clearCart(user_id) {
     return await prisma.cart.deleteMany({ where: { user_id } });
+  },
+  async removeWishlistItemHandler(req, res) {
+    const { userId, productId } = req.body;
+
+    if (!userId || !productId) {
+      return res.status(400).json({ error: "Thiếu userId hoặc productId." });
+    }
+
+    try {
+      const result = await removeWishlistItemUsecase(
+        parseInt(userId),
+        parseInt(productId)
+      );
+
+      if (result === null) {
+        return res
+          .status(404)
+          .json({ message: "Mục yêu thích không tồn tại." });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "Đã xóa sản phẩm khỏi wishlist." });
+    } catch (error) {
+      console.error("[Handler] Lỗi xóa sản phẩm khỏi wishlist:", error);
+      return res.status(500).json({ error: "Lỗi máy chủ." });
+    }
+  },
+  async deleteByUserAndProduct(userId, productId) {
+    try {
+      return await prisma.wishlist_items.delete({
+        where: {
+          user_id_product_id: {
+            user_id: userId,
+            product_id: productId,
+          },
+        },
+      });
+    } catch (error) {
+      if (error.code === "P2025") return null;
+      throw error;
+    }
   },
 };
 
