@@ -19,6 +19,8 @@ const getUserProfileUsecase = require('../../infrastructure/usecase/user/getUser
 const getReviewsByUserUsecase = require('../../infrastructure/usecase/user/getReviewsByUserUsecase');
 const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendContactEmailUsecase');
 const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetailUseCase');
+const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
+const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -78,6 +80,25 @@ const getOrderDetailHandler = async (req, res) => {
   }
 
   return res.json(result.data);
+};
+
+const getWishlistByUserHandler = async (req, res) => {
+  const user_id = parseInt(req.params.userId);
+
+  const result = await getWishlistByUserUsecase(user_id);
+
+  if (result.error) {
+    if (result.error === 'wishlist not found.') {
+      return res.status(404).json({ error: result.error });
+    }
+    return res.status(400).json({ error: result.error });
+  }
+
+  if (!result || result.length === 0) {
+    return res.status(200).json({ message: 'wishlist is empty', result: [] });
+  }
+
+  return res.json(result);
 };
 
 async function checkTokenHandler(req, res) {
@@ -240,12 +261,12 @@ async function getReviewsByUserHandler(req, res) {
 }
 
 async function sendContactEmailHandler(req, res) {
-  const { name, email, subject, message } = req.body;
+  const { name, email, phone, message } = req.body;
 
   const result = await sendContactEmailUsecase({
     name,
     email,
-    subject,
+    phone,
     message,
   });
 
@@ -254,6 +275,17 @@ async function sendContactEmailHandler(req, res) {
   }
 
   return res.status(200).json(result);
+}
+async function sendMailHandler(req, res) {
+  const { to, subject, html } = req.body;
+
+  try {
+    await sendMailUsecase({ to, subject, html });
+    res.status(200).json({ message: 'Gửi email thành công.' });
+  } catch (error) {
+    console.error('[Handler] Lỗi gửi email:', error);
+    res.status(500).json({ error: 'Không thể gửi email.' });
+  }
 }
 
 module.exports = {
@@ -272,5 +304,7 @@ module.exports = {
   getUserProfileHandler,
   getReviewsByUserHandler,
   sendContactEmailHandler,
-  getOrderDetailHandler
+  getOrderDetailHandler,
+  getWishlistByUserHandler,
+  sendMailHandler
 };
