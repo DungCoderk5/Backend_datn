@@ -26,7 +26,8 @@ const {
   getCartHandler,
   updateCartHandler,
   removeFromCartHandler,
-  checkoutHandler
+  checkoutHandler,
+  removeWishlistItemHandler
 } = require('../../../application/product/productHttpHandler');
 
 
@@ -55,6 +56,7 @@ router.get('/compare', getCompareProductsHandler);
 router.get('/cart', getCartHandler);
 router.put('/cart/update', updateCartHandler);
 router.delete('/cart/remove', removeFromCartHandler);
+router.delete('/wishlist', removeWishlistItemHandler);
 router.post('/checkout', checkoutHandler);
 
 

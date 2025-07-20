@@ -554,36 +554,35 @@ const productRepository = {
 
     return compareItems;
   },
- async getCartItemsByUserId(user_id) {
-  const cart = await prisma.carts.findFirst({
-    where: { user_id },
-  });
-  if (!cart) return [];
+  async getCartItemsByUserId(user_id) {
+    const cart = await prisma.carts.findFirst({
+      where: { user_id },
+    });
+    if (!cart) return [];
 
-  return await prisma.cart_items.findMany({
-    where: { cart_id: cart.carts_id },
-    include: {
-      variant: {
-        include: {
-          product: {
-            select: {
-              products_id: true,
-              name: true,
-              price: true,
-              images: {
-                select: {
-                  url: true,
+    return await prisma.cart_items.findMany({
+      where: { cart_id: cart.carts_id },
+      include: {
+        variant: {
+          include: {
+            product: {
+              select: {
+                products_id: true,
+                name: true,
+                price: true,
+                images: {
+                  select: {
+                    url: true,
+                  },
+                  take: 1,
                 },
-                take: 1,
               },
             },
           },
         },
       },
-    },
-  });
-},
-
+    });
+  },
 
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
@@ -629,56 +628,55 @@ const productRepository = {
     return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
   },
   async filteredProducts({
-      keyword = "",
-      gender = null,
-      brand = null,
-      minPrice = 0,
-      maxPrice = Number.MAX_SAFE_INTEGER,
-      status = 1,
-      limit = 12,
-      offset = 0,
-    }) {
-      return prisma.products.findMany({
-        where: {
-          status,
-          name: {
-            contains: keyword,
-            mode: "insensitive",
-          },
-          price: {
-            gte: minPrice,
-            lte: maxPrice,
-          },
-          gender: gender
-            ? {
-                name: {
-                  equals: gender,
-                  mode: "insensitive",
-                },
-              }
-            : undefined,
-          brand: brand
-            ? {
-                name: {
-                  equals: brand,
-                  mode: "insensitive",
-                },
-              }
-            : undefined,
+    keyword = "",
+    gender,
+    brand,
+    minPrice = 0,
+    maxPrice = Number.MAX_SAFE_INTEGER,
+    status = 1,
+    limit = 12,
+    offset = 0,
+  }) {
+    return prisma.products.findMany({
+      where: {
+        status,
+        name: {
+          contains: keyword,
+          mode: "insensitive",
         },
-        include: {
-          brand: true,
-          gender: true,
-          category: true,
+        price: {
+          gte: minPrice,
+          lte: maxPrice,
         },
-        take: limit,
-        skip: offset,
-        orderBy: {
-          created_at: "desc",
-        },
-      });
-    },
-
+        gender: gender
+          ? {
+              name: {
+                equals: gender,
+                mode: "insensitive",
+              },
+            }
+          : undefined,
+        brand: brand
+          ? {
+              name: {
+                equals: brand,
+                mode: "insensitive",
+              },
+            }
+          : undefined,
+      },
+      include: {
+        brand: true,
+        gender: true,
+        category: true,
+      },
+      take: limit,
+      skip: offset,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  },
   async findByBrand(brandId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 
@@ -734,64 +732,102 @@ const productRepository = {
   },
   async removeFromCart({ user_id, product_id }) {
     return await prisma.carts.deleteMany({
-      where: { user_id, product_id },
+      where: { user_id },
     });
   },
-async createOrder({
-  user_id,
-  total_price,
-  shipping_address,
-  payment_method,
-  items,
-}) {
-  return await prisma.orders.create({
-    data: {
-      user_id,
-      total_amount: total_price,
-      status: "pending",
-      comment: shipping_address,
-      payment_method_id: payment_method, // ✅ Sửa tại đây
-      order_items: {
-        create: items.map((item) => ({
-          variant: {
-            connect: { product_variants_id: item.variant_id },
-          },
-          quantity: item.quantity,
-          unit_price: item.price,
-        })),
+  async createOrder({
+    user_id,
+    total_price,
+    shipping_address,
+    payment_method,
+    items,
+  }) {
+    return await prisma.orders.create({
+      data: {
+        user_id,
+        total_amount: total_price,
+        status: "pending",
+        comment: shipping_address,
+        payment_method_id: payment_method, // ✅ Sửa tại đây
+        order_items: {
+          create: items.map((item) => ({
+            variant: {
+              connect: { product_variants_id: item.variant_id },
+            },
+            quantity: item.quantity,
+            unit_price: item.price,
+          })),
+        },
       },
-    },
-    include: {
-      order_items: {
-        include: {
-          variant: {
-            include: {
-              product: true,
+      include: {
+        order_items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
             },
           },
         },
       },
-    },
-  });
-},
-
-
+    });
+  },
 
   async clearCart(user_id) {
-  const cart = await prisma.carts.findFirst({ where: { user_id } });
-  if (!cart) return;
+    const cart = await prisma.carts.findFirst({ where: { user_id } });
+    if (!cart) return;
 
-  // Xoá tất cả cart_items trước
-  await prisma.cart_items.deleteMany({
-    where: { cart_id: cart.carts_id },
-  });
+    // Xoá tất cả cart_items trước
+    await prisma.cart_items.deleteMany({
+      where: { cart_id: cart.carts_id },
+    });
 
-  // Sau đó mới xoá cart (nếu thực sự muốn)
-  await prisma.carts.delete({
-    where: { carts_id: cart.carts_id },
-  });
-}
+    // Sau đó mới xoá cart (nếu thực sự muốn)
+    await prisma.carts.delete({
+      where: { carts_id: cart.carts_id },
+    });
+  },
 
+  async removeWishlistItemHandler(req, res) {
+    const { userId, productId } = req.body;
+
+    if (!userId || !productId) {
+      return res.status(400).json({ error: "Thiếu userId hoặc productId." });
+    }
+
+    try {
+      const result = await removeWishlistItemUsecase(
+        parseInt(userId),
+        parseInt(productId)
+      );
+
+      if (result === null) {
+        return res
+          .status(404)
+          .json({ message: "Mục yêu thích không tồn tại." });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "Đã xóa sản phẩm khỏi wishlist." });
+    } catch (error) {
+      console.error("[Handler] Lỗi xóa sản phẩm khỏi wishlist:", error);
+      return res.status(500).json({ error: "Lỗi máy chủ." });
+    }
+  },
+  async deleteByUserAndProduct(userId, productId) {
+    try {
+      return await prisma.wishlist_items.deleteMany({
+        where: {
+          user_id: userId,
+          product_id: productId,
+        },
+      });
+    } catch (error) {
+      if (error.code === "P2025") return null;
+      throw error;
+    }
+  },
 };
 
 module.exports = productRepository;
