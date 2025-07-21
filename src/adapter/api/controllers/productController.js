@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { upload, validateRealImage } = require("../../middlewares/upload");
 
 const {
   getAllProductsHandler,
@@ -11,23 +12,52 @@ const {
   getDealProductsHandler,
   getRelatedProductsHandler,  
   getProductsByGenderHandler,
+  addProductHandler,
+  searchProductsHandler,
+  getAllCouponsHandler,
+  addToWishlistHandler,
+  getReviewsByProductHandler,
+  createProductReviewHandler,
+  getProductsByBrandHandler,
+  addToCart,
+  addToCompareHandler,
+  removeFromCompareHandler,
+  getCompareProductsHandler,
+  getCartHandler,
+  updateCartHandler,
+  removeFromCartHandler,
+  checkoutHandler,
+  removeWishlistItemHandler
 } = require('../../../application/product/productHttpHandler');
 
 
-router.get('/products/best-selling', getBestSellingHandler);
-router.get('/products/newest', getNewestProductsHandler);
-router.get('/products/featured', getFeaturedProductsHandler);
-router.get('/products/category', getProductsByCategoryHandler);
-router.get('/products/deals', getDealProductsHandler);
-router.get('/products/related', getRelatedProductsHandler);
-router.get('/products/gender', getProductsByGenderHandler);
-router.get('/products/slug/:slug', getProductDetailHandler);
-
-router.get('/products', getAllProductsHandler);
-
-// 👉 Route động để cuối cùng
-router.get('/products/:id', getProductDetailHandler);
-
+router.get('/', getAllProductsHandler);
+router.get('/filter', getProductsByBrandHandler);
+router.get('/brand/:brandId', getProductsByBrandHandler);
+router.get('/detail/:id', getProductDetailHandler);
+router.get('/detail/slug', getProductDetailHandler);
+router.get('/best-selling', getBestSellingHandler);
+router.get('/newest', getNewestProductsHandler);
+router.get('/featured', getFeaturedProductsHandler);
+router.get('/category', getProductsByCategoryHandler);
+router.get('/deals', getDealProductsHandler);
+router.get('/related/:productId', getRelatedProductsHandler);
+router.get('/gender', getProductsByGenderHandler);
+router.post('/add-product', validateRealImage, upload.single('product_img'),  addProductHandler);
+router.post('/addToCart', addToCart);
+router.post('/compare/add', addToCompareHandler);
+router.get('/search', searchProductsHandler);
+router.get('/coupons', getAllCouponsHandler);
+router.post('/wishlist', addToWishlistHandler);
+router.get('/reviews/:productId', getReviewsByProductHandler);
+router.post('/reviews/:productId', createProductReviewHandler);
+router.delete('/compare/remove', removeFromCompareHandler);
+router.get('/compare', getCompareProductsHandler);
+router.get('/cart', getCartHandler);
+router.put('/cart/update', updateCartHandler);
+router.delete('/cart/remove', removeFromCartHandler);
+router.delete('/wishlist', removeWishlistItemHandler);
+router.post('/checkout', checkoutHandler);
 
 
 module.exports = router;
