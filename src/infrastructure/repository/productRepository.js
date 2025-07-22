@@ -616,8 +616,8 @@ const productRepository = {
   },
   async filteredProducts({
     keyword = "",
-    gender = null,
-    brand = null,
+    gender,
+    brand,
     minPrice = 0,
     maxPrice = Number.MAX_SAFE_INTEGER,
     status = 1,
@@ -640,6 +640,7 @@ const productRepository = {
               name: {
                 equals: gender,
                 lte: "insensitive",
+
               },
             }
           : undefined,
@@ -648,6 +649,7 @@ const productRepository = {
               name: {
                 equals: brand,
                 lte: "insensitive",
+
               },
             }
           : undefined,
@@ -664,7 +666,6 @@ const productRepository = {
       },
     });
   },
-
   async findByBrand(brandId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 
@@ -719,8 +720,8 @@ const productRepository = {
     });
   },
   async removeFromCart({ user_id, product_id }) {
-    return await prisma.cart.deleteMany({
-      where: { user_id, product_id },
+    return await prisma.carts.deleteMany({
+      where: { user_id },
     });
   },
   async createOrder({
@@ -750,9 +751,50 @@ const productRepository = {
       },
     });
   },
-
   async clearCart(user_id) {
     return await prisma.cart.deleteMany({ where: { user_id } });
+  },
+  async removeWishlistItemHandler(req, res) {
+    const { userId, productId } = req.body;
+
+    if (!userId || !productId) {
+      return res.status(400).json({ error: "Thiếu userId hoặc productId." });
+    }
+
+    try {
+      const result = await removeWishlistItemUsecase(
+        parseInt(userId),
+        parseInt(productId)
+      );
+
+      if (result === null) {
+        return res
+          .status(404)
+          .json({ message: "Mục yêu thích không tồn tại." });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "Đã xóa sản phẩm khỏi wishlist." });
+    } catch (error) {
+      console.error("[Handler] Lỗi xóa sản phẩm khỏi wishlist:", error);
+      return res.status(500).json({ error: "Lỗi máy chủ." });
+    }
+  },
+  async deleteByUserAndProduct(userId, productId) {
+    try {
+      return await prisma.wishlist_items.delete({
+        where: {
+          user_id_product_id: {
+            user_id: userId,
+            product_id: productId,
+          },
+        },
+      });
+    } catch (error) {
+      if (error.code === "P2025") return null;
+      throw error;
+    }
   },
 };
 

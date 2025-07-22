@@ -23,6 +23,7 @@ const updateCartUsecase = require('../../infrastructure/usecase/product/updateCa
 const removeFromCartUsecase = require('../../infrastructure/usecase/product/removeFromCartUsecase');
 const checkoutUsecase = require('../../infrastructure/usecase/product/checkoutUsecase');
 const filterProductsUsecase = require('../../infrastructure/usecase/product/filterProductsUsecase');
+const removeWishlistItemUsecase = require('../../infrastructure/usecase/product/removeWishlistItemUsecase');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -67,7 +68,6 @@ async function filterProductsHandler(req, res, next) {
     next(err);
   }
 }
-
 
 async function getCompareProductsHandler(req, res) {
   const user_id = parseInt(req.query.user_id);
@@ -424,6 +424,28 @@ async function checkoutHandler(req, res) {
     res.status(500).json({ error: 'Lỗi khi thanh toán đơn hàng' });
   }
 }
+
+async function removeWishlistItemHandler(req, res) {
+  const { userId, productId } = req.body;
+
+  if (!userId || !productId) {
+    return res.status(400).json({ error: 'Thiếu userId hoặc productId.' });
+  }
+
+  try {
+    const result = await removeWishlistItemUsecase(parseInt(userId), parseInt(productId));
+
+    if (result === null) {
+      return res.status(404).json({ message: 'Mục yêu thích không tồn tại.' });
+    }
+
+    return res.status(200).json({ message: 'Đã xóa sản phẩm khỏi wishlist.' });
+  } catch (error) {
+    console.error('[Handler] Lỗi xóa sản phẩm khỏi wishlist:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ.' });
+  }
+}
+
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -450,4 +472,5 @@ module.exports = {
   removeFromCartHandler,
   checkoutHandler,
   filterProductsHandler,
+  removeWishlistItemHandler
 };
