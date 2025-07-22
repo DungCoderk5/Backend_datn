@@ -141,8 +141,7 @@ const productRepository = {
       const reviews = product.product_reviews || [];
       const avgRating =
         reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
-
-      return reviews.length >= 5 && avgRating >= 4;
+      return reviews.length >= 5 && avgRating >= 5;
     });
   },
   async findProductsByCategory({ categoryName, page = 1, limit = 20 }) {
@@ -213,7 +212,7 @@ const productRepository = {
               size: true,
             },
           },
-          product_reviews: true
+          product_reviews: true,
         },
         skip,
         take: limit,
@@ -444,7 +443,7 @@ const productRepository = {
       status: 1,
       name: {
         contains: keyword,
-        mode: "insensitive", // không phân biệt hoa thường
+        lte: "insensitive", // không phân biệt hoa thường
       },
     };
 
@@ -601,7 +600,9 @@ const productRepository = {
     });
 
     if (existing) {
-      return { message: "Sản phẩm đã có trong danh sách so sánh." };
+      const error = new Error("Sản phẩm đã có trong danh sách so sánh.");
+      error.statusCode = 409;
+      throw error;
     }
 
     const comparelistItem = await prisma.product_compares.create({
@@ -628,7 +629,7 @@ const productRepository = {
         status,
         name: {
           contains: keyword,
-          mode: "insensitive",
+          lte: "insensitive",
         },
         price: {
           gte: minPrice,
@@ -638,7 +639,7 @@ const productRepository = {
           ? {
               name: {
                 equals: gender,
-                mode: "insensitive",
+                lte: "insensitive",
               },
             }
           : undefined,
@@ -646,7 +647,7 @@ const productRepository = {
           ? {
               name: {
                 equals: brand,
-                mode: "insensitive",
+                lte: "insensitive",
               },
             }
           : undefined,
