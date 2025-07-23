@@ -146,6 +146,7 @@ async function findWishlistByUserId(user_id) {
             category: true,
             gender: true,
             images: true,
+             product_variants: true,
           },
         },
       }

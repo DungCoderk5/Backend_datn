@@ -84,9 +84,7 @@ const getOrderDetailHandler = async (req, res) => {
 
 const getWishlistByUserHandler = async (req, res) => {
   const user_id = parseInt(req.params.userId);
-
   const result = await getWishlistByUserUsecase(user_id);
-
   if (result.error) {
     if (result.error === 'wishlist not found.') {
       return res.status(404).json({ error: result.error });

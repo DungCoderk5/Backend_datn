@@ -59,5 +59,4 @@ router.delete('/cart/remove', removeFromCartHandler);
 router.delete('/wishlist', removeWishlistItemHandler);
 router.post('/checkout', checkoutHandler);
 
-
 module.exports = router;
