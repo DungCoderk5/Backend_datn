@@ -1,6 +1,32 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
+  async findByUserId(userId) {
+ return await prisma.orders.findMany({
+    where: {
+      user_id: userId,
+    },
+    include: {
+      order_items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
+              color: true,
+              size: true,
+            },
+          },
+        },
+      },
+      payment_method: true,
+      shipping_address: true,
+      coupon: true,
+    },
+    orderBy: {
+      created_at: "desc",
+    },
+    });
+  },
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -613,22 +639,28 @@ const productRepository = {
     const existing = await prisma.product_compares.findFirst({
       where: { user_id, product_id },
     });
-
     if (existing) {
       return { message: "Sản phẩm đã có trong danh sách so sánh." };
     }
-
+    const count = await prisma.product_compares.count({
+      where: { user_id },
+    });
+    if (count >= 3) {
+      return { message: "Danh sách so sánh đã đạt tối đa 3 sản phẩm." };
+    }
     const comparelistItem = await prisma.product_compares.create({
       data: {
         user_id,
         product_id,
       },
     });
-
-    return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
+    return {
+      message: "Đã thêm vào danh sách so sánh.",
+      data: comparelistItem,
+    };
   },
   async filteredProducts({
-    keyword = "",
+    keyword,
     gender,
     brand,
     minPrice = 0,
@@ -637,34 +669,44 @@ const productRepository = {
     limit = 12,
     offset = 0,
   }) {
-    return prisma.products.findMany({
-      where: {
-        status,
-        name: {
-          contains: keyword,
-          mode: "insensitive",
-        },
-        price: {
-          gte: minPrice,
-          lte: maxPrice,
-        },
-        gender: gender
-          ? {
+    const filters = {
+      status,
+      price: {
+        gte: minPrice,
+        lte: maxPrice,
+      },
+      ...(keyword?.trim()
+        ? {
+            name: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+      ...(gender
+        ? {
+            gender: {
               name: {
                 equals: gender,
-                mode: "insensitive",
+                // Prisma không hỗ trợ `mode` ở đây
               },
-            }
-          : undefined,
-        brand: brand
-          ? {
+            },
+          }
+        : {}),
+      ...(brand
+        ? {
+            brand: {
               name: {
                 equals: brand,
-                mode: "insensitive",
+                // Prisma không hỗ trợ `mode` ở đây
               },
-            }
-          : undefined,
-      },
+            },
+          }
+        : {}),
+    };
+
+    return prisma.products.findMany({
+      where: filters,
       include: {
         brand: true,
         gender: true,

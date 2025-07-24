@@ -27,12 +27,14 @@ const {
   updateCartHandler,
   removeFromCartHandler,
   checkoutHandler,
-  removeWishlistItemHandler
+  removeWishlistItemHandler,
+  filterProductsHandler,
+  getOrderHandler
 } = require('../../../application/product/productHttpHandler');
 
 
 router.get('/', getAllProductsHandler);
-router.get('/filter', getProductsByBrandHandler);
+router.get('/filter',   filterProductsHandler,);
 router.get('/brand/:brandId', getProductsByBrandHandler);
 router.get('/detail/:id', getProductDetailHandler);
 router.get('/detail/slug', getProductDetailHandler);
@@ -58,5 +60,6 @@ router.put('/cart/update', updateCartHandler);
 router.delete('/cart/remove', removeFromCartHandler);
 router.delete('/wishlist', removeWishlistItemHandler);
 router.post('/checkout', checkoutHandler);
+router.get('/order/:userId', getOrderHandler);
 
 module.exports = router;

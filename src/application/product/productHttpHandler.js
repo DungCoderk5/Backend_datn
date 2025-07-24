@@ -1,29 +1,31 @@
-const getAllProductsUsecase = require("../../infrastructure/usecase/product/getAllProductUsecase");
-const getProductDetailUsecase = require("../../infrastructure/usecase/product/getProductDetailUsecase");
-const getBestSellingUsecase = require("../../infrastructure/usecase/product/getBestSellingUsecase");
-const getNewestProductsUsecase = require("../../infrastructure/usecase/product/getNewestProductsUsecase");
-const getFeaturedProductsUsecase = require("../../infrastructure/usecase/product/getFeaturedProductsUsecase");
-const getProductsByCategoryUsecase = require("../../infrastructure/usecase/product/getProductsByCategoryUsecase");
-const getDealProductsUsecase = require("../../infrastructure/usecase/product/getDealProductsUsecase");
-const getRelatedProductsUsecase = require("../../infrastructure/usecase/product/getRelatedProductsUsecase");
-const getProductsByGenderUsecase = require("../../infrastructure/usecase/product/getProductsByGenderUsecase");
-const addProductUsecase = require("../../infrastructure/usecase/product/addProductUsecase");
-const addToCartUsecase = require("../../infrastructure/usecase/product/addToCartUsecase");
-const searchProductsUsecase = require("../../infrastructure/usecase/product/searchProductsUsecase");
-const getAllCouponsUsecase = require("../../infrastructure/usecase/product/getAllCouponsUsecase");
-const addToWishlistUsecase = require("../../infrastructure/usecase/product/addToWishlistUsecase");
-const getReviewsByProductUsecase = require("../../infrastructure/usecase/product/getReviewsByProductUsecase");
-const createProductReviewUsecase = require("../../infrastructure/usecase/product/createProductReviewUsecase");
-const getProductsByBrandUsecase = require("../../infrastructure/usecase/product/getProductsByBrandUsecase");
-const addToCompareUsecase = require("../../infrastructure/usecase/product/addToCompareUsecase");
-const removeFromCompareUsecase = require("../../infrastructure/usecase/product/removeFromCompareUsecase");
-const getCompareProductsUsecase = require("../../infrastructure/usecase/product/getCompareProductsUsecase");
-const getCartUsecase = require("../../infrastructure/usecase/product/getCartUsecase");
-const updateCartUsecase = require("../../infrastructure/usecase/product/updateCartUsecase");
-const removeFromCartUsecase = require("../../infrastructure/usecase/product/removeFromCartUsecase");
-const checkoutUsecase = require("../../infrastructure/usecase/product/checkoutUsecase");
-const filterProductsUsecase = require("../../infrastructure/usecase/product/filterProductsUsecase");
-const removeWishlistItemUsecase = require("../../infrastructure/usecase/product/removeWishlistItemUsecase");
+
+const getAllProductsUsecase = require('../../infrastructure/usecase/product/getAllProductUsecase');
+const getProductDetailUsecase = require('../../infrastructure/usecase/product/getProductDetailUsecase');
+const getBestSellingUsecase = require('../../infrastructure/usecase/product/getBestSellingUsecase');
+const getNewestProductsUsecase = require('../../infrastructure/usecase/product/getNewestProductsUsecase');
+const getFeaturedProductsUsecase = require('../../infrastructure/usecase/product/getFeaturedProductsUsecase');
+const getProductsByCategoryUsecase = require('../../infrastructure/usecase/product/getProductsByCategoryUsecase');
+const getDealProductsUsecase = require('../../infrastructure/usecase/product/getDealProductsUsecase');
+const getRelatedProductsUsecase = require('../../infrastructure/usecase/product/getRelatedProductsUsecase');
+const getProductsByGenderUsecase = require('../../infrastructure/usecase/product/getProductsByGenderUsecase');
+const addProductUsecase = require('../../infrastructure/usecase/product/addProductUsecase');
+const addToCartUsecase = require('../../infrastructure/usecase/product/addToCartUsecase');
+const searchProductsUsecase = require('../../infrastructure/usecase/product/searchProductsUsecase');
+const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAllCouponsUsecase');
+const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
+const getReviewsByProductUsecase = require('../../infrastructure/usecase/product/getReviewsByProductUsecase');
+const createProductReviewUsecase = require('../../infrastructure/usecase/product/createProductReviewUsecase');
+const getProductsByBrandUsecase = require('../../infrastructure/usecase/product/getProductsByBrandUsecase');
+const addToCompareUsecase = require('../../infrastructure/usecase/product/addToCompareUsecase');
+const removeFromCompareUsecase = require('../../infrastructure/usecase/product/removeFromCompareUsecase');
+const getCompareProductsUsecase = require('../../infrastructure/usecase/product/getCompareProductsUsecase');
+const getCartUsecase = require('../../infrastructure/usecase/product/getCartUsecase');
+const updateCartUsecase = require('../../infrastructure/usecase/product/updateCartUsecase');
+const removeFromCartUsecase = require('../../infrastructure/usecase/product/removeFromCartUsecase');
+const checkoutUsecase = require('../../infrastructure/usecase/product/checkoutUsecase');
+const filterProductsUsecase = require('../../infrastructure/usecase/product/filterProductsUsecase');
+const removeWishlistItemUsecase = require('../../infrastructure/usecase/product/removeWishlistItemUsecase');
+const getOrdersByUserUsecase = require('../../infrastructure/usecase/product/getOrdersByUserUsecase');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -39,6 +41,16 @@ async function getAllProductsHandler(req, res) {
   }
 }
 
+async function getOrderHandler(req, res) {
+  const userId = parseInt(req.params.userId);
+  try {
+    const orders = await getOrdersByUserUsecase(userId);
+    return res.status(200).json(orders);
+  } catch (error) {
+    console.error('[Handler] Lỗi lấy đơn hàng theo user:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ khi lấy đơn hàng.' });
+  }
+}
 async function filterProductsHandler(req, res, next) {
   try {
     const { keyword, gender, brand, minPrice, maxPrice, sort, page, limit } =
@@ -502,4 +514,5 @@ module.exports = {
   checkoutHandler,
   filterProductsHandler,
   removeWishlistItemHandler,
+  getOrderHandler
 };
