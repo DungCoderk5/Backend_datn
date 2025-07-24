@@ -53,8 +53,19 @@ async function getOrderHandler(req, res) {
 }
 async function filterProductsHandler(req, res, next) {
   try {
-    const { keyword, gender, brand, minPrice, maxPrice, sort, page, limit } =
-      req.query;
+
+    const {
+      keyword,
+      gender,
+      brand,
+      minPrice,
+      maxPrice,
+      sort,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    } = req.query;
 
     const result = await filterProductsUsecase({
       keyword,
@@ -65,6 +76,8 @@ async function filterProductsHandler(req, res, next) {
       sort,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
+      sortBy,
+      sortOrder,
     });
 
     res.json({ success: true, data: result });

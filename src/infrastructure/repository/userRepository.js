@@ -214,7 +214,6 @@ async function findBasicInfo(userId) {
       email: true,
       phone: true,
       avatar: true,
-      address: true,
       role: true,
       status: 1,
       created_at: true,
