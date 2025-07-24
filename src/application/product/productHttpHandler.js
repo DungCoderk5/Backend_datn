@@ -61,6 +61,8 @@ async function filterProductsHandler(req, res, next) {
       sort,
       page,
       limit,
+      sortBy,
+      sortOrder,
     } = req.query;
 
     const result = await filterProductsUsecase({
@@ -72,6 +74,8 @@ async function filterProductsHandler(req, res, next) {
       sort,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
+      sortBy,
+      sortOrder,
     });
 
     res.json({ success: true, data: result });

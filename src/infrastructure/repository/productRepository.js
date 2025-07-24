@@ -2,29 +2,29 @@ const prisma = require("../../shared/prisma");
 
 const productRepository = {
   async findByUserId(userId) {
- return await prisma.orders.findMany({
-    where: {
-      user_id: userId,
-    },
-    include: {
-      order_items: {
-        include: {
-          variant: {
-            include: {
-              product: true,
-              color: true,
-              size: true,
+    return await prisma.orders.findMany({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        order_items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+                color: true,
+                size: true,
+              },
             },
           },
         },
+        payment_method: true,
+        shipping_address: true,
+        coupon: true,
       },
-      payment_method: true,
-      shipping_address: true,
-      coupon: true,
-    },
-    orderBy: {
-      created_at: "desc",
-    },
+      orderBy: {
+        created_at: "desc",
+      },
     });
   },
   async findAll({ page = 1, limit = 20 }) {
@@ -653,6 +653,8 @@ const productRepository = {
     status = 1,
     limit = 12,
     offset = 0,
+    sortBy = "price",
+    sortOrder = "desc",
   }) {
     const filters = {
       status,
@@ -663,7 +665,7 @@ const productRepository = {
       ...(keyword?.trim()
         ? {
             name: {
-              contains: keyword
+              contains: keyword,
             },
           }
         : {}),
@@ -672,7 +674,6 @@ const productRepository = {
             gender: {
               name: {
                 equals: gender,
-                // Prisma không hỗ trợ `mode` ở đây
               },
             },
           }
@@ -682,7 +683,6 @@ const productRepository = {
             brand: {
               name: {
                 equals: brand,
-                // Prisma không hỗ trợ `mode` ở đây
               },
             },
           }
@@ -699,7 +699,7 @@ const productRepository = {
       take: limit,
       skip: offset,
       orderBy: {
-        created_at: "desc",
+        [sortBy]: sortOrder,
       },
     });
   },
