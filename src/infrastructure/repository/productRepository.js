@@ -613,7 +613,7 @@ const productRepository = {
     return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
   },
   async filteredProducts({
-    keyword = "",
+    keyword,
     gender,
     brand,
     minPrice = 0,
@@ -622,34 +622,44 @@ const productRepository = {
     limit = 12,
     offset = 0,
   }) {
-    return prisma.products.findMany({
-      where: {
-        status,
-        name: {
-          contains: keyword,
-          mode: "insensitive",
-        },
-        price: {
-          gte: minPrice,
-          lte: maxPrice,
-        },
-        gender: gender
-          ? {
+    const filters = {
+      status,
+      price: {
+        gte: minPrice,
+        lte: maxPrice,
+      },
+      ...(keyword?.trim()
+        ? {
+            name: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+      ...(gender
+        ? {
+            gender: {
               name: {
                 equals: gender,
-                mode: "insensitive",
+                // Prisma không hỗ trợ `mode` ở đây
               },
-            }
-          : undefined,
-        brand: brand
-          ? {
+            },
+          }
+        : {}),
+      ...(brand
+        ? {
+            brand: {
               name: {
                 equals: brand,
-                mode: "insensitive",
+                // Prisma không hỗ trợ `mode` ở đây
               },
-            }
-          : undefined,
-      },
+            },
+          }
+        : {}),
+    };
+
+    return prisma.products.findMany({
+      where: filters,
       include: {
         brand: true,
         gender: true,
