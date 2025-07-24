@@ -598,19 +598,25 @@ const productRepository = {
     const existing = await prisma.product_compares.findFirst({
       where: { user_id, product_id },
     });
-
     if (existing) {
       return { message: "Sản phẩm đã có trong danh sách so sánh." };
     }
-
+    const count = await prisma.product_compares.count({
+      where: { user_id },
+    });
+    if (count >= 3) {
+      return { message: "Danh sách so sánh đã đạt tối đa 3 sản phẩm." };
+    }
     const comparelistItem = await prisma.product_compares.create({
       data: {
         user_id,
         product_id,
       },
     });
-
-    return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
+    return {
+      message: "Đã thêm vào danh sách so sánh.",
+      data: comparelistItem,
+    };
   },
   async filteredProducts({
     keyword,
