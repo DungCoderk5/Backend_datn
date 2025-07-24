@@ -29,7 +29,7 @@ const {
   checkoutHandler,
   removeWishlistItemHandler,
   filterProductsHandler,
-
+  getOrderHandler
 } = require('../../../application/product/productHttpHandler');
 
 
@@ -60,6 +60,5 @@ router.put('/cart/update', updateCartHandler);
 router.delete('/cart/remove', removeFromCartHandler);
 router.delete('/wishlist', removeWishlistItemHandler);
 router.post('/checkout', checkoutHandler);
-
-
+router.get('/order/:userId', getOrderHandler);
 module.exports = router;

@@ -1,6 +1,32 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
+  async findByUserId(userId) {
+ return await prisma.orders.findMany({
+    where: {
+      user_id: userId,
+    },
+    include: {
+      order_items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
+              color: true,
+              size: true,
+            },
+          },
+        },
+      },
+      payment_method: true,
+      shipping_address: true,
+      coupon: true,
+    },
+    orderBy: {
+      created_at: "desc",
+    },
+    });
+  },
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 

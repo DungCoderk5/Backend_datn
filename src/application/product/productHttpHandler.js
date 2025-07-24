@@ -24,6 +24,7 @@ const removeFromCartUsecase = require('../../infrastructure/usecase/product/remo
 const checkoutUsecase = require('../../infrastructure/usecase/product/checkoutUsecase');
 const filterProductsUsecase = require('../../infrastructure/usecase/product/filterProductsUsecase');
 const removeWishlistItemUsecase = require('../../infrastructure/usecase/product/removeWishlistItemUsecase');
+const getOrdersByUserUsecase = require('../../infrastructure/usecase/product/getOrdersByUserUsecase');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -39,6 +40,16 @@ async function getAllProductsHandler(req, res) {
   }
 }
 
+async function getOrderHandler(req, res) {
+  const userId = parseInt(req.params.userId);
+  try {
+    const orders = await getOrdersByUserUsecase(userId);
+    return res.status(200).json(orders);
+  } catch (error) {
+    console.error('[Handler] Lỗi lấy đơn hàng theo user:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ khi lấy đơn hàng.' });
+  }
+}
 async function filterProductsHandler(req, res, next) {
   try {
     const {
@@ -472,5 +483,6 @@ module.exports = {
   removeFromCartHandler,
   checkoutHandler,
   filterProductsHandler,
-  removeWishlistItemHandler
+  removeWishlistItemHandler,
+  getOrderHandler
 };
