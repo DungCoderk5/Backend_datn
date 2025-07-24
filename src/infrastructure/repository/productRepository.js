@@ -678,8 +678,7 @@ const productRepository = {
       ...(keyword?.trim()
         ? {
             name: {
-              contains: keyword,
-              mode: "insensitive",
+              contains: keyword
             },
           }
         : {}),
