@@ -652,10 +652,12 @@ const productRepository = {
     maxPrice = Number.MAX_SAFE_INTEGER,
     status = 1,
     limit = 12,
-    offset = 0,
+    page = 1,
     sortBy = "price",
     sortOrder = "desc",
   }) {
+    const offset = (page - 1) * limit;
+
     const filters = {
       status,
       price: {
@@ -689,19 +691,33 @@ const productRepository = {
         : {}),
     };
 
-    return prisma.products.findMany({
-      where: filters,
-      include: {
-        brand: true,
-        gender: true,
-        category: true,
-      },
-      take: limit,
-      skip: offset,
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
-    });
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where: filters,
+        include: {
+          brand: true,
+          gender: true,
+          category: true,
+        },
+        take: limit,
+        skip: offset,
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+      }),
+
+      prisma.products.count({
+        where: filters,
+      }),
+    ]);
+
+    return {
+      data: products,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   },
   async findByBrand(brandId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;

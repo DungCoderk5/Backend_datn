@@ -73,7 +73,7 @@ async function filterProductsHandler(req, res, next) {
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
       sort,
       page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 20,
+      limit: limit ? Number(limit) : 12,
       sortBy,
       sortOrder,
     });
