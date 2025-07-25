@@ -679,6 +679,10 @@ const productRepository = {
         gte: minPrice,
         lte: maxPrice,
       },
+      sale_price: {
+        gte: minPrice,
+        lte: maxPrice,
+      },
       ...(keyword?.trim()
         ? {
             name: {
