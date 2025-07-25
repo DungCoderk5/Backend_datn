@@ -21,7 +21,8 @@ async function registerUsecase(data, res) {
       email,
       password: hashedPassword,
       phone,
-      role: "user", // default role
+      role: "user",
+      status: 0,
     },
   });
 
@@ -50,6 +51,7 @@ async function registerUsecase(data, res) {
       name: user.name,
       email: user.email,
       role: user.role,
+      status: user.status
     },
   };
 }
