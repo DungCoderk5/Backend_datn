@@ -1,6 +1,32 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
+  async findByUserId(userId) {
+    return await prisma.orders.findMany({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        order_items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+                color: true,
+                size: true,
+              },
+            },
+          },
+        },
+        payment_method: true,
+        shipping_address: true,
+        coupon: true,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  },
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -613,20 +639,17 @@ const productRepository = {
     const existing = await prisma.product_compares.findFirst({
       where: { user_id, product_id },
     });
-
     if (existing) {
       const error = new Error("Sản phẩm đã có trong danh sách so sánh.");
       error.statusCode = 409;
       throw error;
     }
-    const currentCount = await prisma.product_compares.count({
+
+    const count = await prisma.product_compares.count({
       where: { user_id },
     });
-
-    if (currentCount >= 3) {
-      const error = new Error("Chỉ được so sánh tối đa 3 sản phẩm.");
-      error.statusCode = 403;
-      throw error;
+    if (count >= 3) {
+      return { message: "Danh sách so sánh đã đạt tối đa 3 sản phẩm." };
     }
     const comparelistItem = await prisma.product_compares.create({
       data: {
@@ -634,58 +657,91 @@ const productRepository = {
         product_id,
       },
     });
-
-    return { message: "Đã thêm vào danh sách so sánh.", data: comparelistItem };
+    return {
+      message: "Đã thêm vào danh sách so sánh.",
+      data: comparelistItem,
+    };
   },
   async filteredProducts({
-    keyword = "",
+    keyword,
     gender,
     brand,
     minPrice = 0,
     maxPrice = Number.MAX_SAFE_INTEGER,
     status = 1,
     limit = 12,
-    offset = 0,
+    page = 1,
+    sortBy = "price",
+    sortOrder = "desc",
   }) {
-    return prisma.products.findMany({
-      where: {
-        status,
-        name: {
-          contains: keyword,
-          lte: "insensitive",
-        },
-        price: {
-          gte: minPrice,
-          lte: maxPrice,
-        },
-        gender: gender
-          ? {
+
+    const offset = (page - 1) * limit;
+
+    const filters = {
+      status,
+      price: {
+        gte: minPrice,
+        lte: maxPrice,
+      },
+      sale_price: {
+        gte: minPrice,
+        lte: maxPrice,
+      },
+      ...(keyword?.trim()
+        ? {
+            name: {
+              contains: keyword,
+            },
+          }
+        : {}),
+      ...(gender
+        ? {
+            gender: {
               name: {
                 equals: gender,
-                lte: "insensitive",
               },
-            }
-          : undefined,
-        brand: brand
-          ? {
+            },
+          }
+        : {}),
+      ...(brand
+        ? {
+            brand: {
               name: {
                 equals: brand,
                 lte: "insensitive",
               },
-            }
-          : undefined,
-      },
-      include: {
-        brand: true,
-        gender: true,
-        category: true,
-      },
-      take: limit,
-      skip: offset,
-      orderBy: {
-        created_at: "desc",
-      },
-    });
+            },
+          }
+        : {}),
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where: filters,
+        include: {
+          brand: true,
+          gender: true,
+          category: true,
+        },
+        take: limit,
+        skip: offset,
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+      }),
+
+      prisma.products.count({
+        where: filters,
+      }),
+    ]);
+
+    return {
+      data: products,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   },
   async findByBrand(brandId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
