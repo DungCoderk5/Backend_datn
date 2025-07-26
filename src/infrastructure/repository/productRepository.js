@@ -730,8 +730,8 @@ const productRepository = {
           category: true,
               product_variants: {
       include: {
-        color: true,  // Lấy thông tin màu của biến thể
-        size: true,   // Nếu cần, lấy kích cỡ của biến thể
+        color: true, 
+        size: true,  
       }
         },
         take: limit,
@@ -739,7 +739,7 @@ const productRepository = {
         orderBy: {
           [sortBy]: sortOrder,
         },
-      }),
+      }}),
 
       prisma.products.count({
         where: filters,
