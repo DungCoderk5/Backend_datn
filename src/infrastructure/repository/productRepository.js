@@ -649,7 +649,9 @@ const productRepository = {
       where: { user_id },
     });
     if (count >= 3) {
-      return { message: "Danh sách so sánh đã đạt tối đa 3 sản phẩm." };
+      const error = new Error("Chỉ được so sánh tối đa 3 sản phẩm.");
+      error.statusCode = 403;
+      throw error;
     }
     const comparelistItem = await prisma.product_compares.create({
       data: {
@@ -674,7 +676,6 @@ const productRepository = {
     sortBy = "price",
     sortOrder = "desc",
   }) {
-
     const offset = (page - 1) * limit;
 
     const filters = {
