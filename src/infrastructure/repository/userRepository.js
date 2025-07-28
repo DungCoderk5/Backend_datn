@@ -1,8 +1,8 @@
 const prisma = require("../../shared/prisma");
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || 'smtp.gmail.com',
+  host: process.env.MAIL_HOST || "smtp.gmail.com",
   port: 587,
   secure: false, // true for 465, false for other ports
   auth: {
@@ -19,16 +19,23 @@ async function findByUsernameOrEmail(usernameOrEmail) {
   });
 }
 
-
 async function findDefaultAddress(userId) {
-  console.log(`Finding default address for userId: ${userId}`);
-  
   if (!userId) {
     throw new Error("Thiếu userId");
   }
 
   const address = await prisma.ship_address.findFirst({
-    where: { user_id: userId, is_default: true },
+    where: {
+      user_id: userId,
+      is_default: true,
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
   });
 
   if (!address) {
@@ -38,14 +45,14 @@ async function findDefaultAddress(userId) {
   return address;
 }
 
-  async function sendMail({ to, subject, html }) {
-    return await transporter.sendMail({
-      from: `"DATN Store" <${process.env.MAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
-  }
+async function sendMail({ to, subject, html }) {
+  return await transporter.sendMail({
+    from: `"DATN Store" <${process.env.MAIL_USER}>`,
+    to,
+    subject,
+    html,
+  });
+}
 
 async function create(data) {
   return await prisma.users.create({
@@ -66,7 +73,6 @@ async function createAddress(userId, addressData) {
       ...addressData,
     },
   });
-
 }
 
 async function getOrderDetailById(orderId) {
@@ -153,7 +159,7 @@ async function findWishlistByUserId(user_id) {
   if (!user_id || isNaN(user_id)) {
     throw new Error("Invalid userId passed to findWishlistByUserId");
   }
-  
+
   try {
     const wishlist = await prisma.wishlist_items.findMany({
       where: { user_id },
@@ -164,10 +170,10 @@ async function findWishlistByUserId(user_id) {
             category: true,
             gender: true,
             images: true,
-             product_variants: true,
+            product_variants: true,
           },
         },
-      }
+      },
     });
     return wishlist;
   } catch (error) {
@@ -213,7 +219,7 @@ async function updateAddress(addressId, payload) {
   return await prisma.ship_address.update({
     where: { ship_address_id: addressId },
     data: {
-      ...payload
+      ...payload,
     },
   });
 }
@@ -274,5 +280,5 @@ module.exports = {
   getOrderDetailById,
   findWishlistByUserId,
   sendMail,
-  findDefaultAddress
+  findDefaultAddress,
 };
