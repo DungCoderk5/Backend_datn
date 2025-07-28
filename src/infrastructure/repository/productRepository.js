@@ -107,7 +107,7 @@ const productRepository = {
       },
     });
   },
-  async getBestSelling(top = 4) {
+  async getBestSelling(top = 6) {
     const products = await prisma.products.findMany({
       where: { status: 1 },
       include: {

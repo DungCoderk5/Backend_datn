@@ -169,7 +169,7 @@ async function getProductDetailHandler(req, res) {
 
 async function getBestSellingHandler(req, res) {
   try {
-    const top = parseInt(req.query.top) || 3;
+    const top = parseInt(req.query.top) || 6;
     console.log("Top best selling products:", top);
     const result = await getBestSellingUsecase(top);
     console.log("Best Selling Products:", result);
