@@ -27,7 +27,7 @@ class GoogleAuthUsecase {
         email: userInfo.email,
         name: userInfo.name,
         avatar: userInfo.picture,
-        status: true,
+        status: 1,
         role: "user",
       });
     }
@@ -37,7 +37,7 @@ class GoogleAuthUsecase {
         email: userInfo.email,
         name: userInfo.name,
         phone: userInfo.phone,
-        address: userInfo.address,
+        // address: userInfo.address,
       },
       jwtSecret,
       { expiresIn: "1h" }

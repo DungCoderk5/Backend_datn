@@ -7,6 +7,7 @@ const {
   registerHandler,
   updateUserHandler,
   addAddressHandler,
+
   checkTokenHandler,
   googleCallback,
   changePasswordHandler,
@@ -26,6 +27,7 @@ const {
 router.post("/login", loginHandler);
 router.post("/logout", logoutHandler);
 router.post("/register", registerHandler);
+
 router.put("/update" , upload.single('avatar'), validateRealImage, updateUserHandler);
 router.post("/add-address", addAddressHandler);
 router.get("/check-token", checkTokenHandler);
