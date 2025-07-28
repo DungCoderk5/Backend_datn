@@ -20,9 +20,7 @@ async function findByUsernameOrEmail(usernameOrEmail) {
 }
 
 
-async function findDefaultAddress(userId) {
-  console.log(`Finding default address for userId: ${userId}`);
-  
+async function findDefaultAddress(userId) {  
   if (!userId) {
     throw new Error("Thiếu userId");
   }
