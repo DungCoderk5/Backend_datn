@@ -21,7 +21,7 @@ async function sendContactEmailUsecase({ name, email, phone, message }) {
     const response = await resend.emails.send({
       from: `Liên hệ <${fromEmail}>`,
       to: [process.env.MAIL_RECEIVER || 'your@email.com'], // fallback nếu MAIL_RECEIVER chưa có
-      subject: `[Liên hệ] ${subject}`,
+      subject: `[Liên hệ] ${phone}`,
       html: htmlContent,
     });
 

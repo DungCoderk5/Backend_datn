@@ -19,6 +19,7 @@ async function findByUsernameOrEmail(usernameOrEmail) {
   });
 }
 
+
   async function sendMail({ to, subject, html }) {
     return await transporter.sendMail({
       from: `"DATN Store" <${process.env.MAIL_USER}>`,
@@ -47,6 +48,7 @@ async function createAddress(userId, addressData) {
       ...addressData,
     },
   });
+
 }
 
 async function getOrderDetailById(orderId) {
@@ -59,6 +61,8 @@ async function getOrderDetailById(orderId) {
           name: true,
           email: true,
           phone: true,
+          status: 1,
+          created_at: true,
         },
       },
       shipping_address: true,
@@ -142,6 +146,7 @@ async function findWishlistByUserId(user_id) {
             category: true,
             gender: true,
             images: true,
+             product_variants: true,
           },
         },
       }
@@ -190,8 +195,7 @@ async function updateAddress(addressId, payload) {
   return await prisma.ship_address.update({
     where: { ship_address_id: addressId },
     data: {
-      ...payload,
-      updated_at: new Date(),
+      ...payload
     },
   });
 }
@@ -213,7 +217,7 @@ async function findBasicInfo(userId) {
       phone: true,
       avatar: true,
       role: true,
-      status: true,
+      status: 1,
       created_at: true,
     },
   });

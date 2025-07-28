@@ -1,12 +1,15 @@
+
 const userRepository = require("../../infrastructure/repository/userRepository");
 
 const loginUsecase = require("../../infrastructure/usecase/user/loginUsecase");
 const registerUsecase = require("../../infrastructure/usecase/user/registerUsecase");
 const updateUserUsecase = require("../../infrastructure/usecase/user/updateUserUsecase");
+
 const addAddressUsecase = require("../../infrastructure/usecase/user/addAddressUsecase");
 const checkTokenUsecase = require("../../infrastructure/usecase/user/checkTokenUsecase");
 const GoogleAuthUsecase = require("../../infrastructure/usecase/user/googleAuthUsecase");
 const GoogleAuthRepository = require("../../infrastructure/repository/googleAuthRepository");
+
 const changePasswordUsecase = require('../../infrastructure/usecase/user/changePasswordUsecase');
 const getCartByUserUsecase = require('../../infrastructure/usecase/user/getCartByUserUsecase');
 const getAddressesByUserUsecase = require('../../infrastructure/usecase/user/getAddressesByUserUsecase');
@@ -63,6 +66,7 @@ async function loginHandler(req, res) {
   }
 }
 
+
 const getOrderDetailHandler = async (req, res) => {
   const orderId = parseInt(req.params.orderId);
 
@@ -80,9 +84,7 @@ const getOrderDetailHandler = async (req, res) => {
 
 const getWishlistByUserHandler = async (req, res) => {
   const user_id = parseInt(req.params.userId);
-
   const result = await getWishlistByUserUsecase(user_id);
-
   if (result.error) {
     if (result.error === 'wishlist not found.') {
       return res.status(404).json({ error: result.error });
@@ -145,11 +147,13 @@ async function updateUserHandler(req, res) {
   }
 }
 
+
 async function addAddressHandler(req, res) {
   const userId = req.user?.user_id || req.body.user_id; // tuỳ vào middleware xác thực
   const { full_name, phone, address_line, is_default } = req.body;
 
   if (!userId || !full_name || !phone || !address_line) {
+
     return res.status(400).json({ error: "Thiếu thông tin địa chỉ" });
   }
 
@@ -158,6 +162,7 @@ async function addAddressHandler(req, res) {
       full_name,
       phone,
       address_line,
+
       is_default: is_default ?? false,
     });
 
@@ -165,13 +170,14 @@ async function addAddressHandler(req, res) {
   } catch (error) {
     res.status(500).json({ error: error.message || "Lỗi server" });
   }
+
 }
 
 async function changePasswordHandler(req, res) {
   try {
     // const userId = req.body?.user_id; // hoặc lấy từ JWT decode
     const {userId, oldPassword, newPassword } = req.body;
-
+console.log('[DEBUG] req.body:', req.body);
     if (!oldPassword || !newPassword) {
       return res.status(400).json({ error: 'Thiếu mật khẩu cũ hoặc mới' });
     }

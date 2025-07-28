@@ -9,6 +9,7 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
   if (!user) throw new Error("Tài khoản không tồn tại");
   if (!user.status) throw new Error("Tài khoản đã bị khóa");
 
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Mật khẩu không đúng");
 
@@ -18,8 +19,6 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
       name: user.name,
       email: user.email,
       role: user.role,
-      address: user.address
-
     },
     JWT_SECRET,
     { expiresIn: "9999 years" } // không hết hạn
@@ -34,7 +33,9 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
 
   return {
     message: "Đăng nhập thành công",
+
     token
+
   };
 }
 
