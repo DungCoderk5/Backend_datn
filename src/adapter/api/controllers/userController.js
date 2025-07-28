@@ -21,6 +21,7 @@ const {
   getOrderDetailHandler,
   getWishlistByUserHandler,
   sendMailHandler ,
+  getDefaultAddressHandler
   
 } = require("../../../application/user/userHttpHandler");
 
@@ -43,5 +44,6 @@ router.post('/contact', sendContactEmailHandler);
 router.get('/orders/:orderId', getOrderDetailHandler);
 router.get('/wishlist/:userId', getWishlistByUserHandler);
 router.post('/send', sendMailHandler);
+router.get('/user_default_address/:userId', getDefaultAddressHandler);
 
 module.exports = router;

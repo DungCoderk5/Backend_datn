@@ -21,6 +21,7 @@ const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendC
 const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetailUseCase');
 const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
 const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
+const getDefaultAddressUsecase = require('../../infrastructure/usecase/user/getDefaultAddressUsecase');
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -66,6 +67,19 @@ async function loginHandler(req, res) {
   }
 }
 
+async function getDefaultAddressHandler(req, res) {
+  const userId = parseInt(req.params.userId);
+  try {
+    const result = await getDefaultAddressUsecase(userId);
+    if (!result) {
+      return res.status(404).json({ error: 'Địa chỉ mặc định không tìm thấy.' });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getDefaultAddress:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy địa chỉ mặc định.' });
+  }
+}
 
 const getOrderDetailHandler = async (req, res) => {
   const orderId = parseInt(req.params.orderId);
@@ -304,5 +318,7 @@ module.exports = {
   sendContactEmailHandler,
   getOrderDetailHandler,
   getWishlistByUserHandler,
-  sendMailHandler
+  sendMailHandler,
+  getDefaultAddressHandler,
+
 };

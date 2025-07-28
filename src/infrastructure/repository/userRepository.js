@@ -20,6 +20,24 @@ async function findByUsernameOrEmail(usernameOrEmail) {
 }
 
 
+async function findDefaultAddress(userId) {
+  console.log(`Finding default address for userId: ${userId}`);
+  
+  if (!userId) {
+    throw new Error("Thiếu userId");
+  }
+
+  const address = await prisma.ship_address.findFirst({
+    where: { user_id: userId, is_default: true },
+  });
+
+  if (!address) {
+    throw new Error("Địa chỉ mặc định không tìm thấy");
+  }
+
+  return address;
+}
+
   async function sendMail({ to, subject, html }) {
     return await transporter.sendMail({
       from: `"DATN Store" <${process.env.MAIL_USER}>`,
@@ -256,4 +274,5 @@ module.exports = {
   getOrderDetailById,
   findWishlistByUserId,
   sendMail,
+  findDefaultAddress
 };
