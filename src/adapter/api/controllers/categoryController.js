@@ -10,7 +10,7 @@ const {
 
 router.get('/', getAllProductCategoriesHandler);
 router.post('/', addCategoryHandler);
-router.put('/:id', updateCategoryHandler);
-router.delete('/:id', deleteCategoryHandler);
+router.put('/update/:id', updateCategoryHandler);
+router.delete('/delete/:id', deleteCategoryHandler);
 
 module.exports = router;
