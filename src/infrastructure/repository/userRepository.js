@@ -19,6 +19,7 @@ async function findByUsernameOrEmail(usernameOrEmail) {
   });
 }
 
+
   async function sendMail({ to, subject, html }) {
     return await transporter.sendMail({
       from: `"DATN Store" <${process.env.MAIL_USER}>`,
@@ -47,6 +48,7 @@ async function createAddress(userId, addressData) {
       ...addressData,
     },
   });
+
 }
 
 async function getOrderDetailById(orderId) {

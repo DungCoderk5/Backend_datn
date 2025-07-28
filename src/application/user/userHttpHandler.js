@@ -1,8 +1,10 @@
+
 const userRepository = require("../../infrastructure/repository/userRepository");
 
 const loginUsecase = require("../../infrastructure/usecase/user/loginUsecase");
 const registerUsecase = require("../../infrastructure/usecase/user/registerUsecase");
 const updateUserUsecase = require("../../infrastructure/usecase/user/updateUserUsecase");
+
 const addAddressUsecase = require("../../infrastructure/usecase/user/addAddressUsecase");
 const checkTokenUsecase = require("../../infrastructure/usecase/user/checkTokenUsecase");
 const GoogleAuthUsecase = require("../../infrastructure/usecase/user/googleAuthUsecase");
@@ -63,6 +65,7 @@ async function loginHandler(req, res) {
     res.status(401).json({ error: err.message });
   }
 }
+
 
 const getOrderDetailHandler = async (req, res) => {
   const orderId = parseInt(req.params.orderId);
@@ -144,11 +147,13 @@ async function updateUserHandler(req, res) {
   }
 }
 
+
 async function addAddressHandler(req, res) {
   const userId = req.user?.user_id || req.body.user_id; // tuỳ vào middleware xác thực
   const { full_name, phone, address_line, is_default } = req.body;
 
   if (!userId || !full_name || !phone || !address_line) {
+
     return res.status(400).json({ error: "Thiếu thông tin địa chỉ" });
   }
 
@@ -157,6 +162,7 @@ async function addAddressHandler(req, res) {
       full_name,
       phone,
       address_line,
+
       is_default: is_default ?? false,
     });
 
@@ -164,6 +170,7 @@ async function addAddressHandler(req, res) {
   } catch (error) {
     res.status(500).json({ error: error.message || "Lỗi server" });
   }
+
 }
 
 async function changePasswordHandler(req, res) {

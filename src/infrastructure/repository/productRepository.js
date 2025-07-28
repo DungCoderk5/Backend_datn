@@ -192,8 +192,7 @@ const productRepository = {
       const reviews = product.product_reviews || [];
       const avgRating =
         reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
-
-      return reviews.length >= 5 && avgRating >= 4;
+      return reviews.length >= 5 && avgRating >= 5;
     });
   },
   async findProductsByCategory({ categoryName, page = 1, limit = 20 }) {
@@ -264,6 +263,7 @@ const productRepository = {
               size: true,
             },
           },
+          product_reviews: true,
         },
         skip,
         take: limit,
@@ -494,7 +494,7 @@ const productRepository = {
       status: 1,
       name: {
         contains: keyword,
-        mode: "insensitive", // không phân biệt hoa thường
+        lte: "insensitive", // không phân biệt hoa thường
       },
     };
 
@@ -665,13 +665,18 @@ const productRepository = {
       where: { user_id, product_id },
     });
     if (existing) {
-      return { message: "Sản phẩm đã có trong danh sách so sánh." };
+      const error = new Error("Sản phẩm đã có trong danh sách so sánh.");
+      error.statusCode = 409;
+      throw error;
     }
+
     const count = await prisma.product_compares.count({
       where: { user_id },
     });
     if (count >= 3) {
-      return { message: "Danh sách so sánh đã đạt tối đa 3 sản phẩm." };
+      const error = new Error("Chỉ được so sánh tối đa 3 sản phẩm.");
+      error.statusCode = 403;
+      throw error;
     }
     const comparelistItem = await prisma.product_compares.create({
       data: {
@@ -729,6 +734,7 @@ const productRepository = {
             brand: {
               name: {
                 equals: brand,
+                lte: "insensitive",
               },
             },
           }
@@ -806,73 +812,72 @@ const productRepository = {
       totalPages: Math.ceil(total / limit),
     };
   },
- async updateCartItem({ user_id, variant_id, quantity }) {
-  const cart = await prisma.carts.findFirst({
-    where: { user_id },
-  });
-
-  if (!cart) {
-    throw new Error("Không tìm thấy giỏ hàng của người dùng");
-  }
-  const existingItem = await prisma.cart_items.findFirst({
-    where: {
-      cart_id: cart.carts_id,
-      variant_id,
-    },
-  });
-
-  if (existingItem) {
-    return await prisma.cart_items.update({
-      where: {
-        cart_items_id: existingItem.cart_items_id,
-      },
-      data: {
-        quantity,
-      },
+  async updateCartItem({ user_id, variant_id, quantity }) {
+    const cart = await prisma.carts.findFirst({
+      where: { user_id },
     });
-  } else {
-    return await prisma.cart_items.create({
-      data: {
+
+    if (!cart) {
+      throw new Error("Không tìm thấy giỏ hàng của người dùng");
+    }
+    const existingItem = await prisma.cart_items.findFirst({
+      where: {
         cart_id: cart.carts_id,
         variant_id,
-        quantity,
-        price: 0,
       },
     });
-  }
-},
 
-async removeFromCart({ user_id, variant_id }) {
-  const cart = await prisma.carts.findFirst({
-    where: { user_id },
-  });
+    if (existingItem) {
+      return await prisma.cart_items.update({
+        where: {
+          cart_items_id: existingItem.cart_items_id,
+        },
+        data: {
+          quantity,
+        },
+      });
+    } else {
+      return await prisma.cart_items.create({
+        data: {
+          cart_id: cart.carts_id,
+          variant_id,
+          quantity,
+          price: 0,
+        },
+      });
+    }
+  },
 
-  if (!cart) {
-    throw new Error("Không tìm thấy giỏ hàng của người dùng.");
-  }
-  const deleted = await prisma.cart_items.deleteMany({
-    where: {
-      cart_id: cart.carts_id,
-      variant_id,
-    },
-  });
-  const remainingItems = await prisma.cart_items.count({
-    where: {
-      cart_id: cart.carts_id,
-    },
-  });
+  async removeFromCart({ user_id, variant_id }) {
+    const cart = await prisma.carts.findFirst({
+      where: { user_id },
+    });
 
-  if (remainingItems === 0) {
-    await prisma.carts.delete({
+    if (!cart) {
+      throw new Error("Không tìm thấy giỏ hàng của người dùng.");
+    }
+    const deleted = await prisma.cart_items.deleteMany({
       where: {
-        carts_id: cart.carts_id,
+        cart_id: cart.carts_id,
+        variant_id,
       },
     });
-  }
+    const remainingItems = await prisma.cart_items.count({
+      where: {
+        cart_id: cart.carts_id,
+      },
+    });
 
-  return deleted;
-},
+    if (remainingItems === 0) {
+      await prisma.carts.delete({
+        where: {
+          carts_id: cart.carts_id,
+        },
+      });
+    }
 
+    return deleted;
+  },
 
   async createOrder({
     user_id,
