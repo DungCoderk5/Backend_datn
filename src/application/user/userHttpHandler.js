@@ -78,7 +78,7 @@ const getOrderDetailHandler = async (req, res) => {
     }
     return res.status(400).json({ error: result.error });
   }
-
+console.log('[Handler] getOrderDetail result:', result);
   return res.json(result.data);
 };
 
