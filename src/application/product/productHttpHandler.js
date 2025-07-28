@@ -456,20 +456,20 @@ async function removeFromCartHandler(req, res) {
 
 async function checkoutHandler(req, res) {
   try {
-    const { user_id, shipping_address, payment_method } = req.body;
+    const { user_id, shipping_address_id, payment_method, coupons_id } = req.body;
 
-    if (!user_id || !shipping_address || !payment_method) {
+    if (!user_id || !shipping_address_id || !payment_method) {
       return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
     }
 
     const order = await checkoutUsecase({
       user_id,
-      shipping_address,
+      shipping_address_id,
       payment_method,
+      coupons_id, // Thêm dòng này
     });
-    return res
-      .status(201)
-      .json({ message: "Thanh toán thành công", data: order });
+
+    return res.status(201).json({ message: "Thanh toán thành công", data: order });
   } catch (err) {
     console.error("Checkout Error:", err);
     res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
