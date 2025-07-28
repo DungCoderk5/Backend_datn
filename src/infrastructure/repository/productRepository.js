@@ -27,6 +27,31 @@ const productRepository = {
       },
     });
   },
+  async delete(products_id) {
+    await prisma.product_variants.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    await prisma.images.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    await prisma.wishlist_items.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    await prisma.product_compares.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    await prisma.product_reviews.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    return await prisma.products.delete({
+      where: { products_id },
+    });
+  },
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -714,16 +739,22 @@ const productRepository = {
       prisma.products.findMany({
         where: filters,
         include: {
+          images: true,
           brand: true,
           gender: true,
           category: true,
+              product_variants: {
+      include: {
+        color: true, 
+        size: true,  
+      }
         },
         take: limit,
         skip: offset,
         orderBy: {
           [sortBy]: sortOrder,
         },
-      }),
+      }}),
 
       prisma.products.count({
         where: filters,
@@ -936,6 +967,55 @@ async removeFromCart({ user_id, variant_id }) {
       throw error;
     }
   },
+async update({ products_id, data }) {
+  const {
+    name,
+    slug,
+    description,
+    short_desc,
+    price,
+    sale_price,
+    categories_id,
+    brand_id,
+    gender_id,
+    images = [],
+    product_variants = [],
+  } = data;
+
+  if (!products_id) {
+    throw new Error("Missing products_id for update");
+  }
+
+  const updateProduct = await prisma.products.update({
+    where: { products_id },
+    data: {
+      name,
+      slug,
+      description,
+      short_desc,
+      price,
+      sale_price,
+      categories_id,
+      brand_id,
+      gender_id,
+      status: 1,
+      images: {
+        create: images,
+      },
+      product_variants: {
+        create: product_variants,
+      },
+    },
+    include: {
+      images: true,
+      product_variants: true,
+    },
+  });
+
+  return updateProduct;
+}
+
+
 };
 
 module.exports = productRepository;
