@@ -16,6 +16,6 @@ router.get('/byId/:id', getPostByIdHandler);
 router.get('/category', getPostCategoryHandler);
 router.get('/category/:categoryId', getPostByCategoryHandler);
 router.post('/', addPostHandler);
-router.delete('/:id', deletePostHandler);
-router.put('/:id', updatePostHandler);
+router.delete('/delete/:id', deletePostHandler);
+router.put('/update/:id', updatePostHandler);
 module.exports = router;
