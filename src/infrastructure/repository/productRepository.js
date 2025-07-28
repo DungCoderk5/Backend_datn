@@ -749,19 +749,18 @@ const productRepository = {
           brand: true,
           gender: true,
           category: true,
-          product_variants: {
-            include: {
-              color: true,
-              size: true,
-            },
-          },
+              product_variants: {
+      include: {
+        color: true, 
+        size: true,  
+      }
         },
         take: limit,
         skip: offset,
         orderBy: {
           [sortBy]: sortOrder,
         },
-      }),
+      }}),
 
       prisma.products.count({
         where: filters,
@@ -973,8 +972,28 @@ const productRepository = {
       throw error;
     }
   },
-  async update({ products_id, data }) {
-    const {
+async update({ products_id, data }) {
+  const {
+    name,
+    slug,
+    description,
+    short_desc,
+    price,
+    sale_price,
+    categories_id,
+    brand_id,
+    gender_id,
+    images = [],
+    product_variants = [],
+  } = data;
+
+  if (!products_id) {
+    throw new Error("Missing products_id for update");
+  }
+
+  const updateProduct = await prisma.products.update({
+    where: { products_id },
+    data: {
       name,
       slug,
       description,
@@ -984,42 +1003,24 @@ const productRepository = {
       categories_id,
       brand_id,
       gender_id,
-      images = [],
-      product_variants = [],
-    } = data;
-
-    if (!products_id) {
-      throw new Error("Missing products_id for update");
-    }
-
-    const updateProduct = await prisma.products.update({
-      where: { products_id },
-      data: {
-        name,
-        slug,
-        description,
-        short_desc,
-        price,
-        sale_price,
-        categories_id,
-        brand_id,
-        gender_id,
-        status: 1,
-        images: {
-          create: images,
-        },
-        product_variants: {
-          create: product_variants,
-        },
+      status: 1,
+      images: {
+        create: images,
       },
-      include: {
-        images: true,
-        product_variants: true,
+      product_variants: {
+        create: product_variants,
       },
-    });
+    },
+    include: {
+      images: true,
+      product_variants: true,
+    },
+  });
 
-    return updateProduct;
-  },
+  return updateProduct;
+}
+
+
 };
 
 module.exports = productRepository;
