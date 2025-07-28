@@ -10,7 +10,7 @@ const {
 
 router.get('/', getAllProductBrandHandler);
 router.post('/', addBrandHandler);
-router.put('/:id', updateBrandHandler);
-router.delete('/:id', deleteBrandHandler);
+router.put('/update/:id', updateBrandHandler);
+router.delete('/delete/:id', deleteBrandHandler);
 
 module.exports = router;

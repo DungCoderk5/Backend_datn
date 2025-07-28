@@ -169,7 +169,7 @@ async function getProductDetailHandler(req, res) {
 
 async function getBestSellingHandler(req, res) {
   try {
-    const top = parseInt(req.query.top) || 3;
+    const top = parseInt(req.query.top) || 6;
     console.log("Top best selling products:", top);
     const result = await getBestSellingUsecase(top);
     console.log("Best Selling Products:", result);
@@ -333,9 +333,8 @@ async function addToCart(req, res) {
       .status(200)
       .json({ message: "thêm sản phẩm vào giỏ hàng thành công", cart: cart });
   } catch (error) {
-
-    console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Lỗi khi lấy thêm sản phẩm:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
