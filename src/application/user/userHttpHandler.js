@@ -22,6 +22,7 @@ const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetail
 const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
 const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
 const getDefaultAddressUsecase = require('../../infrastructure/usecase/user/getDefaultAddressUsecase');
+const confirmEmailUsecase = require('../../infrastructure/usecase/user/confirmEmailUsecase');
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -64,6 +65,26 @@ async function loginHandler(req, res) {
     res.status(200).json(result);
   } catch (err) {
     res.status(401).json({ error: err.message });
+  }
+}
+
+async function confirmEmailHandler(req, res) {
+  const { email, token } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ error: 'Thiếu email hoặc token xác nhận.' });
+    }
+    console.log
+    ('[Handler] Xác nhận email:', { email, token });
+    const result = await confirmEmailUsecase(email, token);
+    if (result) {
+      return res.status(200).json({ message: 'Email đã được xác nhận thành công.' });
+    } else {
+      return res.status(400).json({ error: 'Xác nhận email không thành công.' });
+    }
+  } catch (error) {
+    console.error('[Handler] Lỗi xác nhận email:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ khi xác nhận email.' });
   }
 }
 
@@ -320,5 +341,6 @@ module.exports = {
   getWishlistByUserHandler,
   sendMailHandler,
   getDefaultAddressHandler,
+  confirmEmailHandler,
 
 };
