@@ -880,42 +880,53 @@ const productRepository = {
   },
 
   async createOrder({
-    user_id,
-    total_price,
-    shipping_address,
-    payment_method,
-    items,
-  }) {
-    return await prisma.orders.create({
-      data: {
-        user_id,
-        total_amount: total_price,
-        status: "pending",
-        comment: shipping_address,
-        payment_method_id: payment_method,
-        order_items: {
-          create: items.map((item) => ({
-            variant: {
-              connect: { product_variants_id: item.variant_id },
-            },
-            quantity: item.quantity,
-            unit_price: item.price,
-          })),
-        },
+  user_id,
+  total_price,
+  shipping_address_id,
+  payment_method_id,
+  coupons_id,
+  items,
+}) {
+  return await prisma.orders.create({
+    data: {
+      user_id,
+      total_amount: total_price,
+      status: "pending",
+      payment_method_id,
+      shipping_address_id,
+      coupons_id,
+      comment: null,
+      order_items: {
+        create: items.map((item) => ({
+          variant: {
+            connect: { product_variants_id: item.variant_id },
+          },
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
       },
-      include: {
-        order_items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
-              },
+    },
+    include: {
+      order_items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
             },
           },
         },
       },
-    });
-  },
+    },
+  });
+},
+async getVoucherById(id) {
+  return await prisma.coupons.findUnique({
+    where: {
+      coupons_id: Number(id), // Ép kiểu tại đây
+    },
+  });
+},
+
 
   async clearCart(user_id) {
     const cart = await prisma.carts.findFirst({ where: { user_id } });
