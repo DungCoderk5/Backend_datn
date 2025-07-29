@@ -29,11 +29,15 @@ const {
   checkoutHandler,
   removeWishlistItemHandler,
   filterProductsHandler,
-  getOrderHandler
+  getOrderHandler,
+  updateProductHandler,
+  deleteProductHandler
 } = require('../../../application/product/productHttpHandler');
 
 
 router.get('/', getAllProductsHandler);
+router.put('/update/:id', updateProductHandler);
+router.delete('/delete/:id', deleteProductHandler);
 router.get('/filter',   filterProductsHandler,);
 router.get('/brand/:brandId', getProductsByBrandHandler);
 router.get('/detail/:id', getProductDetailHandler);

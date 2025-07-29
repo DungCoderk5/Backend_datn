@@ -26,6 +26,8 @@ const checkoutUsecase = require('../../infrastructure/usecase/product/checkoutUs
 const filterProductsUsecase = require('../../infrastructure/usecase/product/filterProductsUsecase');
 const removeWishlistItemUsecase = require('../../infrastructure/usecase/product/removeWishlistItemUsecase');
 const getOrdersByUserUsecase = require('../../infrastructure/usecase/product/getOrdersByUserUsecase');
+const updateProductUsecase = require('../../infrastructure/usecase/product/updateProductUsecase');
+const deleteProductUsecase = require('../../infrastructure/usecase/product/deleteProductUsecase');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -51,6 +53,22 @@ async function getOrderHandler(req, res) {
     return res.status(500).json({ error: 'Lỗi máy chủ khi lấy đơn hàng.' });
   }
 }
+
+async function deleteProductHandler(req, res) {
+  try {
+    const products_id = parseInt(req.params.id);
+    if (isNaN(products_id)) {
+      return res.status(400).json({ error: 'ID sản phẩm không hợp lệ.' });
+    } 
+    const result = await deleteProductUsecase(products_id);
+    res.status(200).json({ message: 'Xóa sản phẩm thành công.', result });
+  } catch (error) {
+    console.error('[Handler] Lỗi deleteProduct:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ khi xóa sản phẩm.' });
+    
+  }
+}
+
 async function filterProductsHandler(req, res, next) {
   try {
 
@@ -151,7 +169,7 @@ async function getProductDetailHandler(req, res) {
 
 async function getBestSellingHandler(req, res) {
   try {
-    const top = parseInt(req.query.top) || 3;
+    const top = parseInt(req.query.top) || 6;
     console.log("Top best selling products:", top);
     const result = await getBestSellingUsecase(top);
     console.log("Best Selling Products:", result);
@@ -288,6 +306,24 @@ async function addProductHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+const updateProductHandler = async (req, res) => {
+  try {
+    const products_id = parseInt(req.params.id);
+    const data = req.body;
+
+    if (!products_id || !data) {
+      return res.status(400).json({ error: "Thiếu dữ liệu cập nhật." });
+    }
+
+    const result = await updateProductUsecase({ products_id, data });
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Lỗi khi cập nhật sản phẩm:", error.message);
+    return res.status(500).json({ error: "Đã xảy ra lỗi khi cập nhật sản phẩm." });
+  }
+};
+
 
 async function addToCart(req, res) {
   try {
@@ -527,5 +563,8 @@ module.exports = {
   checkoutHandler,
   filterProductsHandler,
   removeWishlistItemHandler,
-  getOrderHandler
+  getOrderHandler,
+  updateProductHandler,
+  deleteProductHandler,
+
 };
