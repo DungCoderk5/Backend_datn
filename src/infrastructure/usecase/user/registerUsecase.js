@@ -14,7 +14,7 @@ async function registerUsecase(data, res) {
   if (existingUser) throw new Error("Email đã tồn tại");
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const OTP = Math.random().toString(36).substring(2, 15);
+  const OTP = Math.floor(100000 + Math.random() * 900000).toString();
 
   const sendEmail = await userRepository.sendMail({
     to: email,
