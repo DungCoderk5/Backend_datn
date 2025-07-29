@@ -22,7 +22,8 @@ const {
   getWishlistByUserHandler,
   sendMailHandler ,
   getDefaultAddressHandler,
-  confirmEmailHandler
+  confirmEmailHandler,
+  getAddressesByIdHandler
 } = require("../../../application/user/userHttpHandler");
 
 router.post("/login", loginHandler);
@@ -36,6 +37,7 @@ router.post("/google/callback",googleCallback);
 router.put("/change-pass", changePasswordHandler);
 router.get('/get-cart/:userId', getCartByUserHandler);
 router.get('/addresses/:userId', getAddressesByUserHandler);
+router.get('/addressesbyid/:addressid', getAddressesByIdHandler);
 router.put('/addresses/:addressId', updateAddressHandler);
 router.delete('/addresses/:addressId', deleteAddressHandler);
 router.get('/profile/:userId', getUserProfileHandler);

@@ -23,6 +23,8 @@ const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getW
 const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
 const getDefaultAddressUsecase = require('../../infrastructure/usecase/user/getDefaultAddressUsecase');
 const confirmEmailUsecase = require('../../infrastructure/usecase/user/confirmEmailUsecase');
+const getAddressesByIdUsecase = require('../../infrastructure/usecase/user/getAddressesByIdUsecase');
+
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -65,6 +67,20 @@ async function loginHandler(req, res) {
     res.status(200).json(result);
   } catch (err) {
     res.status(401).json({ error: err.message });
+  }
+}
+
+async function getAddressesByIdHandler(req, res) {
+  const addressId = parseInt(req.params.addressid);
+  try {
+    const result = await getAddressesByIdUsecase(addressId);
+    if (!result) {
+      return res.status(404).json({ error: 'Địa chỉ không tìm thấy.' });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getAddressesById:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy địa chỉ.' });
   }
 }
 
@@ -342,5 +358,6 @@ module.exports = {
   sendMailHandler,
   getDefaultAddressHandler,
   confirmEmailHandler,
+  getAddressesByIdHandler,
 
 };

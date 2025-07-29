@@ -19,6 +19,19 @@ async function findByUsernameOrEmail(usernameOrEmail) {
   });
 }
 
+async function findAddressById(addressid) {
+  return await prisma.ship_address.findUnique({
+    where: { ship_address_id: addressid },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+}
+
 async function confirm(email, token) {
   const user = await prisma.users.findUnique({
     where: { email },
@@ -309,4 +322,5 @@ module.exports = {
   sendMail,
   findDefaultAddress,
   confirm,
+  findAddressById,
 };
