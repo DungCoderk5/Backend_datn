@@ -492,7 +492,7 @@ async function removeFromCartHandler(req, res) {
 
 async function checkoutHandler(req, res) {
   try {
-    const { user_id, shipping_address_id, payment_method, coupons_id } = req.body;
+    const { user_id, shipping_address_id, payment_method, coupon_code, shipping_fee } = req.body;
 
     if (!user_id || !shipping_address_id || !payment_method) {
       return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
@@ -502,15 +502,19 @@ async function checkoutHandler(req, res) {
       user_id,
       shipping_address_id,
       payment_method,
-      coupons_id, // Thêm dòng này
+      coupon_code,
+      shipping_fee: shipping_fee || 0,
     });
 
     return res.status(201).json({ message: "Thanh toán thành công", data: order });
   } catch (err) {
     console.error("Checkout Error:", err);
-    res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
+    return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
   }
 }
+
+module.exports = checkoutHandler;
+
 
 async function removeWishlistItemHandler(req, res) {
   const { userId, productId } = req.body;

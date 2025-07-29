@@ -4,7 +4,8 @@ async function checkoutUsecase({
   user_id,
   shipping_address_id,
   payment_method,
-  coupons_id,
+  coupon_code,
+  shipping_fee = 0,
 }) {
   const cartItems = await productRepository.getCartItemsByUserId(user_id);
 
@@ -20,8 +21,8 @@ async function checkoutUsecase({
   let discount = 0;
   let coupon_id = null;
 
-  if (coupons_id) {
-    const coupon = await productRepository.getVoucherById(coupons_id);
+  if (coupon_code) {
+    const coupon = await productRepository.getVoucherByCode(coupon_code);
 
     if (coupon && coupon.usage_limit > coupon.used_count) {
       coupon_id = coupon.coupons_id;
@@ -34,7 +35,7 @@ async function checkoutUsecase({
     }
   }
 
-  const total_price = subtotal - discount;
+  const total_price = subtotal - discount + shipping_fee;
 
   const newOrder = await productRepository.createOrder({
     user_id,
@@ -53,6 +54,5 @@ async function checkoutUsecase({
 
   return newOrder;
 }
-
 
 module.exports = checkoutUsecase;
