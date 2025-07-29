@@ -21,6 +21,10 @@ const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendC
 const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetailUseCase');
 const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
 const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
+const getDefaultAddressUsecase = require('../../infrastructure/usecase/user/getDefaultAddressUsecase');
+const confirmEmailUsecase = require('../../infrastructure/usecase/user/confirmEmailUsecase');
+const getAddressesByIdUsecase = require('../../infrastructure/usecase/user/getAddressesByIdUsecase');
+
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -66,6 +70,53 @@ async function loginHandler(req, res) {
   }
 }
 
+async function getAddressesByIdHandler(req, res) {
+  const addressId = parseInt(req.params.addressid);
+  try {
+    const result = await getAddressesByIdUsecase(addressId);
+    if (!result) {
+      return res.status(404).json({ error: 'Địa chỉ không tìm thấy.' });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getAddressesById:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy địa chỉ.' });
+  }
+}
+
+async function confirmEmailHandler(req, res) {
+  const { email, token } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ error: 'Thiếu email hoặc token xác nhận.' });
+    }
+    console.log
+    ('[Handler] Xác nhận email:', { email, token });
+    const result = await confirmEmailUsecase(email, token);
+    if (result) {
+      return res.status(200).json({ message: 'Email đã được xác nhận thành công.' });
+    } else {
+      return res.status(400).json({ error: 'Xác nhận email không thành công.' });
+    }
+  } catch (error) {
+    console.error('[Handler] Lỗi xác nhận email:', error);
+    return res.status(500).json({ error: 'Lỗi máy chủ khi xác nhận email.' });
+  }
+}
+
+async function getDefaultAddressHandler(req, res) {
+  const userId = parseInt(req.params.userId);
+  try {
+    const result = await getDefaultAddressUsecase(userId);
+    if (!result) {
+      return res.status(404).json({ error: 'Địa chỉ mặc định không tìm thấy.' });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[Handler] Lỗi getDefaultAddress:', error);
+    res.status(500).json({ error: 'Lỗi khi lấy địa chỉ mặc định.' });
+  }
+}
 
 const getOrderDetailHandler = async (req, res) => {
   const orderId = parseInt(req.params.orderId);
@@ -304,5 +355,9 @@ module.exports = {
   sendContactEmailHandler,
   getOrderDetailHandler,
   getWishlistByUserHandler,
-  sendMailHandler
+  sendMailHandler,
+  getDefaultAddressHandler,
+  confirmEmailHandler,
+  getAddressesByIdHandler,
+
 };

@@ -335,6 +335,7 @@ async function addToCart(req, res) {
   } catch (error) {
     console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error);
     res.status(500).json({ error: 'Internal server error' });
+
   }
 }
 

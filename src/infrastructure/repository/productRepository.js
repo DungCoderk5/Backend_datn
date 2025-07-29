@@ -734,7 +734,6 @@ const productRepository = {
             brand: {
               name: {
                 equals: brand,
-                lte: "insensitive",
               },
             },
           }
