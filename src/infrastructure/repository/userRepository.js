@@ -19,6 +19,72 @@ async function findByUsernameOrEmail(usernameOrEmail) {
   });
 }
 
+async function findByEmail(email) {
+  return await prisma.users.findFirst({
+    where: {email}
+  });
+}
+
+async function ResetPass(email, hashedPassword) {
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      password: hashedPassword,
+      updated_at: new Date(),
+      verify_otp: null,
+    },
+  });
+}
+
+async function findAddressById(addressid) {
+  return await prisma.ship_address.findUnique({
+    where: { ship_address_id: addressid },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+}
+
+async function confirm(email, token) {
+  const user = await prisma.users.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new Error("Người dùng không tồn tại");
+  }
+
+  if (user.status === 1) {
+    throw new Error("Email đã được xác nhận trước đó");
+  }
+
+  if (user.verify_otp !== token) {
+    throw new Error("Token xác nhận không hợp lệ");
+  }
+
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      status: 1,
+      verify_otp: null,
+      updated_at: new Date(),
+    },
+  });
+}
+
+async function setOTP(email, OTP) {
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      verify_otp: OTP
+    },
+  });
+}
+
 async function findDefaultAddress(userId) {
   if (!userId) {
     throw new Error("Thiếu userId");
@@ -281,4 +347,9 @@ module.exports = {
   findWishlistByUserId,
   sendMail,
   findDefaultAddress,
+  confirm,
+  findAddressById,
+  setOTP,
+  findByEmail,
+  ResetPass
 };

@@ -882,8 +882,9 @@ const productRepository = {
   async createOrder({
     user_id,
     total_price,
-    shipping_address,
-    payment_method,
+    shipping_address_id,
+    payment_method_id,
+    coupons_id,
     items,
   }) {
     return await prisma.orders.create({
@@ -891,8 +892,10 @@ const productRepository = {
         user_id,
         total_amount: total_price,
         status: "pending",
-        comment: shipping_address,
-        payment_method_id: payment_method,
+        payment_method_id,
+        shipping_address_id,
+        coupons_id,
+        comment: null,
         order_items: {
           create: items.map((item) => ({
             variant: {
@@ -913,6 +916,14 @@ const productRepository = {
             },
           },
         },
+      },
+    });
+  },
+
+  async getVoucherByCode(code) {
+    return await prisma.coupons.findFirst({
+      where: {
+        code: code,
       },
     });
   },
