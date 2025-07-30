@@ -522,7 +522,7 @@ async function checkoutHandler(req, res) {
 
     return res
       .status(201)
-      .json({ message: "Thanh toán thành công", data: order });
+      .json({ message: "Thanh toán thành công", data: order, orders_id: order.id, });
   } catch (err) {
     console.error("Checkout Error:", err);
     return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
