@@ -45,14 +45,25 @@ async function getAllProductsHandler(req, res) {
 
 async function getOrderHandler(req, res) {
   const userId = parseInt(req.params.userId);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const skip = (page - 1) * limit;
+
   try {
-    const orders = await getOrdersByUserUsecase(userId);
-    return res.status(200).json(orders);
+    const orders = await getOrdersByUserUsecase({ userId, skip, take: limit });
+
+    return res.status(200).json({
+      data: orders,
+      page,
+      limit,
+    });
   } catch (error) {
     console.error('[Handler] Lỗi lấy đơn hàng theo user:', error);
     return res.status(500).json({ error: 'Lỗi máy chủ khi lấy đơn hàng.' });
   }
 }
+
 
 async function deleteProductHandler(req, res) {
   try {
