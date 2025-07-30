@@ -1,4 +1,4 @@
-const productRepository = require('../../repository/productRepository');
+const productRepository = require("../../repository/productRepository");
 
 async function checkoutUsecase({
   user_id,
@@ -15,10 +15,11 @@ async function checkoutUsecase({
   }
 
   const subtotal = cartItems.reduce((sum, item) => {
-    return sum + item.variant.product.price * item.quantity;
+    const product = item.variant.product;
+    const unitPrice = product.sale_price ?? product.price;
+    return sum + unitPrice * item.quantity;
   }, 0);
 
-  // Xử lý mã giảm giá
   let discount = 0;
   let coupon_id = null;
 
@@ -38,6 +39,17 @@ async function checkoutUsecase({
 
   const total_price = subtotal - discount + shipping_fee;
 
+  const orderItems = cartItems.map((item) => {
+    const product = item.variant.product;
+    const unitPrice = product.sale_price ?? product.price;
+
+    return {
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+      price: unitPrice,
+    };
+  });
+
   const newOrder = await productRepository.createOrder({
     user_id,
     total_price,
@@ -45,11 +57,7 @@ async function checkoutUsecase({
     shipping_address_id,
     coupons_id: coupon_id,
     comment,
-    items: cartItems.map((item) => ({
-      variant_id: item.variant_id,
-      quantity: item.quantity,
-      price: item.variant.product.price,
-    })),
+    items: orderItems,
   });
 
   await productRepository.clearCart(user_id);
