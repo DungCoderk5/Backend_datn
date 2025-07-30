@@ -6,6 +6,7 @@ async function checkoutUsecase({
   payment_method,
   coupon_code,
   shipping_fee = 0,
+  comment = "",
 }) {
   const cartItems = await productRepository.getCartItemsByUserId(user_id);
 
@@ -43,6 +44,7 @@ async function checkoutUsecase({
     payment_method_id: payment_method.id,
     shipping_address_id,
     coupons_id: coupon_id,
+    comment,
     items: cartItems.map((item) => ({
       variant_id: item.variant_id,
       quantity: item.quantity,
