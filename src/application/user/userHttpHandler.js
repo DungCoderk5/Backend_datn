@@ -25,10 +25,29 @@ const confirmEmailUsecase = require("../../infrastructure/usecase/user/confirmEm
 const getAddressesByIdUsecase = require("../../infrastructure/usecase/user/getAddressesByIdUsecase");
 const sendResetPassUsecase = require("../../infrastructure/usecase/user/sendResetPassUsecase");
 const ResetPassUsecase = require("../../infrastructure/usecase/user/ResetPassUsecase");
+const updateOrderStatusUsecase = require("../../infrastructure/usecase/user/updateOrderStatusUsecase");
 
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
+
+async function updateOrderStatusHandler(req, res) {
+  const orderId = parseInt(req.params.orderId);
+  const { status } = req.body;
+
+  if (!orderId || !status) {
+    return res.status(400).json({ error: "Thiếu thông tin cần thiết" });
+  }
+
+  try {
+    const result = await updateOrderStatusUsecase(orderId, status);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi cập nhật trạng thái đơn hàng:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái đơn hàng." });
+  }
+}
+
 async function googleCallback(req, res) {
   try {
     const { code } = req.body;
@@ -400,4 +419,5 @@ module.exports = {
   getAddressesByIdHandler,
   sendResetPassHandler,
   ResetPassHandler,
+  updateOrderStatusHandler
 };
