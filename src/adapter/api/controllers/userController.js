@@ -23,7 +23,9 @@ const {
   sendMailHandler ,
   getDefaultAddressHandler,
   confirmEmailHandler,
-  getAddressesByIdHandler
+  getAddressesByIdHandler,
+  sendResetPassHandler,
+  ResetPassHandler,
 } = require("../../../application/user/userHttpHandler");
 
 router.post("/login", loginHandler);
@@ -48,5 +50,7 @@ router.get('/wishlist/:userId', getWishlistByUserHandler);
 router.post('/send', sendMailHandler);
 router.get('/user_default_address/:userId', getDefaultAddressHandler);
 router.post('/confirm-email', confirmEmailHandler);
+router.post('/forget', sendResetPassHandler);
+router.post('/reset-password', ResetPassHandler);
 
 module.exports = router;
