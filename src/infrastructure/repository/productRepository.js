@@ -1,31 +1,45 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
-  async findByUserId(userId) {
-    return await prisma.orders.findMany({
-      where: {
-        user_id: userId,
-      },
-      include: {
-        order_items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
-                color: true,
-                size: true,
+ async findByUserId(userId, skip, take) {
+    const [orders, total] = await Promise.all([
+      prisma.orders.findMany({
+        where: { user_id: userId },
+        skip,
+        take,
+        include: {
+          order_items: {
+            include: {
+              variant: {
+                include: {
+                  product: true,
+                  color: true,
+                  size: true,
+                },
               },
             },
           },
+          payment_method: true,
+          shipping_address: true,
+          coupon: true,
         },
-        payment_method: true,
-        shipping_address: true,
-        coupon: true,
+        orderBy: {
+          created_at: "desc",
+        },
+      }),
+      prisma.orders.count({
+        where: { user_id: userId },
+      }),
+    ]);
+
+    return {
+      orders,
+      pagination: {
+        total,
+        page,
+        totalPages: Math.ceil(total / take),
       },
-      orderBy: {
-        created_at: "desc",
-      },
-    });
+    };
   },
   async delete(products_id) {
     await prisma.product_variants.deleteMany({

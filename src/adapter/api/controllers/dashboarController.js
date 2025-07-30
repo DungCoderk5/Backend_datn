@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const {
-  getTotalRevenueHandler,
   getTotalProductsHandler,
   getTotalBrandsHandler,
   getTotalCategoriesHandler,
@@ -11,9 +10,15 @@ const {
   getTotalPostsHandler,
   getTotalPostCategoriesHandler,
   getTotalOrdersHandler,
+  getMonthlyRevenueHandler,
+  getYearlyRevenueHandler,
+  getWeeklyRevenueHandler
 } = require('../../../application/dashboar/dashboarHttpHandler');
 
-router.get('/revenue', getTotalRevenueHandler);
+router.get('/revenue/weekly', getWeeklyRevenueHandler);
+//http://localhost:3000/dashboard/revenue/yearly?date=2025-05-31
+router.get('/revenue/monthly', getMonthlyRevenueHandler);
+router.get('/revenue/yearly', getYearlyRevenueHandler);
 router.get('/products', getTotalProductsHandler);
 router.get('/brands', getTotalBrandsHandler);
 router.get('/categories', getTotalCategoriesHandler);
