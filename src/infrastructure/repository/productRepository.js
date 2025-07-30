@@ -902,6 +902,7 @@ const productRepository = {
     shipping_address_id,
     payment_method_id,
     coupons_id,
+    comment,
     items,
   }) {
     return await prisma.orders.create({
@@ -912,7 +913,7 @@ const productRepository = {
         payment_method_id,
         shipping_address_id,
         coupons_id,
-        comment: null,
+        comment,
         order_items: {
           create: items.map((item) => ({
             variant: {

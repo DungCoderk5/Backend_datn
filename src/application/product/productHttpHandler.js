@@ -504,6 +504,7 @@ async function checkoutHandler(req, res) {
       payment_method,
       coupon_code,
       shipping_fee,
+      comment
     } = req.body;
 
     if (!user_id || !shipping_address_id || !payment_method) {
@@ -516,6 +517,7 @@ async function checkoutHandler(req, res) {
       payment_method,
       coupon_code,
       shipping_fee: shipping_fee || 0,
+      comment,
     });
 
     return res
