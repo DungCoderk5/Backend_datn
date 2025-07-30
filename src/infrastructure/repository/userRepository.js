@@ -11,6 +11,16 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+async function updateOrderStatus(orderId, status) {
+  return await prisma.orders.update({
+    where: { orders_id: orderId },
+    data: {
+      status,
+      updated_at: new Date(),
+    },
+  });
+}
+
 async function findByUsernameOrEmail(usernameOrEmail) {
   return await prisma.users.findFirst({
     where: {
@@ -351,5 +361,6 @@ module.exports = {
   findAddressById,
   setOTP,
   findByEmail,
-  ResetPass
+  ResetPass,
+  updateOrderStatus
 };
