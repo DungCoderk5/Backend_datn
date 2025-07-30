@@ -1,13 +1,58 @@
 const dashboardRepository = require('../../infrastructure/repository/dashboardRepository');
 
-async function getTotalRevenueHandler(req, res) {
+// async function getTotalRevenueHandler(req, res) {
+//   try {
+//     const result = await dashboardRepository.getTotalRevenue();
+//     res.status(200).json({ totalRevenue: result });
+//   } catch (err) {
+//     res.status(500).json({ error: 'Lỗi lấy tổng doanh thu' });
+//   }
+// }
+
+async function getMonthlyRevenueHandler(req, res) {
+  const { date } = req.query;
+
+  if (!date) return res.status(400).json({ error: 'Thiếu ngày truy vấn' });
+
   try {
-    const result = await dashboardRepository.getTotalRevenue();
-    res.status(200).json({ totalRevenue: result });
+    const result = await dashboardRepository.getMonthlyRevenueByDate(date);
+    return res.status(200).json(result);
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng doanh thu' });
+    console.error('[Handler] Lỗi doanh thu tháng:', err);
+    return res.status(500).json({ error: 'Lỗi máy chủ' });
   }
 }
+
+async function getWeeklyRevenueHandler(req, res) {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ error: 'Thiếu ngày truy vấn' });
+  }
+
+  try {
+    const result = await dashboardRepository.getWeeklyRevenueByDate(date);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('[Handler] Lỗi doanh thu tuần:', err);
+    return res.status(500).json({ error: 'Lỗi máy chủ' });
+  }
+}
+
+async function getYearlyRevenueHandler(req, res) {
+  const { date } = req.query;
+
+  if (!date) return res.status(400).json({ error: 'Thiếu ngày truy vấn' });
+
+  try {
+    const result = await dashboardRepository.getYearlyRevenueByDate(date);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('[Handler] Lỗi doanh thu năm:', err);
+    return res.status(500).json({ error: 'Lỗi máy chủ' });
+  }
+}
+
 
 async function getTotalProductsHandler(req, res) {
   try {
@@ -82,7 +127,6 @@ async function getTotalOrdersHandler(req, res) {
 }
 
 module.exports = {
-  getTotalRevenueHandler,
   getTotalProductsHandler,
   getTotalBrandsHandler,
   getTotalCategoriesHandler,
@@ -91,4 +135,7 @@ module.exports = {
   getTotalPostsHandler,
   getTotalPostCategoriesHandler,
   getTotalOrdersHandler,
+  getYearlyRevenueHandler,
+  getMonthlyRevenueHandler,
+  getWeeklyRevenueHandler,
 };
