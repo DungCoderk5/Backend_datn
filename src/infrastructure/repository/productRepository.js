@@ -743,23 +743,24 @@ const productRepository = {
     const [products, total] = await Promise.all([
       prisma.products.findMany({
         where: filters,
-        include: {
-          images: true,
-          brand: true,
-          gender: true,
-          category: true,
-              product_variants: {
-      include: {
-        color: true, 
-        size: true,  
-      }
-        },
         take: limit,
         skip: offset,
         orderBy: {
           [sortBy]: sortOrder,
         },
-      }}),
+        include: {
+          images: true,
+          brand: true,
+          gender: true,
+          category: true,
+          product_variants: {
+            include: {
+              color: true,
+              size: true,
+            },
+          },
+        },
+      }),
 
       prisma.products.count({
         where: filters,
@@ -879,53 +880,52 @@ const productRepository = {
   },
 
   async createOrder({
-  user_id,
-  total_price,
-  shipping_address_id,
-  payment_method_id,
-  coupons_id,
-  items,
-}) {
-  return await prisma.orders.create({
-    data: {
-      user_id,
-      total_amount: total_price,
-      status: "pending",
-      payment_method_id,
-      shipping_address_id,
-      coupons_id,
-      comment: null,
-      order_items: {
-        create: items.map((item) => ({
-          variant: {
-            connect: { product_variants_id: item.variant_id },
-          },
-          quantity: item.quantity,
-          unit_price: item.price,
-        })),
+    user_id,
+    total_price,
+    shipping_address_id,
+    payment_method_id,
+    coupons_id,
+    items,
+  }) {
+    return await prisma.orders.create({
+      data: {
+        user_id,
+        total_amount: total_price,
+        status: "pending",
+        payment_method_id,
+        shipping_address_id,
+        coupons_id,
+        comment: null,
+        order_items: {
+          create: items.map((item) => ({
+            variant: {
+              connect: { product_variants_id: item.variant_id },
+            },
+            quantity: item.quantity,
+            unit_price: item.price,
+          })),
+        },
       },
-    },
-    include: {
-      order_items: {
-        include: {
-          variant: {
-            include: {
-              product: true,
+      include: {
+        order_items: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
             },
           },
         },
       },
-    },
-  });
-},
-async getVoucherById(id) {
-  return await prisma.coupons.findUnique({
-    where: {
-      coupons_id: Number(id), // Ép kiểu tại đây
-    },
-  });
-},
-
+    });
+  },
+  async getVoucherById(id) {
+    return await prisma.coupons.findUnique({
+      where: {
+        coupons_id: Number(id), // Ép kiểu tại đây
+      },
+    });
+  },
 
   async clearCart(user_id) {
     const cart = await prisma.carts.findFirst({ where: { user_id } });
@@ -982,28 +982,8 @@ async getVoucherById(id) {
       throw error;
     }
   },
-async update({ products_id, data }) {
-  const {
-    name,
-    slug,
-    description,
-    short_desc,
-    price,
-    sale_price,
-    categories_id,
-    brand_id,
-    gender_id,
-    images = [],
-    product_variants = [],
-  } = data;
-
-  if (!products_id) {
-    throw new Error("Missing products_id for update");
-  }
-
-  const updateProduct = await prisma.products.update({
-    where: { products_id },
-    data: {
+  async update({ products_id, data }) {
+    const {
       name,
       slug,
       description,
@@ -1013,24 +993,42 @@ async update({ products_id, data }) {
       categories_id,
       brand_id,
       gender_id,
-      status: 1,
-      images: {
-        create: images,
+      images = [],
+      product_variants = [],
+    } = data;
+
+    if (!products_id) {
+      throw new Error("Missing products_id for update");
+    }
+
+    const updateProduct = await prisma.products.update({
+      where: { products_id },
+      data: {
+        name,
+        slug,
+        description,
+        short_desc,
+        price,
+        sale_price,
+        categories_id,
+        brand_id,
+        gender_id,
+        status: 1,
+        images: {
+          create: images,
+        },
+        product_variants: {
+          create: product_variants,
+        },
       },
-      product_variants: {
-        create: product_variants,
+      include: {
+        images: true,
+        product_variants: true,
       },
-    },
-    include: {
-      images: true,
-      product_variants: true,
-    },
-  });
+    });
 
-  return updateProduct;
-}
-
-
+    return updateProduct;
+  },
 };
 
 module.exports = productRepository;
