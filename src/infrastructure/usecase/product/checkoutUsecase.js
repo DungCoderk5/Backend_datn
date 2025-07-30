@@ -13,9 +13,10 @@ async function checkoutUsecase({
   if (!cartItems || cartItems.length === 0) {
     throw new Error("Giỏ hàng trống");
   }
-
+console.log("Cart Items:", cartItems);
   const subtotal = cartItems.reduce((sum, item) => {
     const product = item.variant.product;
+    console.log("Product info:", item.variant.product);
     const unitPrice = product.sale_price ?? product.price;
     return sum + unitPrice * item.quantity;
   }, 0);
