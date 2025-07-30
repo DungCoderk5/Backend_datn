@@ -638,6 +638,7 @@ const productRepository = {
                 products_id: true,
                 name: true,
                 price: true,
+                sale_price: true,
                 images: {
                   select: {
                     url: true,
