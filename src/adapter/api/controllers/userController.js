@@ -23,8 +23,12 @@ const {
   sendMailHandler ,
   getDefaultAddressHandler,
   confirmEmailHandler,
-  getAddressesByIdHandler
+  getAddressesByIdHandler,
+  sendResetPassHandler,
+  ResetPassHandler,
+  updateOrderStatusHandler
 } = require("../../../application/user/userHttpHandler");
+const { update } = require("../../../infrastructure/repository/brandRepository");
 
 router.post("/login", loginHandler);
 router.post("/logout", logoutHandler);
@@ -48,5 +52,8 @@ router.get('/wishlist/:userId', getWishlistByUserHandler);
 router.post('/send', sendMailHandler);
 router.get('/user_default_address/:userId', getDefaultAddressHandler);
 router.post('/confirm-email', confirmEmailHandler);
+router.post('/forget', sendResetPassHandler);
+router.post('/reset-password', ResetPassHandler);
+router.put('/update-order-status/:orderId', updateOrderStatusHandler);
 
 module.exports = router;

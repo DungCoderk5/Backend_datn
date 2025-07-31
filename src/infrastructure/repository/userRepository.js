@@ -11,10 +11,37 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+async function updateOrderStatus(orderId, status) {
+  return await prisma.orders.update({
+    where: { orders_id: orderId },
+    data: {
+      status,
+      updated_at: new Date(),
+    },
+  });
+}
+
 async function findByUsernameOrEmail(usernameOrEmail) {
   return await prisma.users.findFirst({
     where: {
       OR: [{ email: usernameOrEmail }, { name: usernameOrEmail }],
+    },
+  });
+}
+
+async function findByEmail(email) {
+  return await prisma.users.findFirst({
+    where: {email}
+  });
+}
+
+async function ResetPass(email, hashedPassword) {
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      password: hashedPassword,
+      updated_at: new Date(),
+      verify_otp: null,
     },
   });
 }
@@ -55,6 +82,15 @@ async function confirm(email, token) {
       status: 1,
       verify_otp: null,
       updated_at: new Date(),
+    },
+  });
+}
+
+async function setOTP(email, OTP) {
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      verify_otp: OTP
     },
   });
 }
@@ -323,4 +359,8 @@ module.exports = {
   findDefaultAddress,
   confirm,
   findAddressById,
+  setOTP,
+  findByEmail,
+  ResetPass,
+  updateOrderStatus
 };
