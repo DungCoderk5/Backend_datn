@@ -31,7 +31,7 @@ async function findByUsernameOrEmail(usernameOrEmail) {
 
 async function findByEmail(email) {
   return await prisma.users.findFirst({
-    where: {email}
+    where: { email },
   });
 }
 
@@ -90,7 +90,7 @@ async function setOTP(email, OTP) {
   return await prisma.users.update({
     where: { email },
     data: {
-      verify_otp: OTP
+      verify_otp: OTP,
     },
   });
 }
@@ -362,5 +362,5 @@ module.exports = {
   setOTP,
   findByEmail,
   ResetPass,
-  updateOrderStatus
+  updateOrderStatus,
 };

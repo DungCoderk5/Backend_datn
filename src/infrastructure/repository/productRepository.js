@@ -124,6 +124,29 @@ const productRepository = {
       },
     });
   },
+
+  async getCouponsByCode(code, total) {
+    const coupon = await prisma.coupons.findFirst({
+      where: {
+        code,
+        end_date: {
+          gte: new Date(),
+        },
+        min_order: {
+          lte: total,
+        },
+      },
+    });
+
+    if (!coupon) {
+      throw new Error(
+        "Coupon không tồn tại, đã hết hạn, hoặc chưa đạt giá trị tối thiểu"
+      );
+    }
+
+    return coupon;
+  },
+
   async getBestSelling(top = 6) {
     const products = await prisma.products.findMany({
       where: { status: 1 },
