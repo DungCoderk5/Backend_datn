@@ -1,27 +1,31 @@
-const productRepository = require('../../repository/productRepository');
+const productRepository = require("../../repository/productRepository");
 
 async function checkoutUsecase({
   user_id,
   shipping_address_id,
   payment_method,
-  coupons_id,
+  coupon_code,
+  shipping_fee = 0,
+  comment = "",
 }) {
   const cartItems = await productRepository.getCartItemsByUserId(user_id);
 
   if (!cartItems || cartItems.length === 0) {
     throw new Error("Giỏ hàng trống");
   }
-
+console.log("Cart Items:", cartItems);
   const subtotal = cartItems.reduce((sum, item) => {
-    return sum + item.variant.product.price * item.quantity;
+    const product = item.variant.product;
+    console.log("Product info:", item.variant.product);
+    const unitPrice = product.sale_price ?? product.price;
+    return sum + unitPrice * item.quantity;
   }, 0);
 
-  // Xử lý mã giảm giá
   let discount = 0;
   let coupon_id = null;
 
-  if (coupons_id) {
-    const coupon = await productRepository.getVoucherById(coupons_id);
+  if (coupon_code) {
+    const coupon = await productRepository.getVoucherByCode(coupon_code);
 
     if (coupon && coupon.usage_limit > coupon.used_count) {
       coupon_id = coupon.coupons_id;
@@ -34,7 +38,18 @@ async function checkoutUsecase({
     }
   }
 
-  const total_price = subtotal - discount;
+  const total_price = subtotal - discount + shipping_fee;
+
+  const orderItems = cartItems.map((item) => {
+    const product = item.variant.product;
+    const unitPrice = product.sale_price ?? product.price;
+
+    return {
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+      price: unitPrice,
+    };
+  });
 
   const newOrder = await productRepository.createOrder({
     user_id,
@@ -42,17 +57,13 @@ async function checkoutUsecase({
     payment_method_id: payment_method.id,
     shipping_address_id,
     coupons_id: coupon_id,
-    items: cartItems.map((item) => ({
-      variant_id: item.variant_id,
-      quantity: item.quantity,
-      price: item.variant.product.price,
-    })),
+    comment,
+    items: orderItems,
   });
 
   await productRepository.clearCart(user_id);
 
   return newOrder;
 }
-
 
 module.exports = checkoutUsecase;

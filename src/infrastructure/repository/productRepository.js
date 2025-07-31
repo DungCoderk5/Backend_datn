@@ -1,7 +1,8 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
- async findByUserId(userId, skip, take) {
+  async findByUserId(userId, skip, take) {
+    const page = Math.max(1, Math.ceil(skip / take) + 1);
     const [orders, total] = await Promise.all([
       prisma.orders.findMany({
         where: { user_id: userId },
@@ -37,6 +38,8 @@ const productRepository = {
       pagination: {
         total,
         page,
+        limit: take,
+        currentPage: page,
         totalPages: Math.ceil(total / take),
       },
     };
@@ -635,6 +638,7 @@ const productRepository = {
                 products_id: true,
                 name: true,
                 price: true,
+                sale_price: true,
                 images: {
                   select: {
                     url: true,
@@ -899,6 +903,7 @@ const productRepository = {
     shipping_address_id,
     payment_method_id,
     coupons_id,
+    comment,
     items,
   }) {
     return await prisma.orders.create({
@@ -909,7 +914,7 @@ const productRepository = {
         payment_method_id,
         shipping_address_id,
         coupons_id,
-        comment: null,
+        comment,
         order_items: {
           create: items.map((item) => ({
             variant: {
@@ -937,6 +942,7 @@ const productRepository = {
     return await prisma.coupons.findUnique({
       where: {
         coupons_id: Number(id), // Ép kiểu tại đây
+
       },
     });
   },

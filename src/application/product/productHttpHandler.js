@@ -1,33 +1,32 @@
-
-const getAllProductsUsecase = require('../../infrastructure/usecase/product/getAllProductUsecase');
-const getProductDetailUsecase = require('../../infrastructure/usecase/product/getProductDetailUsecase');
-const getBestSellingUsecase = require('../../infrastructure/usecase/product/getBestSellingUsecase');
-const getNewestProductsUsecase = require('../../infrastructure/usecase/product/getNewestProductsUsecase');
-const getFeaturedProductsUsecase = require('../../infrastructure/usecase/product/getFeaturedProductsUsecase');
-const getProductsByCategoryUsecase = require('../../infrastructure/usecase/product/getProductsByCategoryUsecase');
-const getDealProductsUsecase = require('../../infrastructure/usecase/product/getDealProductsUsecase');
-const getRelatedProductsUsecase = require('../../infrastructure/usecase/product/getRelatedProductsUsecase');
-const getProductsByGenderUsecase = require('../../infrastructure/usecase/product/getProductsByGenderUsecase');
-const addProductUsecase = require('../../infrastructure/usecase/product/addProductUsecase');
-const addToCartUsecase = require('../../infrastructure/usecase/product/addToCartUsecase');
-const searchProductsUsecase = require('../../infrastructure/usecase/product/searchProductsUsecase');
-const getAllCouponsUsecase = require('../../infrastructure/usecase/product/getAllCouponsUsecase');
-const addToWishlistUsecase = require('../../infrastructure/usecase/product/addToWishlistUsecase');
-const getReviewsByProductUsecase = require('../../infrastructure/usecase/product/getReviewsByProductUsecase');
-const createProductReviewUsecase = require('../../infrastructure/usecase/product/createProductReviewUsecase');
-const getProductsByBrandUsecase = require('../../infrastructure/usecase/product/getProductsByBrandUsecase');
-const addToCompareUsecase = require('../../infrastructure/usecase/product/addToCompareUsecase');
-const removeFromCompareUsecase = require('../../infrastructure/usecase/product/removeFromCompareUsecase');
-const getCompareProductsUsecase = require('../../infrastructure/usecase/product/getCompareProductsUsecase');
-const getCartUsecase = require('../../infrastructure/usecase/product/getCartUsecase');
-const updateCartUsecase = require('../../infrastructure/usecase/product/updateCartUsecase');
-const removeFromCartUsecase = require('../../infrastructure/usecase/product/removeFromCartUsecase');
-const checkoutUsecase = require('../../infrastructure/usecase/product/checkoutUsecase');
-const filterProductsUsecase = require('../../infrastructure/usecase/product/filterProductsUsecase');
-const removeWishlistItemUsecase = require('../../infrastructure/usecase/product/removeWishlistItemUsecase');
-const getOrdersByUserUsecase = require('../../infrastructure/usecase/product/getOrdersByUserUsecase');
-const updateProductUsecase = require('../../infrastructure/usecase/product/updateProductUsecase');
-const deleteProductUsecase = require('../../infrastructure/usecase/product/deleteProductUsecase');
+const getAllProductsUsecase = require("../../infrastructure/usecase/product/getAllProductUsecase");
+const getProductDetailUsecase = require("../../infrastructure/usecase/product/getProductDetailUsecase");
+const getBestSellingUsecase = require("../../infrastructure/usecase/product/getBestSellingUsecase");
+const getNewestProductsUsecase = require("../../infrastructure/usecase/product/getNewestProductsUsecase");
+const getFeaturedProductsUsecase = require("../../infrastructure/usecase/product/getFeaturedProductsUsecase");
+const getProductsByCategoryUsecase = require("../../infrastructure/usecase/product/getProductsByCategoryUsecase");
+const getDealProductsUsecase = require("../../infrastructure/usecase/product/getDealProductsUsecase");
+const getRelatedProductsUsecase = require("../../infrastructure/usecase/product/getRelatedProductsUsecase");
+const getProductsByGenderUsecase = require("../../infrastructure/usecase/product/getProductsByGenderUsecase");
+const addProductUsecase = require("../../infrastructure/usecase/product/addProductUsecase");
+const addToCartUsecase = require("../../infrastructure/usecase/product/addToCartUsecase");
+const searchProductsUsecase = require("../../infrastructure/usecase/product/searchProductsUsecase");
+const getAllCouponsUsecase = require("../../infrastructure/usecase/product/getAllCouponsUsecase");
+const addToWishlistUsecase = require("../../infrastructure/usecase/product/addToWishlistUsecase");
+const getReviewsByProductUsecase = require("../../infrastructure/usecase/product/getReviewsByProductUsecase");
+const createProductReviewUsecase = require("../../infrastructure/usecase/product/createProductReviewUsecase");
+const getProductsByBrandUsecase = require("../../infrastructure/usecase/product/getProductsByBrandUsecase");
+const addToCompareUsecase = require("../../infrastructure/usecase/product/addToCompareUsecase");
+const removeFromCompareUsecase = require("../../infrastructure/usecase/product/removeFromCompareUsecase");
+const getCompareProductsUsecase = require("../../infrastructure/usecase/product/getCompareProductsUsecase");
+const getCartUsecase = require("../../infrastructure/usecase/product/getCartUsecase");
+const updateCartUsecase = require("../../infrastructure/usecase/product/updateCartUsecase");
+const removeFromCartUsecase = require("../../infrastructure/usecase/product/removeFromCartUsecase");
+const checkoutUsecase = require("../../infrastructure/usecase/product/checkoutUsecase");
+const filterProductsUsecase = require("../../infrastructure/usecase/product/filterProductsUsecase");
+const removeWishlistItemUsecase = require("../../infrastructure/usecase/product/removeWishlistItemUsecase");
+const getOrdersByUserUsecase = require("../../infrastructure/usecase/product/getOrdersByUserUsecase");
+const updateProductUsecase = require("../../infrastructure/usecase/product/updateProductUsecase");
+const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -55,34 +54,29 @@ async function getOrderHandler(req, res) {
 
     return res.status(200).json({
       data: orders,
-      page,
-      limit,
     });
   } catch (error) {
-    console.error('[Handler] Lỗi lấy đơn hàng theo user:', error);
-    return res.status(500).json({ error: 'Lỗi máy chủ khi lấy đơn hàng.' });
+    console.error("[Handler] Lỗi lấy đơn hàng theo user:", error);
+    return res.status(500).json({ error: "Lỗi máy chủ khi lấy đơn hàng." });
   }
 }
-
 
 async function deleteProductHandler(req, res) {
   try {
     const products_id = parseInt(req.params.id);
     if (isNaN(products_id)) {
-      return res.status(400).json({ error: 'ID sản phẩm không hợp lệ.' });
-    } 
+      return res.status(400).json({ error: "ID sản phẩm không hợp lệ." });
+    }
     const result = await deleteProductUsecase(products_id);
-    res.status(200).json({ message: 'Xóa sản phẩm thành công.', result });
+    res.status(200).json({ message: "Xóa sản phẩm thành công.", result });
   } catch (error) {
-    console.error('[Handler] Lỗi deleteProduct:', error);
-    res.status(500).json({ error: 'Lỗi máy chủ khi xóa sản phẩm.' });
-    
+    console.error("[Handler] Lỗi deleteProduct:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi xóa sản phẩm." });
   }
 }
 
 async function filterProductsHandler(req, res, next) {
   try {
-
     const {
       keyword,
       gender,
@@ -331,10 +325,11 @@ const updateProductHandler = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     console.error("Lỗi khi cập nhật sản phẩm:", error.message);
-    return res.status(500).json({ error: "Đã xảy ra lỗi khi cập nhật sản phẩm." });
+    return res
+      .status(500)
+      .json({ error: "Đã xảy ra lỗi khi cập nhật sản phẩm." });
   }
 };
-
 
 async function addToCart(req, res) {
   try {
@@ -504,7 +499,14 @@ async function removeFromCartHandler(req, res) {
 
 async function checkoutHandler(req, res) {
   try {
-    const { user_id, shipping_address_id, payment_method, coupons_id } = req.body;
+    const {
+      user_id,
+      shipping_address_id,
+      payment_method,
+      coupon_code,
+      shipping_fee,
+      comment
+    } = req.body;
 
     if (!user_id || !shipping_address_id || !payment_method) {
       return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
@@ -514,15 +516,21 @@ async function checkoutHandler(req, res) {
       user_id,
       shipping_address_id,
       payment_method,
-      coupons_id, // Thêm dòng này
+      coupon_code,
+      shipping_fee: shipping_fee || 0,
+      comment,
     });
 
-    return res.status(201).json({ message: "Thanh toán thành công", data: order });
+    return res
+      .status(201)
+      .json({ message: "Thanh toán thành công", data: order });
   } catch (err) {
     console.error("Checkout Error:", err);
-    res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
+    return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
   }
 }
+
+module.exports = checkoutHandler;
 
 async function removeWishlistItemHandler(req, res) {
   const { userId, productId } = req.body;
@@ -578,5 +586,4 @@ module.exports = {
   getOrderHandler,
   updateProductHandler,
   deleteProductHandler,
-
 };

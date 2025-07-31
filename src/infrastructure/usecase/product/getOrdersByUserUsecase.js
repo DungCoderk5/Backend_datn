@@ -1,6 +1,6 @@
-const productRepository = require('../../repository/productRepository');
+const productRepository = require("../../repository/productRepository");
 
-async function getOrdersByUserUsecase(userId, skip, take) {
+async function getOrdersByUserUsecase({ userId, skip, take }) {
   return await productRepository.findByUserId(userId, skip, take);
 }
 
