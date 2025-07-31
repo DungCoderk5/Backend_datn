@@ -64,11 +64,26 @@ const postRepository = {
     });
   },
 
-  async findById(post_id) {
-    return await prisma.posts.findUnique({
-      where: { post_id },
-    });
-  },
+async findById(post_id) {
+  return await prisma.posts.findUnique({
+    where: { post_id },
+    include: {
+      author: {
+        select: {
+          name: true,
+        },
+      },
+      category_post: {
+        select: {
+          category_post_id: true,
+          name: true, // nếu bạn muốn lấy tên chuyên mục
+        },
+      },
+    },
+  });
+}
+,
+
 
   async delete(post_id) {
     return await prisma.posts.delete({

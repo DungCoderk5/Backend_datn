@@ -784,6 +784,11 @@ const productRepository = {
     const [products, total] = await Promise.all([
       prisma.products.findMany({
         where: filters,
+        take: limit,
+        skip: offset,
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
         include: {
           images: true,
           brand: true,
@@ -795,11 +800,6 @@ const productRepository = {
               size: true,
             },
           },
-        },
-        take: limit,
-        skip: offset,
-        orderBy: {
-          [sortBy]: sortOrder,
         },
       }),
 
@@ -961,11 +961,11 @@ const productRepository = {
       },
     });
   },
-
-  async getVoucherByCode(code) {
-    return await prisma.coupons.findFirst({
+  async getVoucherById(id) {
+    return await prisma.coupons.findUnique({
       where: {
-        code: code,
+        coupons_id: Number(id), // Ép kiểu tại đây
+
       },
     });
   },
