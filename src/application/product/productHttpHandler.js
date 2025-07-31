@@ -27,6 +27,7 @@ const removeWishlistItemUsecase = require("../../infrastructure/usecase/product/
 const getOrdersByUserUsecase = require("../../infrastructure/usecase/product/getOrdersByUserUsecase");
 const updateProductUsecase = require("../../infrastructure/usecase/product/updateProductUsecase");
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
+const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -39,6 +40,27 @@ async function getAllProductsHandler(req, res) {
   } catch (error) {
     console.error("[Handler] Lỗi getAllProducts:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách sản phẩm." });
+  }
+}
+
+async function getCouponsHandler(req, res) {
+  const { code, total } = req.query;
+  if (!code) {
+    return res.status(400).json({ error: "Thiếu mã giảm giá." });
+  }
+  if (total && isNaN(total)) {
+    return res
+      .status(400)
+      .json({ error: "Bạn cần thêm sản phẩm trước khi áp dụng mã giảm giá ." });
+  }
+  try {
+    const coupons = await getCouponsUsecase(code, total);
+    res.status(200).json(coupons);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllCoupons:", error);
+    res
+      .status(500)
+      .json({ error: "Lỗi máy chủ khi lấy danh sách mã giảm giá." });
   }
 }
 
@@ -504,7 +526,7 @@ async function checkoutHandler(req, res) {
       payment_method,
       coupon_code,
       shipping_fee,
-      comment
+      comment,
     } = req.body;
 
     if (!user_id || !shipping_address_id || !payment_method) {
@@ -528,8 +550,6 @@ async function checkoutHandler(req, res) {
     return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
   }
 }
-
-module.exports = checkoutHandler;
 
 async function removeWishlistItemHandler(req, res) {
   const { userId, productId } = req.body;
@@ -585,4 +605,5 @@ module.exports = {
   getOrderHandler,
   updateProductHandler,
   deleteProductHandler,
+  getCouponsHandler,
 };

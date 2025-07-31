@@ -193,6 +193,7 @@ model coupons {
   used_count     Int                    @default(0)
   created_at     DateTime               @default(now())
   updated_at     DateTime               @default(now()) @updatedAt
+  min_order      Int                    @default(0)
 
   // Relations
   orders orders[]
