@@ -968,7 +968,18 @@ const productRepository = {
       },
     });
   },
+  async updatePaymentStatus(orderId, status) {
+    await prisma.orders.update({
+      where: { orders_id: orderId },
+      data: { payment_status: status },
+    });
+  },
 
+  async getOrderById(orderId) {
+    return await prisma.orders.findUnique({
+      where: { orders_id: orderId },
+    });
+  },
   async getVoucherById(id) {
     return await prisma.coupons.findUnique({
       where: {
@@ -979,14 +990,15 @@ const productRepository = {
 
   async clearCart(user_id) {
     const cart = await prisma.carts.findFirst({ where: { user_id } });
-    if (!cart) return;
 
-    // Xoá tất cả cart_items trước
+    if (!cart) {
+      return;
+    }
+
     await prisma.cart_items.deleteMany({
       where: { cart_id: cart.carts_id },
     });
 
-    // Sau đó mới xoá cart (nếu thực sự muốn)
     await prisma.carts.delete({
       where: { carts_id: cart.carts_id },
     });
