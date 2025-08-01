@@ -7,7 +7,6 @@ const {
   registerHandler,
   updateUserHandler,
   addAddressHandler,
-
   checkTokenHandler,
   googleCallback,
   changePasswordHandler,
@@ -28,12 +27,10 @@ const {
   ResetPassHandler,
   updateOrderStatusHandler
 } = require("../../../application/user/userHttpHandler");
-const { update } = require("../../../infrastructure/repository/brandRepository");
-
+require("../../../infrastructure/repository/brandRepository");
 router.post("/login", loginHandler);
 router.post("/logout", logoutHandler);
 router.post("/register", registerHandler);
-
 router.put("/update" , upload.single('avatar'), validateRealImage, updateUserHandler);
 router.post("/add-address", addAddressHandler);
 router.get("/check-token", checkTokenHandler);
