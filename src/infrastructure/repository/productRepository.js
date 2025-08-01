@@ -961,11 +961,18 @@ const productRepository = {
       },
     });
   },
+  async getVoucherByCode(code) {
+    return await prisma.coupons.findFirst({
+      where: {
+        code: code,
+      },
+    });
+  },
+
   async getVoucherById(id) {
     return await prisma.coupons.findUnique({
       where: {
         coupons_id: Number(id), // Ép kiểu tại đây
-
       },
     });
   },
