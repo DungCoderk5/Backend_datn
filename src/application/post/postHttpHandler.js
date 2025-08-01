@@ -124,7 +124,7 @@ async function addPostHandler(req, res) {
       images,
       category_post_id,
       author_id,
-      status = 1, // mặc định nếu không truyền
+      status = 1, 
     } = req.body;
 
     if (req.file) {
