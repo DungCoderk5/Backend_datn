@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const userController = require('../adapter/api/controllers/userController');
+
 const productController = require('../adapter/api/controllers/productController');
 const categoryController = require('../adapter/api/controllers/categoryController');
 const postController = require('../adapter/api/controllers/postController');
@@ -14,6 +15,7 @@ const path = require("path")
 const app = express();
 app.use(express.json());
 
+
 app.use(cors({
   origin: 'http://localhost:3001',  
   credentials: true                
@@ -23,6 +25,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 
 app.use('/', userController);
+
 
 app.use('/product', productController);
 

@@ -15,6 +15,7 @@ model users {
   role       String?  @db.VarChar(191)
   status     Int?     @default(1) @db.TinyInt
   avatar     String?  @db.Text
+  verify_otp String?  @db.Text
   created_at DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
 
@@ -192,6 +193,7 @@ model coupons {
   used_count     Int                    @default(0)
   created_at     DateTime               @default(now())
   updated_at     DateTime               @default(now()) @updatedAt
+  min_order      Int                    @default(0)
 
   // Relations
   orders orders[]
