@@ -13,10 +13,9 @@ async function checkoutUsecase({
   if (!cartItems || cartItems.length === 0) {
     throw new Error("Giỏ hàng trống");
   }
-console.log("Cart Items:", cartItems);
+
   const subtotal = cartItems.reduce((sum, item) => {
     const product = item.variant.product;
-    console.log("Product info:", item.variant.product);
     const unitPrice = product.sale_price ?? product.price;
     return sum + unitPrice * item.quantity;
   }, 0);
@@ -26,15 +25,11 @@ console.log("Cart Items:", cartItems);
 
   if (coupon_code) {
     const coupon = await productRepository.getVoucherByCode(coupon_code);
-
     if (coupon && coupon.usage_limit > coupon.used_count) {
       coupon_id = coupon.coupons_id;
-
-      if (coupon.discount_type === "percentage") {
-        discount = Math.floor((subtotal * coupon.discount_value) / 100);
-      } else if (coupon.discount_type === "fixed") {
-        discount = coupon.discount_value;
-      }
+      discount = coupon.discount_type === "percentage"
+        ? Math.floor((subtotal * coupon.discount_value) / 100)
+        : coupon.discount_value;
     }
   }
 
@@ -60,8 +55,9 @@ console.log("Cart Items:", cartItems);
     comment,
     items: orderItems,
   });
-
-  await productRepository.clearCart(user_id);
+  if (payment_method.code !== "zalopay") {
+    await productRepository.clearCart(user_id);
+  }
 
   return newOrder;
 }
