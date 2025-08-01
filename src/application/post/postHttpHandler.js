@@ -137,7 +137,7 @@ async function addPostHandler(req, res) {
       content,
       thumbnail,
       images,
-      category_post_id,
+      category_post_id : Number(category_post_id),
       author_id: Number(author_id),
       status,
     });
