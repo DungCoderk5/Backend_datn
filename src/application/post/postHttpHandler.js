@@ -121,17 +121,15 @@ async function addPostHandler(req, res) {
       title,
       slug,
       content,
-      thumbnail,
       images,
       category_post_id,
       author_id,
       status = 1, // mặc định nếu không truyền
     } = req.body;
 
-    // Kiểm tra thông tin cần thiết
-    // if (!title || !content || !category_post_id) {
-    //   return res.status(400).json({ error: "Thiếu thông tin bài viết." });
-    // }
+    if (req.file) {
+      thumbnail = req.file.filename;
+    }
 
     const result = await createPostUsecase({
       title,
@@ -139,8 +137,8 @@ async function addPostHandler(req, res) {
       content,
       thumbnail,
       images,
-      category_post_id,
-      author_id,
+      category_post_id : Number(category_post_id),
+      author_id: Number(author_id),
       status,
     });
 
