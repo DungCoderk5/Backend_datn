@@ -1,4 +1,4 @@
-const checkoutUsecase = require("../../infrastructure/usecase/payment/checkoutUsecase");
+const checkoutUsecase = require("../../infrastructure/usecase/product/checkoutUsecase");
 const paymentUsecase = require("../../infrastructure/usecase/payment/paymentUsecase");
 
 module.exports = {

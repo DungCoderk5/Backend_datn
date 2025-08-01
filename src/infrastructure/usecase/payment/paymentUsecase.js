@@ -14,7 +14,7 @@ module.exports = {
   createPayment: async ({ amount, order_id }) => {
     const transID = Math.floor(Math.random() * 1000000);
     const items = [{}];
-    const embed_data = { redirecturl: `http://localhost:3001/thankyou/${order_id}` };
+    const embed_data = { redirecturl: `http://localhost:3001/payment_successful/${order_id}` };
 
     const order = {
       app_id: config.app_id,
