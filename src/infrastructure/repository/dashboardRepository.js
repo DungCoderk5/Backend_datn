@@ -1,8 +1,19 @@
-const prisma = require('../../shared/prisma');
-const { startOfWeek, addDays, format, isAfter, startOfMonth, endOfMonth, startOfYear, endOfYear, eachDayOfInterval, eachMonthOfInterval } = require('date-fns');
+const prisma = require("../../shared/prisma");
+const {
+  startOfWeek,
+  addDays,
+  format,
+  isAfter,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+} = require("date-fns");
 
 const dashboardRepository = {
- async getWeeklyRevenueByDate(inputDateStr) {
+  async getWeeklyRevenueByDate(inputDateStr) {
     const inputDate = new Date(inputDateStr);
 
     const startDate = startOfWeek(inputDate, { weekStartsOn: 1 });
@@ -21,7 +32,7 @@ const dashboardRepository = {
       const revenue = await prisma.orders.aggregate({
         _sum: { total_amount: true },
         where: {
-          status: { not: 'canceled' },
+          status: { not: "canceled" },
           created_at: {
             gte: start,
             lte: end,
@@ -30,11 +41,25 @@ const dashboardRepository = {
       });
 
       result.push({
-        day: format(start, 'EEEE (dd/MM)'),
+        day: format(start, "EEEE (dd/MM)"),
         revenue: revenue._sum.total_amount || 0,
       });
     }
 
+    return result;
+  },
+
+  async getDailyRevenueByDate(date) {
+    const today = date || new Date();
+    const result = await prisma.orders.aggregate({
+      _sum: { total_amount: true },
+      where: {
+        status: { not: "canceled" },
+        created_at: {
+          today,
+        },
+      },
+    });
     return result;
   },
 
@@ -53,7 +78,7 @@ const dashboardRepository = {
         const revenue = await prisma.orders.aggregate({
           _sum: { total_amount: true },
           where: {
-            status: { not: 'canceled' },
+            status: { not: "canceled" },
             created_at: {
               gte: startTime,
               lte: endTime,
@@ -62,7 +87,7 @@ const dashboardRepository = {
         });
 
         return {
-          day: format(startTime, 'dd/MM'),
+          day: format(startTime, "dd/MM"),
           revenue: revenue._sum.total_amount || 0,
         };
       })
@@ -88,7 +113,7 @@ const dashboardRepository = {
         const revenue = await prisma.orders.aggregate({
           _sum: { total_amount: true },
           where: {
-            status: { not: 'canceled' },
+            status: { not: "canceled" },
             created_at: {
               gte: startTime,
               lte: endTime,
@@ -97,7 +122,7 @@ const dashboardRepository = {
         });
 
         return {
-          month: format(startTime, 'MM/yyyy'),
+          month: format(startTime, "MM/yyyy"),
           revenue: revenue._sum.total_amount || 0,
         };
       })
