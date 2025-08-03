@@ -3,25 +3,51 @@ const userRepository = require("../../infrastructure/repository/userRepository")
 const loginUsecase = require("../../infrastructure/usecase/user/loginUsecase");
 const registerUsecase = require("../../infrastructure/usecase/user/registerUsecase");
 const updateUserUsecase = require("../../infrastructure/usecase/user/updateUserUsecase");
+
 const addAddressUsecase = require("../../infrastructure/usecase/user/addAddressUsecase");
 const checkTokenUsecase = require("../../infrastructure/usecase/user/checkTokenUsecase");
 const GoogleAuthUsecase = require("../../infrastructure/usecase/user/googleAuthUsecase");
 const GoogleAuthRepository = require("../../infrastructure/repository/googleAuthRepository");
 
-const changePasswordUsecase = require('../../infrastructure/usecase/user/changePasswordUsecase');
-const getCartByUserUsecase = require('../../infrastructure/usecase/user/getCartByUserUsecase');
-const getAddressesByUserUsecase = require('../../infrastructure/usecase/user/getAddressesByUserUsecase');
-const updateAddressUsecase = require('../../infrastructure/usecase/user/updateAddressUsecase');
-const deleteAddressUsecase = require('../../infrastructure/usecase/user/deleteAddressUsecase');
-const getUserProfileUsecase = require('../../infrastructure/usecase/user/getUserProfileUsecase');
-const getReviewsByUserUsecase = require('../../infrastructure/usecase/user/getReviewsByUserUsecase');
-const sendContactEmailUsecase = require('../../infrastructure/usecase/user/sendContactEmailUsecase');
-const getOrderDetail = require('../../infrastructure/usecase/user/getOrderDetailUseCase');
-const getWishlistByUserUsecase = require('../../infrastructure/usecase/user/getWishlistByUserUsecase');
-const sendMailUsecase = require('../../infrastructure/usecase/user/sendMailUsecase');
+const changePasswordUsecase = require("../../infrastructure/usecase/user/changePasswordUsecase");
+const getCartByUserUsecase = require("../../infrastructure/usecase/user/getCartByUserUsecase");
+const getAddressesByUserUsecase = require("../../infrastructure/usecase/user/getAddressesByUserUsecase");
+const updateAddressUsecase = require("../../infrastructure/usecase/user/updateAddressUsecase");
+const deleteAddressUsecase = require("../../infrastructure/usecase/user/deleteAddressUsecase");
+const getUserProfileUsecase = require("../../infrastructure/usecase/user/getUserProfileUsecase");
+const getReviewsByUserUsecase = require("../../infrastructure/usecase/user/getReviewsByUserUsecase");
+const sendContactEmailUsecase = require("../../infrastructure/usecase/user/sendContactEmailUsecase");
+const getOrderDetail = require("../../infrastructure/usecase/user/getOrderDetailUseCase");
+const getWishlistByUserUsecase = require("../../infrastructure/usecase/user/getWishlistByUserUsecase");
+const sendMailUsecase = require("../../infrastructure/usecase/user/sendMailUsecase");
+const getDefaultAddressUsecase = require("../../infrastructure/usecase/user/getDefaultAddressUsecase");
+const confirmEmailUsecase = require("../../infrastructure/usecase/user/confirmEmailUsecase");
+const getAddressesByIdUsecase = require("../../infrastructure/usecase/user/getAddressesByIdUsecase");
+const sendResetPassUsecase = require("../../infrastructure/usecase/user/sendResetPassUsecase");
+const ResetPassUsecase = require("../../infrastructure/usecase/user/ResetPassUsecase");
+const updateOrderStatusUsecase = require("../../infrastructure/usecase/user/updateOrderStatusUsecase");
+
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
+
+async function updateOrderStatusHandler(req, res) {
+  const orderId = parseInt(req.params.orderId);
+  const { status } = req.body;
+
+  if (!orderId || !status) {
+    return res.status(400).json({ error: "Thiếu thông tin cần thiết" });
+  }
+
+  try {
+    const result = await updateOrderStatusUsecase(orderId, status);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi cập nhật trạng thái đơn hàng:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái đơn hàng." });
+  }
+}
+
 async function googleCallback(req, res) {
   try {
     const { code } = req.body;
@@ -38,7 +64,7 @@ async function googleCallback(req, res) {
       redirect_uri,
       jwtSecret
     );
-    res.cookie("token",  result.token, {
+    res.cookie("token", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // chỉ HTTPS khi production
       sameSite: "strict", // hoặc "strict"
@@ -54,6 +80,37 @@ async function googleCallback(req, res) {
   }
 }
 
+async function ResetPassHandler(req, res) {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ error: "Thiếu thông tin cần thiết" });
+  }
+  try {
+    const result = await ResetPassUsecase(email, otp, newPassword);
+    res
+      .status(200)
+      .json({ message: "Mật khẩu đã được cập nhật thành công", result });
+  } catch (error) {
+    console.error("[Handler] Lỗi reset password:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật mật khẩu." });
+  }
+}
+async function sendResetPassHandler(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Thiếu email" });
+  }
+
+  try {
+    const result = await sendResetPassUsecase(email);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi reset password:", error);
+    res.status(500).json({ error: "Lỗi khi gửi email reset password." });
+  }
+}
+
 async function loginHandler(req, res) {
   try {
     const { usernameOrEmail, password } = req.body;
@@ -64,18 +121,72 @@ async function loginHandler(req, res) {
   }
 }
 
+async function getAddressesByIdHandler(req, res) {
+  const addressId = parseInt(req.params.addressid);
+  try {
+    const result = await getAddressesByIdUsecase(addressId);
+    if (!result) {
+      return res.status(404).json({ error: "Địa chỉ không tìm thấy." });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAddressesById:", error);
+    res.status(500).json({ error: "Lỗi khi lấy địa chỉ." });
+  }
+}
+
+async function confirmEmailHandler(req, res) {
+  const { email, token } = req.body;
+  try {
+    if (!email) {
+      return res
+        .status(400)
+        .json({ error: "Thiếu email hoặc token xác nhận." });
+    }
+    const result = await confirmEmailUsecase(email, token);
+    if (result) {
+      return res
+        .status(200)
+        .json({ message: "Email đã được xác nhận thành công." });
+    } else {
+      return res
+        .status(400)
+        .json({ error: "Xác nhận email không thành công." });
+    }
+  } catch (error) {
+    console.error("[Handler] Lỗi xác nhận email:", error);
+    return res.status(500).json({ error: "Lỗi máy chủ khi xác nhận email." });
+  }
+}
+
+async function getDefaultAddressHandler(req, res) {
+  const userId = parseInt(req.params.userId);
+  try {
+    const result = await getDefaultAddressUsecase(userId);
+    if (!result) {
+      return res
+        .status(404)
+        .json({ error: "Địa chỉ mặc định không tìm thấy." });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getDefaultAddress:", error);
+    res.status(500).json({ error: "Lỗi khi lấy địa chỉ mặc định." });
+  }
+}
+
 const getOrderDetailHandler = async (req, res) => {
   const orderId = parseInt(req.params.orderId);
 
   const result = await getOrderDetail(orderId);
 
   if (result.error) {
-    if (result.error === 'Order not found.') {
+    if (result.error === "Order not found.") {
       return res.status(404).json({ error: result.error });
     }
     return res.status(400).json({ error: result.error });
   }
-
+console.log('[Handler] getOrderDetail result:', result);
   return res.json(result.data);
 };
 
@@ -83,14 +194,14 @@ const getWishlistByUserHandler = async (req, res) => {
   const user_id = parseInt(req.params.userId);
   const result = await getWishlistByUserUsecase(user_id);
   if (result.error) {
-    if (result.error === 'wishlist not found.') {
+    if (result.error === "wishlist not found.") {
       return res.status(404).json({ error: result.error });
     }
     return res.status(400).json({ error: result.error });
   }
 
   if (!result || result.length === 0) {
-    return res.status(200).json({ message: 'wishlist is empty', result: [] });
+    return res.status(200).json({ message: "wishlist is empty", result: [] });
   }
 
   return res.json(result);
@@ -136,7 +247,7 @@ async function updateUserHandler(req, res) {
     if (req.file) {
       userData.avatar = req.file.filename;
     }
-    
+
     const result = await updateUserUsecase(userId, userData);
     res.json(result);
   } catch (err) {
@@ -157,6 +268,7 @@ async function addAddressHandler(req, res) {
       full_name,
       phone,
       address_line,
+
       is_default: is_default ?? false,
     });
 
@@ -169,18 +281,22 @@ async function addAddressHandler(req, res) {
 async function changePasswordHandler(req, res) {
   try {
     // const userId = req.body?.user_id; // hoặc lấy từ JWT decode
-    const {userId, oldPassword, newPassword } = req.body;
-console.log('[DEBUG] req.body:', req.body);
+    const { userId, oldPassword, newPassword } = req.body;
+    console.log("[DEBUG] req.body:", req.body);
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ error: 'Thiếu mật khẩu cũ hoặc mới' });
+      return res.status(400).json({ error: "Thiếu mật khẩu cũ hoặc mới" });
     }
 
-    const result = await changePasswordUsecase({ userId, oldPassword, newPassword });
+    const result = await changePasswordUsecase({
+      userId,
+      oldPassword,
+      newPassword,
+    });
 
     res.status(200).json(result);
   } catch (err) {
-    console.error('[Handler] Lỗi đổi mật khẩu:', err);
-    res.status(400).json({ error: err.message || 'Đổi mật khẩu thất bại' });
+    console.error("[Handler] Lỗi đổi mật khẩu:", err);
+    res.status(400).json({ error: err.message || "Đổi mật khẩu thất bại" });
   }
 }
 
@@ -190,8 +306,8 @@ async function getCartByUserHandler(req, res) {
     const result = await getCartByUserUsecase({ userId });
     res.status(200).json(result);
   } catch (error) {
-    console.error('[Handler] Lỗi getCartByUser:', error);
-    res.status(500).json({ error: 'Lỗi máy chủ khi lấy giỏ hàng.' });
+    console.error("[Handler] Lỗi getCartByUser:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy giỏ hàng." });
   }
 }
 
@@ -201,8 +317,8 @@ async function getAddressesByUserHandler(req, res) {
     const result = await getAddressesByUserUsecase({ userId });
     res.status(200).json(result);
   } catch (error) {
-    console.error('[Handler] Lỗi getAddressesByUser:', error);
-    res.status(500).json({ error: 'Lỗi khi lấy danh sách địa chỉ.' });
+    console.error("[Handler] Lỗi getAddressesByUser:", error);
+    res.status(500).json({ error: "Lỗi khi lấy danh sách địa chỉ." });
   }
 }
 
@@ -213,8 +329,8 @@ async function updateAddressHandler(req, res) {
     const result = await updateAddressUsecase({ addressId, payload });
     res.status(200).json(result);
   } catch (error) {
-    console.error('[Handler] Lỗi updateAddress:', error);
-    res.status(500).json({ error: 'Lỗi khi cập nhật địa chỉ.' });
+    console.error("[Handler] Lỗi updateAddress:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật địa chỉ." });
   }
 }
 
@@ -224,8 +340,8 @@ async function deleteAddressHandler(req, res) {
     const result = await deleteAddressUsecase({ addressId });
     res.status(200).json(result);
   } catch (error) {
-    console.error('[Handler] Lỗi deleteAddress:', error);
-    res.status(500).json({ error: 'Lỗi khi xóa địa chỉ.' });
+    console.error("[Handler] Lỗi deleteAddress:", error);
+    res.status(500).json({ error: "Lỗi khi xóa địa chỉ." });
   }
 }
 
@@ -235,8 +351,8 @@ async function getUserProfileHandler(req, res) {
     const result = await getUserProfileUsecase({ userId });
     res.status(200).json(result);
   } catch (error) {
-    console.error('[Handler] Lỗi getUserProfile:', error);
-    res.status(500).json({ error: 'Lỗi khi lấy thông tin người dùng.' });
+    console.error("[Handler] Lỗi getUserProfile:", error);
+    res.status(500).json({ error: "Lỗi khi lấy thông tin người dùng." });
   }
 }
 
@@ -246,8 +362,8 @@ async function getReviewsByUserHandler(req, res) {
     const result = await getReviewsByUserUsecase({ userId });
     res.status(200).json(result);
   } catch (error) {
-    console.error('[Handler] Lỗi getReviewsByUser:', error);
-    res.status(500).json({ error: 'Lỗi khi lấy đánh giá của người dùng.' });
+    console.error("[Handler] Lỗi getReviewsByUser:", error);
+    res.status(500).json({ error: "Lỗi khi lấy đánh giá của người dùng." });
   }
 }
 
@@ -272,10 +388,10 @@ async function sendMailHandler(req, res) {
 
   try {
     await sendMailUsecase({ to, subject, html });
-    res.status(200).json({ message: 'Gửi email thành công.' });
+    res.status(200).json({ message: "Gửi email thành công." });
   } catch (error) {
-    console.error('[Handler] Lỗi gửi email:', error);
-    res.status(500).json({ error: 'Không thể gửi email.' });
+    console.error("[Handler] Lỗi gửi email:", error);
+    res.status(500).json({ error: "Không thể gửi email." });
   }
 }
 
@@ -297,5 +413,11 @@ module.exports = {
   sendContactEmailHandler,
   getOrderDetailHandler,
   getWishlistByUserHandler,
-  sendMailHandler
+  sendMailHandler,
+  getDefaultAddressHandler,
+  confirmEmailHandler,
+  getAddressesByIdHandler,
+  sendResetPassHandler,
+  ResetPassHandler,
+  updateOrderStatusHandler
 };

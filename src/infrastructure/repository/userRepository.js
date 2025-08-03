@@ -1,8 +1,8 @@
 const prisma = require("../../shared/prisma");
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || 'smtp.gmail.com',
+  host: process.env.MAIL_HOST || "smtp.gmail.com",
   port: 587,
   secure: false, // true for 465, false for other ports
   auth: {
@@ -10,6 +10,16 @@ const transporter = nodemailer.createTransport({
     pass: process.env.MAIL_PASS,
   },
 });
+
+async function updateOrderStatus(orderId, status) {
+  return await prisma.orders.update({
+    where: { orders_id: orderId },
+    data: {
+      status,
+      updated_at: new Date(),
+    },
+  });
+}
 
 async function findByUsernameOrEmail(usernameOrEmail) {
   return await prisma.users.findFirst({
@@ -19,14 +29,106 @@ async function findByUsernameOrEmail(usernameOrEmail) {
   });
 }
 
-  async function sendMail({ to, subject, html }) {
-    return await transporter.sendMail({
-      from: `"DATN Store" <${process.env.MAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
+async function findByEmail(email) {
+  return await prisma.users.findFirst({
+    where: { email },
+  });
+}
+
+async function ResetPass(email, hashedPassword) {
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      password: hashedPassword,
+      updated_at: new Date(),
+      verify_otp: null,
+    },
+  });
+}
+
+async function findAddressById(addressid) {
+  return await prisma.ship_address.findUnique({
+    where: { ship_address_id: addressid },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+}
+
+async function confirm(email, token) {
+  const user = await prisma.users.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new Error("Người dùng không tồn tại");
   }
+
+  if (user.status === 1) {
+    throw new Error("Email đã được xác nhận trước đó");
+  }
+
+  if (user.verify_otp !== token) {
+    throw new Error("Token xác nhận không hợp lệ");
+  }
+
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      status: 1,
+      verify_otp: null,
+      updated_at: new Date(),
+    },
+  });
+}
+
+async function setOTP(email, OTP) {
+  return await prisma.users.update({
+    where: { email },
+    data: {
+      verify_otp: OTP,
+    },
+  });
+}
+
+async function findDefaultAddress(userId) {
+  if (!userId) {
+    throw new Error("Thiếu userId");
+  }
+
+  const address = await prisma.ship_address.findFirst({
+    where: {
+      user_id: userId,
+      is_default: true,
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!address) {
+    throw new Error("Địa chỉ mặc định không tìm thấy");
+  }
+
+  return address;
+}
+
+async function sendMail({ to, subject, html }) {
+  return await transporter.sendMail({
+    from: `"DATN Store" <${process.env.MAIL_USER}>`,
+    to,
+    subject,
+    html,
+  });
+}
 
 async function create(data) {
   return await prisma.users.create({
@@ -133,7 +235,7 @@ async function findWishlistByUserId(user_id) {
   if (!user_id || isNaN(user_id)) {
     throw new Error("Invalid userId passed to findWishlistByUserId");
   }
-  
+
   try {
     const wishlist = await prisma.wishlist_items.findMany({
       where: { user_id },
@@ -144,10 +246,10 @@ async function findWishlistByUserId(user_id) {
             category: true,
             gender: true,
             images: true,
-             product_variants: true,
+            product_variants: true,
           },
         },
-      }
+      },
     });
     return wishlist;
   } catch (error) {
@@ -193,7 +295,7 @@ async function updateAddress(addressId, payload) {
   return await prisma.ship_address.update({
     where: { ship_address_id: addressId },
     data: {
-      ...payload
+      ...payload,
     },
   });
 }
@@ -214,7 +316,6 @@ async function findBasicInfo(userId) {
       email: true,
       phone: true,
       avatar: true,
-      address: true,
       role: true,
       status: 1,
       created_at: true,
@@ -255,4 +356,11 @@ module.exports = {
   getOrderDetailById,
   findWishlistByUserId,
   sendMail,
+  findDefaultAddress,
+  confirm,
+  findAddressById,
+  setOTP,
+  findByEmail,
+  ResetPass,
+  updateOrderStatus,
 };
