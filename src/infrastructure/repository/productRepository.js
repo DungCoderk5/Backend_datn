@@ -971,7 +971,7 @@ const productRepository = {
   async updatePaymentStatus(orderId, status) {
     await prisma.orders.update({
       where: { orders_id: orderId },
-      data: { payment_status: status },
+      data: { status }, // ✅ Sửa đúng field có trong schema
     });
   },
 
@@ -992,16 +992,21 @@ const productRepository = {
     const cart = await prisma.carts.findFirst({ where: { user_id } });
 
     if (!cart) {
+      console.warn("⚠️ Không tìm thấy giỏ hàng cho user_id:", user_id);
       return;
     }
+
+    console.log("🧺 Đã tìm thấy giỏ hàng:", cart.carts_id);
 
     await prisma.cart_items.deleteMany({
       where: { cart_id: cart.carts_id },
     });
+    console.log("🗑️ Đã xóa cart_items cho cart_id:", cart.carts_id);
 
     await prisma.carts.delete({
       where: { carts_id: cart.carts_id },
     });
+    console.log("🗑️ Đã xóa cart:", cart.carts_id);
   },
 
   async removeWishlistItemHandler(req, res) {

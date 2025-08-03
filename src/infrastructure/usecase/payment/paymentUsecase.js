@@ -2,7 +2,7 @@ const axios = require("axios");
 const CryptoJS = require("crypto-js");
 const moment = require("moment");
 const qs = require("qs");
-const productRepository = require("../../repository/productRepository"); // cần import
+const productRepository = require("../../repository/productRepository");
 
 const config = {
   app_id: "2553",
@@ -30,7 +30,7 @@ module.exports = {
       amount,
       description: `Thanh toán đơn hàng #${order_id}`,
       bank_code: "",
-      callback_url: "https://4f08a15857b7.ngrok-free.app/payment/callback",
+      callback_url: "https://e6917f72db00.ngrok-free.app/payment/callback",
     };
 
     const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
@@ -43,31 +43,53 @@ module.exports = {
       app_trans_id: order.app_trans_id,
     };
   },
+
   handleCallback: async (body) => {
-    const dataStr = body.data;
-    const reqMac = body.mac;
-    const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
-    if (reqMac !== mac) {
-      return { return_code: -1, return_message: "mac not equal" };
-    }
-    const dataJson = JSON.parse(dataStr);
-    const embedData = JSON.parse(dataJson.embed_data || "{}");
-    const orderId = Number(embedData?.order_id);
+    try {
+      console.log("🔔 [ZaloPay Callback Triggered]", body);
 
-    const status = await module.exports.checkStatus(dataJson.app_trans_id);
-    if (status.return_code === 1) {
-      await productRepository.updatePaymentStatus(orderId, "paid");
+      const dataStr = body.data;
+      const reqMac = body.mac;
+      const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
 
-      const order = await productRepository.getOrderById(orderId);
-
-      if (order?.user_id) {
-        await productRepository.clearCart(order.user_id);
+      if (reqMac !== mac) {
+        console.error("❌ MAC mismatch");
+        return { return_code: -1, return_message: "mac not equal" };
       }
 
-      return { return_code: 1, return_message: "success" };
-    }
+      const dataJson = JSON.parse(dataStr);
+      console.log("✅ Parsed dataJson:", dataJson);
 
-    return { return_code: 2, return_message: "payment not completed" };
+      const embedData = JSON.parse(dataJson.embed_data || "{}");
+      const orderId = Number(embedData?.order_id);
+      console.log("🧾 Extracted orderId:", orderId);
+
+      const status = await module.exports.checkStatus(dataJson.app_trans_id);
+      console.log("🔎 Payment status from ZaloPay:", status);
+
+      if (status.return_code === 1) {
+        console.log("✅ Payment success. Proceeding...");
+
+        await productRepository.updatePaymentStatus(orderId, "paid");
+
+        const order = await productRepository.getOrderById(orderId);
+        console.log("📦 Retrieved order:", order);
+
+        if (order?.user_id) {
+          console.log("🧹 Clearing cart for user:", order.user_id);
+          await productRepository.clearCart(order.user_id);
+        } else {
+          console.warn("⚠️ Không tìm thấy user_id trong đơn hàng");
+        }
+
+        return { return_code: 1, return_message: "success" };
+      }
+
+      return { return_code: 2, return_message: "payment not completed" };
+    } catch (err) {
+      console.error("💥 Error in handleCallback:", err);
+      return { return_code: 0, return_message: err.message };
+    }
   },
 
   checkStatus: async (app_trans_id) => {
