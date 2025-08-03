@@ -139,13 +139,32 @@ async function addPostHandler(req, res) {
       images,
       category_post_id : Number(category_post_id),
       author_id: Number(author_id),
-      status,
+      status: Number(status),
     });
 
     res.status(201).json({ message: "Thêm bài viết thành công", data: result });
   } catch (error) {
     console.error("[Handler] Lỗi addPost:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi thêm bài viết." });
+  }
+}
+// handlers/upLoad.js
+ async function upLoadHandler(req, res) {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: "Không có file được tải lên." });
+    }
+
+    const fileName = file.filename;
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const imageUrl = `${baseUrl}/uploads/blog/${fileName}`;
+
+    return res.status(200).json({ url: imageUrl });
+  } catch (error) {
+    console.error("[Handler] Lỗi upLoad:", error);
+    return res.status(500).json({ error: "Đã xảy ra lỗi khi tải ảnh." });
   }
 }
 
@@ -156,5 +175,6 @@ module.exports = {
   updatePostHandler,
   getPostByIdHandler,
   getPostByCategoryHandler,
-  getPostCategoryHandler
+  getPostCategoryHandler,
+  upLoadHandler
 };
