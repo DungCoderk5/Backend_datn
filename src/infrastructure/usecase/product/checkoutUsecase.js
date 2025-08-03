@@ -1,6 +1,7 @@
 const productRepository = require("../../repository/productRepository");
 
-async function checkoutUsecase({
+// ✅ Hàm chuẩn bị đơn hàng, dùng để tạo dữ liệu tạm khi thanh toán online
+async function prepareOrderData({
   user_id,
   shipping_address_id,
   payment_method,
@@ -13,10 +14,9 @@ async function checkoutUsecase({
   if (!cartItems || cartItems.length === 0) {
     throw new Error("Giỏ hàng trống");
   }
-console.log("Cart Items:", cartItems);
+
   const subtotal = cartItems.reduce((sum, item) => {
     const product = item.variant.product;
-    console.log("Product info:", item.variant.product);
     const unitPrice = product.sale_price ?? product.price;
     return sum + unitPrice * item.quantity;
   }, 0);
@@ -26,15 +26,11 @@ console.log("Cart Items:", cartItems);
 
   if (coupon_code) {
     const coupon = await productRepository.getVoucherByCode(coupon_code);
-
     if (coupon && coupon.usage_limit > coupon.used_count) {
       coupon_id = coupon.coupons_id;
-
-      if (coupon.discount_type === "percentage") {
-        discount = Math.floor((subtotal * coupon.discount_value) / 100);
-      } else if (coupon.discount_type === "fixed") {
-        discount = coupon.discount_value;
-      }
+      discount = coupon.discount_type === "percentage"
+        ? Math.floor((subtotal * coupon.discount_value) / 100)
+        : coupon.discount_value;
     }
   }
 
@@ -51,7 +47,7 @@ console.log("Cart Items:", cartItems);
     };
   });
 
-  const newOrder = await productRepository.createOrder({
+  return {
     user_id,
     total_price,
     payment_method_id: payment_method.id,
@@ -59,11 +55,15 @@ console.log("Cart Items:", cartItems);
     coupons_id: coupon_id,
     comment,
     items: orderItems,
-  });
-
-  await productRepository.clearCart(user_id);
-
-  return newOrder;
+  };
 }
 
-module.exports = checkoutUsecase;
+// ✅ Hàm tạo đơn hàng (dùng cho COD hoặc khi callback thành công)
+async function createOrderFromData(orderData) {
+  return await productRepository.createOrder(orderData);
+}
+
+module.exports = {
+  prepareOrderData,
+  createOrderFromData,
+};

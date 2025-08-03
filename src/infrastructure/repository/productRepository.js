@@ -921,6 +921,7 @@ const productRepository = {
   },
 
   async createOrder({
+    orders_id, // 👈 thêm tham số này
     user_id,
     total_price,
     shipping_address_id,
@@ -929,25 +930,32 @@ const productRepository = {
     comment,
     items,
   }) {
-    return await prisma.orders.create({
-      data: {
-        user_id,
-        total_amount: total_price,
-        status: "pending",
-        payment_method_id,
-        shipping_address_id,
-        coupons_id,
-        comment,
-        order_items: {
-          create: items.map((item) => ({
-            variant: {
-              connect: { product_variants_id: item.variant_id },
-            },
-            quantity: item.quantity,
-            unit_price: item.price,
-          })),
-        },
+    const orderData = {
+      user_id,
+      total_amount: total_price,
+      status: "pending",
+      payment_method_id,
+      shipping_address_id,
+      coupons_id,
+      comment,
+      order_items: {
+        create: items.map((item) => ({
+          variant: {
+            connect: { product_variants_id: item.variant_id },
+          },
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
       },
+    };
+
+    // 👇 Nếu orders_id được truyền thì thêm vào
+    if (orders_id) {
+      orderData.orders_id = orders_id;
+    }
+
+    return await prisma.orders.create({
+      data: orderData,
       include: {
         order_items: {
           include: {
@@ -961,25 +969,47 @@ const productRepository = {
       },
     });
   },
+
+  async getVoucherByCode(code) {
+    return await prisma.coupons.findFirst({
+      where: {
+        code: code,
+      },
+    });
+  },
+  async updatePaymentStatus(orderId, status) {
+    await prisma.orders.update({
+      where: { orders_id: orderId },
+      data: { status }, // ✅ Sửa đúng field có trong schema
+    });
+  },
+
+  async getOrderById(orderId) {
+    return await prisma.orders.findUnique({
+      where: { orders_id: orderId },
+    });
+  },
   async getVoucherById(id) {
     return await prisma.coupons.findUnique({
       where: {
         coupons_id: Number(id), // Ép kiểu tại đây
-
       },
     });
   },
 
   async clearCart(user_id) {
     const cart = await prisma.carts.findFirst({ where: { user_id } });
-    if (!cart) return;
 
-    // Xoá tất cả cart_items trước
+    if (!cart) {
+      console.warn("⚠️ Không tìm thấy giỏ hàng cho user_id:", user_id);
+      return;
+    }
+
+
     await prisma.cart_items.deleteMany({
       where: { cart_id: cart.carts_id },
     });
 
-    // Sau đó mới xoá cart (nếu thực sự muốn)
     await prisma.carts.delete({
       where: { carts_id: cart.carts_id },
     });
