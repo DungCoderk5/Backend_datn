@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 const {
@@ -6,11 +6,11 @@ const {
   addBrandHandler,
   updateBrandHandler,
   deleteBrandHandler,
-} = require('../../../application/brand/brandHttpHandler');
+} = require("../../../application/brand/brandHttpHandler");
 
-router.get('/', getAllProductBrandHandler);
-router.post('/', addBrandHandler);
-router.put('/update/:id', updateBrandHandler);
-router.delete('/delete/:id', deleteBrandHandler);
+router.get("/", getAllProductBrandHandler);
+router.post("/", addBrandHandler);
+router.put("/update/:id", updateBrandHandler);
+router.delete("/delete/:id", deleteBrandHandler);
 
 module.exports = router;
