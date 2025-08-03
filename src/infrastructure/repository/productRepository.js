@@ -921,6 +921,7 @@ const productRepository = {
   },
 
   async createOrder({
+    orders_id, // 👈 thêm tham số này
     user_id,
     total_price,
     shipping_address_id,
@@ -929,25 +930,32 @@ const productRepository = {
     comment,
     items,
   }) {
-    return await prisma.orders.create({
-      data: {
-        user_id,
-        total_amount: total_price,
-        status: "pending",
-        payment_method_id,
-        shipping_address_id,
-        coupons_id,
-        comment,
-        order_items: {
-          create: items.map((item) => ({
-            variant: {
-              connect: { product_variants_id: item.variant_id },
-            },
-            quantity: item.quantity,
-            unit_price: item.price,
-          })),
-        },
+    const orderData = {
+      user_id,
+      total_amount: total_price,
+      status: "pending",
+      payment_method_id,
+      shipping_address_id,
+      coupons_id,
+      comment,
+      order_items: {
+        create: items.map((item) => ({
+          variant: {
+            connect: { product_variants_id: item.variant_id },
+          },
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
       },
+    };
+
+    // 👇 Nếu orders_id được truyền thì thêm vào
+    if (orders_id) {
+      orderData.orders_id = orders_id;
+    }
+
+    return await prisma.orders.create({
+      data: orderData,
       include: {
         order_items: {
           include: {
@@ -961,6 +969,7 @@ const productRepository = {
       },
     });
   },
+
   async getVoucherByCode(code) {
     return await prisma.coupons.findFirst({
       where: {
@@ -996,17 +1005,14 @@ const productRepository = {
       return;
     }
 
-    console.log("🧺 Đã tìm thấy giỏ hàng:", cart.carts_id);
 
     await prisma.cart_items.deleteMany({
       where: { cart_id: cart.carts_id },
     });
-    console.log("🗑️ Đã xóa cart_items cho cart_id:", cart.carts_id);
 
     await prisma.carts.delete({
       where: { carts_id: cart.carts_id },
     });
-    console.log("🗑️ Đã xóa cart:", cart.carts_id);
   },
 
   async removeWishlistItemHandler(req, res) {

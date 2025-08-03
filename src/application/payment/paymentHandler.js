@@ -1,5 +1,9 @@
 const checkoutUsecase = require("../../infrastructure/usecase/product/checkoutUsecase");
 const paymentUsecase = require("../../infrastructure/usecase/payment/paymentUsecase");
+const {
+  prepareOrder,
+} = require("../../infrastructure/usecase/product/checkoutUsecase");
+const productRepository = require("../../infrastructure/repository/productRepository");
 
 module.exports = {
   checkout: async (req, res) => {
@@ -12,13 +16,12 @@ module.exports = {
         shipping_fee,
         comment,
       } = req.body;
-
       if (!user_id || !shipping_address_id || !payment_method) {
         return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
       }
 
-      // B1: Tạo đơn hàng trước
-      const order = await checkoutUsecase({
+      // ✅ CHỈ chuẩn bị dữ liệu (tạm) rồi truyền sang embed_data
+      const orderData = await checkoutUsecase.prepareOrderData({
         user_id,
         shipping_address_id,
         payment_method,
@@ -27,23 +30,24 @@ module.exports = {
         comment,
       });
 
-      // B2: Nếu là thanh toán online → tạo link ZaloPay
       if (payment_method.code === "zalopay") {
         const payment = await paymentUsecase.createPayment({
-          amount: order.total_amount,
-          order_id: order.orders_id,
+          amount: orderData.total_price,
+          order_data: orderData, // ❗ Truyền dữ liệu tạm vào embed_data
         });
 
         return res.status(200).json({
-          message: "Đã tạo đơn hàng và yêu cầu thanh toán",
-          order,
+          message: "Đã tạo yêu cầu thanh toán",
           payment,
         });
       }
 
-      // B3: Nếu là COD hoặc offline
+      // 👉 B3: Nếu là COD thì tạo đơn hàng luôn
+      const order = await productRepository.createOrder(orderData);
+      await productRepository.clearCart(user_id);
+
       return res.status(201).json({
-        message: "Tạo đơn hàng thành công",
+        message: "Tạo đơn hàng thành công (COD)",
         order,
       });
     } catch (err) {

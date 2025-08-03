@@ -1,6 +1,7 @@
 const productRepository = require("../../repository/productRepository");
 
-async function checkoutUsecase({
+// ✅ Hàm chuẩn bị đơn hàng, dùng để tạo dữ liệu tạm khi thanh toán online
+async function prepareOrderData({
   user_id,
   shipping_address_id,
   payment_method,
@@ -46,7 +47,7 @@ async function checkoutUsecase({
     };
   });
 
-  const newOrder = await productRepository.createOrder({
+  return {
     user_id,
     total_price,
     payment_method_id: payment_method.id,
@@ -54,12 +55,15 @@ async function checkoutUsecase({
     coupons_id: coupon_id,
     comment,
     items: orderItems,
-  });
-  if (payment_method.code !== "zalopay") {
-    await productRepository.clearCart(user_id);
-  }
-
-  return newOrder;
+  };
 }
 
-module.exports = checkoutUsecase;
+// ✅ Hàm tạo đơn hàng (dùng cho COD hoặc khi callback thành công)
+async function createOrderFromData(orderData) {
+  return await productRepository.createOrder(orderData);
+}
+
+module.exports = {
+  prepareOrderData,
+  createOrderFromData,
+};
