@@ -282,46 +282,49 @@ const productRepository = {
 
     return { products, total };
   },
-  async findDealProducts({ page = 1, limit = 20 }) {
-    const skip = (page - 1) * limit;
+async findDealProducts({ page = 1, limit = 20 }) {
+  const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
-      prisma.products.findMany({
-        where: {
-          status: 1,
-          NOT: [{ sale_price: null }],
-          AND: [{ sale_price: { lt: prisma.products.fields.price } }],
-        },
-        include: {
-          brand: true,
-          category: true,
-          gender: true,
-          images: true,
-          product_variants: {
-            include: {
-              color: true,
-              size: true,
-            },
+  const [products, total] = await Promise.all([
+    prisma.products.findMany({
+      where: {
+        status: 1,
+        NOT: [{ sale_price: null }],
+        AND: [{ sale_price: { lt: prisma.products.fields.price } }],
+      },
+      include: {
+        brand: true,
+        category: true,
+        gender: true,
+        images: true,
+        product_variants: {
+          include: {
+            color: true,
+            size: true,
           },
-          product_reviews: true,
         },
-        skip,
-        take: limit,
-        orderBy: {
-          created_at: "desc",
-        },
-      }),
-      prisma.products.count({
-        where: {
-          status: 1,
-          NOT: [{ sale_price: null }],
-          AND: [{ sale_price: { lt: prisma.products.fields.price } }],
-        },
-      }),
-    ]);
+        product_reviews: true,
+      },
+      skip,
+      take: limit,
+      orderBy: [
+        { sale_price: "asc" }, // cố định tăng dần
+        { price: "asc" },
+      ],
+    }),
 
-    return { products, total };
-  },
+    prisma.products.count({
+      where: {
+        status: 1,
+        NOT: [{ sale_price: null }],
+        AND: [{ sale_price: { lt: prisma.products.fields.price } }],
+      },
+    }),
+  ]);
+
+  return { products, total };
+},
+
   async findRelatedProducts(productId, page = 1, limit = 8) {
     const product = await prisma.products.findUnique({
       where: { products_id: productId },
@@ -1004,7 +1007,6 @@ const productRepository = {
       console.warn("⚠️ Không tìm thấy giỏ hàng cho user_id:", user_id);
       return;
     }
-
 
     await prisma.cart_items.deleteMany({
       where: { cart_id: cart.carts_id },
