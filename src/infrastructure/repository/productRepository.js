@@ -940,7 +940,7 @@ const productRepository = {
       shipping_address_id,
       coupons_id,
       comment,
-      shipping_fee,
+      shipping_fee: typeof shipping_fee === "number" ? shipping_fee : 0,
       payment_status,
       order_items: {
         create: items.map((item) => ({
