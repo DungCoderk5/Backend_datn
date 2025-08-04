@@ -263,8 +263,9 @@ async function getDealProductsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
+    const sort = req.query.sort || "asc"; // "asc" hoặc "desc"
 
-    const result = await getDealProductsUsecase({ page, limit });
+    const result = await getDealProductsUsecase({ page, limit, sort });
 
     res.json({
       products: result.products,
@@ -277,6 +278,7 @@ async function getDealProductsHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
 
 async function getRelatedProductsHandler(req, res) {
   try {
