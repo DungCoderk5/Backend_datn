@@ -243,5 +243,4 @@ module.exports = {
   getTotalRevenueByMonthHandler,
   getTotalRevenueByYearHandler,
   getTotalRevenueByWeekHandler,
-  getDaily,
 };

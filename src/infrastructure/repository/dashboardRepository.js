@@ -138,7 +138,7 @@ const dashboardRepository = {
     const revenue = await prisma.orders.aggregate({
         _sum: { total_amount: true },
         where: {
-          status: { not: "canceled" },
+          status: { not: "cancelled" },
           created_at: {
             gte: start,
             lte: end,
@@ -155,7 +155,7 @@ const dashboardRepository = {
     const revenue = await prisma.orders.aggregate({
       _sum: { total_amount: true },
       where: {
-        status: { not: "canceled" },
+        status: { not: "cancelled" },
         created_at: {
           gte: start,
           lte: end,
@@ -171,7 +171,7 @@ const dashboardRepository = {
     const revenue = await prisma.orders.aggregate({
       _sum: { total_amount: true },
       where: {
-        status: { not: "canceled" },
+        status: { not: "cancelled" },
         created_at: {
           gte: start,
           lte: end,
@@ -187,7 +187,7 @@ const dashboardRepository = {
     const revenue = await prisma.orders.aggregate({
       _sum: { total_amount: true },
       where: {
-        status: { not: "canceled" },
+        status: { not: "cancelled" },
         created_at: {
           gte: start,
           lte: end,
