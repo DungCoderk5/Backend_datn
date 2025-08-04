@@ -929,6 +929,8 @@ const productRepository = {
     coupons_id,
     comment,
     items,
+    shipping_fee,
+    payment_status = "PROCESSING",
   }) {
     const orderData = {
       user_id,
@@ -938,6 +940,8 @@ const productRepository = {
       shipping_address_id,
       coupons_id,
       comment,
+      shipping_fee,
+      payment_status,
       order_items: {
         create: items.map((item) => ({
           variant: {
@@ -949,7 +953,6 @@ const productRepository = {
       },
     };
 
-    // 👇 Nếu orders_id được truyền thì thêm vào
     if (orders_id) {
       orderData.orders_id = orders_id;
     }

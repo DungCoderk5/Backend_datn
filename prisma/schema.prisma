@@ -20,6 +20,7 @@ model users {
   updated_at DateTime @default(now()) @updatedAt
 
   // Relations
+  user_vouchers  user_vouchers[]
   product_compares product_compares[] @relation("UserProductCompares")
   carts           carts[]
   orders          orders[]
@@ -44,7 +45,7 @@ model categories {
   name          String  @db.VarChar(191)
   slug          String? @db.VarChar(191)
   parent_id     Int?
-
+  image         String? @db.VarChar(255)
   // Relations
   parent   categories?  @relation("CategoryChildren", fields: [parent_id], references: [categories_id])
   children categories[] @relation("CategoryChildren")
@@ -196,12 +197,26 @@ model coupons {
   min_order      Int                    @default(0)
 
   // Relations
+  user_vouchers  user_vouchers[]
   orders orders[]
 }
 
 enum CouponDiscountType {
   percentage
   fixed
+}
+model user_vouchers {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  coupons_id Int
+  is_used    Boolean   @default(false)
+  saved_at   DateTime  @default(now())
+
+  // Relations
+  user    users    @relation(fields: [user_id], references: [user_id])
+  coupon  coupons  @relation(fields: [coupons_id], references: [coupons_id])
+
+  @@unique([user_id, coupons_id])
 }
 
 model ship_address {
@@ -216,6 +231,11 @@ model ship_address {
   user   users    @relation(fields: [user_id], references: [user_id])
   orders orders[]
 }
+enum PaymentStatus {
+  PAID        // 1 - Thành công
+  FAILED      // 2 - Thất bại
+  PROCESSING  // 3 - Chờ xử lý hoặc chưa thanh toán
+}
 
 model orders {
   orders_id           Int      @id @default(autoincrement())
@@ -224,6 +244,8 @@ model orders {
   total_amount        Int
   payment_method_id   Int?
   shipping_address_id Int?
+  shipping_fee        Int
+  payment_status PaymentStatus @default(PROCESSING)
   coupons_id          Int?
   comment             String?  @db.Text
   created_at          DateTime @default(now())
@@ -266,7 +288,8 @@ model categories_post {
   name             String  @db.VarChar(191)
   slug             String  @unique @db.VarChar(191)
   parent_id        Int?
-
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now()) @updatedAt
   // Relations
   parent   categories_post? @relation("CategoryPostChildren", fields: [parent_id], references: [category_post_id])
   children categories_post[] @relation("CategoryPostChildren")
