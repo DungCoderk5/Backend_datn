@@ -22,7 +22,7 @@ async function registerUsecase(data, res) {
     html: `
   <div style="max-width:600px;margin:0 auto;padding:20px;border:1px solid #e0e0e0;border-radius:8px;font-family:sans-serif;background-color:#ffffff;">
     <div style="text-align:center;padding-bottom:20px;">
-      <img src="https://terashoes.store/logo.png" alt="Terashoes Logo" style="max-width:150px;height:auto;" />
+      <img src="${process.env.NEXTAUTH_URL}/uploads/logo-xanh.png" alt="Terashoes Logo" style="max-width:150px;height:auto;" />
     </div>
     <h2 style="color:#005b96;text-align:center;">Xác nhận đăng ký tài khoản</h2>
     <p style="font-size:16px;color:#333;">Xin chào <strong>${name}</strong>,</p>

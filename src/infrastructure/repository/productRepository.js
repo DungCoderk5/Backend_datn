@@ -932,6 +932,8 @@ async findDealProducts({ page = 1, limit = 20 }) {
     coupons_id,
     comment,
     items,
+    shipping_fee,
+    payment_status = "PROCESSING",
   }) {
     const orderData = {
       user_id,
@@ -941,6 +943,8 @@ async findDealProducts({ page = 1, limit = 20 }) {
       shipping_address_id,
       coupons_id,
       comment,
+      shipping_fee,
+      payment_status,
       order_items: {
         create: items.map((item) => ({
           variant: {
@@ -952,7 +956,6 @@ async findDealProducts({ page = 1, limit = 20 }) {
       },
     };
 
-    // 👇 Nếu orders_id được truyền thì thêm vào
     if (orders_id) {
       orderData.orders_id = orders_id;
     }
