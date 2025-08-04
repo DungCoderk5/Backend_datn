@@ -1,6 +1,6 @@
 const productRepository = require("../../repository/productRepository");
 
-// ✅ Hàm chuẩn bị đơn hàng, dùng để tạo dữ liệu tạm khi thanh toán online
+// Hàm chuẩn bị đơn hàng, dùng để tạo dữ liệu tạm khi thanh toán online
 async function prepareOrderData({
   user_id,
   shipping_address_id,
@@ -58,7 +58,7 @@ async function prepareOrderData({
   };
 }
 
-// ✅ Hàm tạo đơn hàng (dùng cho COD hoặc khi callback thành công)
+//Hàm tạo đơn hàng (dùng cho COD hoặc khi callback thành công)
 async function createOrderFromData(orderData) {
   return await productRepository.createOrder(orderData);
 }

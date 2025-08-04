@@ -3,6 +3,8 @@ const CryptoJS = require("crypto-js");
 const moment = require("moment");
 const qs = require("qs");
 const productRepository = require("../../repository/productRepository");
+const userRepository = require("../../repository/userRepository");
+const { renderOrderEmail } = require("../../../utils/orderEmailTemplate");
 
 // ✅ Map lưu app_trans_id ↔ order_id thực
 const transIdMap = new Map();
@@ -70,7 +72,18 @@ module.exports = {
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
 
         const redirectUrl = `http://localhost:3001/checkout?payment=success&orderId=${order.orders_id}`;
-
+        // 📩 Gửi email
+        const fullOrder = await userRepository.getOrderDetailById(
+          order.orders_id
+        ); // Lấy full chi tiết để gửi
+        const html = renderOrderEmail(fullOrder);
+        if (fullOrder.user?.email) {
+          await userRepository.sendMail({
+            to: fullOrder.user.email,
+            subject: `✅ Đơn hàng #${order.orders_id} của bạn đã được xác nhận`,
+            html,
+          });
+        }
         return {
           return_code: 1,
           return_message: "success",
@@ -100,9 +113,7 @@ module.exports = {
       data: qs.stringify(postData),
     });
 
-
     const order_id = transIdMap.get(app_trans_id) || null;
-
 
     return {
       ...result.data,

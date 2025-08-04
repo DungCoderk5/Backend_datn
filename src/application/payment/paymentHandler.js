@@ -4,7 +4,8 @@ const {
   prepareOrder,
 } = require("../../infrastructure/usecase/product/checkoutUsecase");
 const productRepository = require("../../infrastructure/repository/productRepository");
-
+const userRepository = require("../../infrastructure/repository/userRepository");
+const { renderOrderEmail } = require("../../utils/orderEmailTemplate");
 module.exports = {
   checkout: async (req, res) => {
     try {
@@ -42,9 +43,21 @@ module.exports = {
         });
       }
 
-      // 👉 B3: Nếu là COD thì tạo đơn hàng luôn
       const order = await productRepository.createOrder(orderData);
       await productRepository.clearCart(user_id);
+
+      // 📩 Gửi email
+      const fullOrder = await userRepository.getOrderDetailById(
+        order.orders_id
+      );
+      const html = renderOrderEmail(fullOrder);
+      if (fullOrder.user?.email) {
+        await userRepository.sendMail({
+          to: fullOrder.user.email,
+          subject: ` Đơn hàng #${order.orders_id} của bạn đã được xác nhận`,
+          html,
+        });
+      }
 
       return res.status(201).json({
         message: "Tạo đơn hàng thành công (COD)",
