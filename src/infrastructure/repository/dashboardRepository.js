@@ -11,7 +11,7 @@ const {
   eachDayOfInterval,
   eachMonthOfInterval,
 } = require("date-fns");
-const { getBestSelling } = require("./productRepository");
+
 
 const dashboardRepository = {
   async getWeeklyRevenueByDate(inputDateStr) {
@@ -47,6 +47,20 @@ const dashboardRepository = {
       });
     }
 
+    return result;
+  },
+
+  async getDailyRevenueByDate(date) {
+    const today = date || new Date();
+    const result = await prisma.orders.aggregate({
+      _sum: { total_amount: true },
+      where: {
+        status: { not: "canceled" },
+        created_at: {
+          today,
+        },
+      },
+    });
     return result;
   },
 

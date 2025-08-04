@@ -20,6 +20,20 @@ async function getMonthlyRevenueHandler(req, res) {
   } catch (err) {
     console.error("[Handler] Lỗi doanh thu tháng:", err);
     return res.status(500).json({ error: "Lỗi máy chủ" });
+
+  }
+}
+
+async function getDaily(req, res) {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: "Thiếu ngày truy vấn" });
+
+  try {
+    const result = await dashboardRepository.getDailyRevenueByDate(date);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi doanh thu ngày:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
   }
 }
 
@@ -228,5 +242,6 @@ module.exports = {
   getTotalRevvenueByDayHandler,
   getTotalRevenueByMonthHandler,
   getTotalRevenueByYearHandler,
-  getTotalRevenueByWeekHandler
+  getTotalRevenueByWeekHandler,
+  getDaily,
 };
