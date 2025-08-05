@@ -355,6 +355,7 @@ const dashboardRepository = {
           select: {
             name: true,
             email: true,
+            phone:true
           },
         },
         order_items: {
