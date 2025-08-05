@@ -980,6 +980,14 @@ const productRepository = {
       },
     });
   },
+  async findUserVouchers(userId) {
+    return await prisma.user_vouchers.findMany({
+      where: { user_id: Number(userId) },
+      include: {
+        coupon: true,
+      },
+    });
+  },
   async updatePaymentStatus(orderId, status) {
     await prisma.orders.update({
       where: { orders_id: orderId },
@@ -1007,7 +1015,6 @@ const productRepository = {
       console.warn("⚠️ Không tìm thấy giỏ hàng cho user_id:", user_id);
       return;
     }
-
 
     await prisma.cart_items.deleteMany({
       where: { cart_id: cart.carts_id },

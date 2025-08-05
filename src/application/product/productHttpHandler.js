@@ -28,6 +28,7 @@ const getOrdersByUserUsecase = require("../../infrastructure/usecase/product/get
 const updateProductUsecase = require("../../infrastructure/usecase/product/updateProductUsecase");
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
+const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -61,6 +62,23 @@ async function getCouponsHandler(req, res) {
     res
       .status(500)
       .json({ error: "Lỗi máy chủ khi lấy danh sách mã giảm giá." });
+  }
+}
+async function getUserVouchersHandler(req, res) {
+  const { userId } = req.params;
+
+  if (!userId || isNaN(userId)) {
+    return res.status(400).json({ error: "Thiếu hoặc sai userId." });
+  }
+
+  try {
+    const vouchers = await getUserVouchersUsecase(userId);
+    res.status(200).json(vouchers);
+  } catch (error) {
+    console.error("[Handler] Lỗi getUserVouchers:", error);
+    res
+      .status(500)
+      .json({ error: "Lỗi máy chủ khi lấy danh sách voucher người dùng." });
   }
 }
 
@@ -607,4 +625,5 @@ module.exports = {
   updateProductHandler,
   deleteProductHandler,
   getCouponsHandler,
+  getUserVouchersHandler,
 };
