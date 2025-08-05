@@ -66,14 +66,22 @@ async function getCouponsHandler(req, res) {
 }
 async function getUserVouchersHandler(req, res) {
   const { userId } = req.params;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
 
   if (!userId || isNaN(userId)) {
     return res.status(400).json({ error: "Thiếu hoặc sai userId." });
   }
 
   try {
-    const vouchers = await getUserVouchersUsecase(userId);
-    res.status(200).json(vouchers);
+    const vouchers = await getUserVouchersUsecase(userId, page, limit);
+    res.status(200).json({
+      data: vouchers,
+      pagination: {
+        page,
+        limit,
+      },
+    });
   } catch (error) {
     console.error("[Handler] Lỗi getUserVouchers:", error);
     res

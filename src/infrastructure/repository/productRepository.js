@@ -980,14 +980,22 @@ const productRepository = {
       },
     });
   },
-  async findUserVouchers(userId) {
-    return await prisma.user_vouchers.findMany({
-      where: { user_id: Number(userId) },
-      include: {
-        coupon: true,
-      },
-    });
-  },
+  async findUserVouchers(userId, page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
+
+  return await prisma.user_vouchers.findMany({
+    where: { user_id: Number(userId) },
+    include: {
+      coupon: true,
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      saved_at: "desc", // sắp xếp mới nhất (nếu cần)
+    },
+  });
+},
+
   async updatePaymentStatus(orderId, status) {
     await prisma.orders.update({
       where: { orders_id: orderId },
