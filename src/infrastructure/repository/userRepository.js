@@ -340,6 +340,41 @@ async function findReviewsByUserId(userId) {
     },
   });
 }
+ async function addUserVoucher({ user_id, coupon_code }) {
+    // Tìm mã giảm giá theo code
+    const coupon = await prisma.coupons.findUnique({
+      where: { code: coupon_code },
+    });
+
+    if (!coupon) {
+      return { error: "Mã giảm giá không tồn tại." };
+    }
+
+    // Kiểm tra xem user đã có chưa
+    const existing = await prisma.user_vouchers.findFirst({
+      where: {
+        user_id,
+        coupons_id: coupon.coupons_id,
+      },
+    });
+
+    if (existing) {
+      return { message: "Bạn đã lưu mã giảm giá này rồi." };
+    }
+
+    // Tạo user_voucher mới
+    const userVoucher = await prisma.user_vouchers.create({
+      data: {
+        user_id,
+        coupons_id: coupon.coupons_id,
+      },
+    });
+
+    return {
+      message: "Lưu mã giảm giá thành công.",
+      data: userVoucher,
+    };
+  }
 module.exports = {
   findByUsernameOrEmail,
   createAddress,
@@ -363,4 +398,5 @@ module.exports = {
   findByEmail,
   ResetPass,
   updateOrderStatus,
+  addUserVoucher,
 };
