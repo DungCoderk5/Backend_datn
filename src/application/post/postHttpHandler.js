@@ -3,6 +3,7 @@ const createPostUsecase = require("../../infrastructure/usecase/post/createPostU
 const deletePostUsecase = require("../../infrastructure/usecase/post/deletePostUsecase");
 const updatePostUsecase = require("../../infrastructure/usecase/post/updatePostUsecase");
 const getPostByIdUsecase = require("../../infrastructure/usecase/post/getPostByIdUsecase");
+const getPostBySlugUsecase = require("../../infrastructure/usecase/post/getPostBySlugUsecase");
 const getPostByCategoryUsecase = require("../../infrastructure/usecase/post/getPostByCategoryUsecase");
 const getPostCategoryUsecase = require("../../infrastructure/usecase/post/getPostCategoryUsecase");
 
@@ -10,8 +11,12 @@ async function getAllPostsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const title = req.query.title || "";
+    const status =
+      req.query.status !== undefined ? Number(req.query.status) : undefined;
 
-    const result = await getAllPostsUsecase({ page, limit });
+    const result = await getAllPostsUsecase({ page, limit, title, status });
+
     res.status(200).json(result);
   } catch (error) {
     console.error("[Handler] Lỗi getAllPosts:", error);
@@ -21,12 +26,23 @@ async function getAllPostsHandler(req, res) {
 
 async function getPostCategoryHandler(req, res) {
   try {
-    const categories = await getPostCategoryUsecase();
-    res.status(200).json({ message: "Lấy danh mục bài viết thành công.", data: categories });
+    const { page, limit, id, name, status } = req.query;
+
+    const result = await getPostCategoryUsecase({
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      id: id ? parseInt(id) : undefined,
+      name,
+      status,
+    });
+
+    res.status(200).json({
+      message: "Lấy danh mục bài viết thành công.",
+      ...result, // { data, total, currentPage, totalPages }
+    });
   } catch (error) {
     console.error("[Handler] Lỗi getPostCategory:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh mục bài viết." });
-    
   }
 }
 
@@ -38,10 +54,14 @@ async function getPostByCategoryHandler(req, res) {
     }
 
     const posts = await getPostByCategoryUsecase({ category_post_id });
-    res.status(200).json({ message: "Lấy bài viết theo danh mục thành công.", data: posts });
+    res
+      .status(200)
+      .json({ message: "Lấy bài viết theo danh mục thành công.", data: posts });
   } catch (error) {
     console.error("[Handler] Lỗi getPostByCategory:", error);
-    res.status(500).json({ error: "Lỗi máy chủ khi lấy bài viết theo danh mục." });
+    res
+      .status(500)
+      .json({ error: "Lỗi máy chủ khi lấy bài viết theo danh mục." });
   }
 }
 
@@ -59,24 +79,40 @@ async function getPostByIdHandler(req, res) {
   } catch (error) {
     console.error("[Handler] Lỗi getPostById:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi lấy bài viết." });
-    
   }
 }
-
+async function getPostBySlugHandler(req, res) {
+  try {
+    const slug = req.params.slug;
+    if (!slug) {
+      return res.status(400).json({ error: "Slug bài viết không hợp lệ." });
+    }
+    const post = await getPostBySlugUsecase(slug);
+    if (!post) {
+      return res.status(404).json({ error: "Bài viết không tìm thấy." });
+    }
+    res.status(200).json({ message: "Lấy bài viết thành công.", data: post });
+  } catch (error) {
+    console.error("[Handler] Lỗi getPostBySlug:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy bài viết." });
+  }
+}
 async function deletePostHandler(req, res) {
   try {
     const post_id = parseInt(req.params.id);
     console.log(`[Handler] Xóa bài viết với ID: ${post_id}`);
-    
+
     if (!post_id) {
       return res.status(400).json({ error: "ID bài viết không hợp lệ." });
     }
     const deletedPost = await deletePostUsecase(post_id);
 
-    res.status(200).json({ message: "Xóa bài viết thành công.", data: deletedPost });
+    res
+      .status(200)
+      .json({ message: "Xóa bài viết thành công.", data: deletedPost });
   } catch (error) {
     console.error("[Handler] Lỗi deletePost:", error);
-    res.status(500).json({error});
+    res.status(500).json({ error });
   }
 }
 
@@ -91,24 +127,28 @@ async function updatePostHandler(req, res) {
       title,
       slug,
       content,
-      thumbnail,
       images,
       category_post_id,
       author_id,
       status = 1,
     } = req.body;
 
-    const result = await updatePostUsecase(post_id,{
+    if (req.file) {
+      thumbnail = req.file.filename;
+    }
+    const result = await updatePostUsecase(post_id, {
       title,
       slug,
       content,
       thumbnail,
       images,
-      category_post_id,
-      author_id,
-      status,
+      category_post_id: Number(category_post_id),
+      author_id: Number(author_id),
+      status: Number(status),
     });
-    res.status(200).json({ message: "Cập nhật bài viết thành công.", data: result });
+    res
+      .status(200)
+      .json({ message: "Cập nhật bài viết thành công.", data: result });
   } catch (error) {
     console.error("[Handler] Lỗi updatePost:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật bài viết." });
@@ -124,7 +164,7 @@ async function addPostHandler(req, res) {
       images,
       category_post_id,
       author_id,
-      status = 1, 
+      status = 1,
     } = req.body;
 
     if (req.file) {
@@ -137,7 +177,7 @@ async function addPostHandler(req, res) {
       content,
       thumbnail,
       images,
-      category_post_id : Number(category_post_id),
+      category_post_id: Number(category_post_id),
       author_id: Number(author_id),
       status: Number(status),
     });
@@ -148,8 +188,7 @@ async function addPostHandler(req, res) {
     res.status(500).json({ error: "Lỗi máy chủ khi thêm bài viết." });
   }
 }
-// handlers/upLoad.js
- async function upLoadHandler(req, res) {
+async function upLoadHandler(req, res) {
   try {
     const file = req.file;
 
@@ -176,5 +215,6 @@ module.exports = {
   getPostByIdHandler,
   getPostByCategoryHandler,
   getPostCategoryHandler,
-  upLoadHandler
+  upLoadHandler,
+  getPostBySlugHandler,
 };

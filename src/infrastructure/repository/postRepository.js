@@ -1,14 +1,29 @@
 const prisma = require("../../shared/prisma");
 
 const postRepository = {
-  async findAll({ page = 1, limit = 10 }) {
+async findAll({ page = 1, limit = 10, title = "", status }) {
     const skip = (page - 1) * limit;
+    const validStatuses = [0, 1];
+    const whereClause = {
+      AND: [
+        title
+          ? {
+              title: {
+                contains: title,
+                lte: "insensitive",
+              },
+            }
+          : {},
+        validStatuses.includes(status) ? { status: Number(status) } : {},
+      ],
+    };
 
     const [posts, total] = await Promise.all([
       prisma.posts.findMany({
         skip,
         take: limit,
         orderBy: { created_at: "desc" },
+        where: whereClause,
         include: {
           category_post: true,
           author: {
@@ -20,7 +35,10 @@ const postRepository = {
           },
         },
       }),
-      prisma.posts.count(),
+
+      prisma.posts.count({
+        where: whereClause,
+      }),
     ]);
 
     return {
@@ -31,9 +49,43 @@ const postRepository = {
     };
   },
 
-  async findCate() {
-    return await prisma.categories_post.findMany({})
-  },
+  async findCate({ page = 1, limit = 10, id, name, status }) {
+  const where = {};
+
+  if (id) {
+    where.category_post_id = id;
+  }
+
+  if (name) {
+    where.name = {
+      contains: name,
+      lte: 'insensitive',
+    };
+  }
+
+  if (status) {
+    where.status = status;
+  }
+
+  const [data, total] = await Promise.all([
+    prisma.categories_post.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      // orderBy: {
+      //   created_at: 'desc',
+      // },
+    }),
+    prisma.categories_post.count({ where }),
+  ]);
+
+  return {
+    data,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+  };
+},
   async create({
     title,
     slug,

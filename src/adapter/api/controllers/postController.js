@@ -11,15 +11,17 @@ const {
   getPostByIdHandler,
   getPostByCategoryHandler,
   getPostCategoryHandler,
-  upLoadHandler
+  upLoadHandler,
+  getPostBySlugHandler
 } = require('../../../application/post/postHttpHandler');
 
 router.get('/', getAllPostsHandler);
 router.get('/byId/:id', getPostByIdHandler);
+router.get('/bySlug/:slug', getPostBySlugHandler);
 router.get('/category', getPostCategoryHandler);
 router.get('/category/:categoryId', getPostByCategoryHandler);
 router.post('/', uploadBlog.single('thumbnail'), validateRealImage, addPostHandler);
 router.post('/upload', uploadBlog.single('image'), validateRealImage, upLoadHandler);
 router.delete('/delete/:id', deletePostHandler);
-router.put('/update/:id', updatePostHandler);
+router.put('/update/:id',uploadBlog.single('thumbnail'),validateRealImage, updatePostHandler);
 module.exports = router;

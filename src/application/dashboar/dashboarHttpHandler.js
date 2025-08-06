@@ -20,6 +20,20 @@ async function getMonthlyRevenueHandler(req, res) {
   } catch (err) {
     console.error("[Handler] Lỗi doanh thu tháng:", err);
     return res.status(500).json({ error: "Lỗi máy chủ" });
+
+  }
+}
+
+async function getDaily(req, res) {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: "Thiếu ngày truy vấn" });
+
+  try {
+    const result = await dashboardRepository.getDailyRevenueByDate(date);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi doanh thu ngày:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
   }
 }
 
@@ -201,11 +215,45 @@ async function getPendingOrdersHandler(req, res) {
 }
 async function getRecentOrdersHandler(req, res) {
   try {
-    const limit = parseInt(req.query.limit) || 10;
-    const orders = await dashboardRepository.getRecentOrders(limit);
-    res.status(200).json({ success: true, data: orders });
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status ,
+      categoryId = "",
+    } = req.query;
+
+    const pageNum = parseInt(page );
+    const limitNum = parseInt(limit );
+    const category = categoryId ? parseInt(categoryId ) : null;
+
+    const [orders, total] = await Promise.all([
+      dashboardRepository.getOrdersWithFilters({
+        page: pageNum,
+        limit: limitNum,
+        search: search,
+        status: status,
+        categoryId: category,
+      }),
+      dashboardRepository.countOrdersWithFilters({
+        search: search ,
+        status: status ,
+        categoryId: category,
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: orders,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
   } catch (error) {
-    console.error("Error fetching recent orders:", error);
+    console.error("Error fetching filtered orders:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
@@ -228,5 +276,5 @@ module.exports = {
   getTotalRevvenueByDayHandler,
   getTotalRevenueByMonthHandler,
   getTotalRevenueByYearHandler,
-  getTotalRevenueByWeekHandler
+  getTotalRevenueByWeekHandler,
 };
