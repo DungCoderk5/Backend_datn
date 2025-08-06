@@ -25,7 +25,8 @@ const {
   getAddressesByIdHandler,
   sendResetPassHandler,
   ResetPassHandler,
-  updateOrderStatusHandler
+  updateOrderStatusHandler,
+  addUserVoucherHandler,
 } = require("../../../application/user/userHttpHandler");
 require("../../../infrastructure/repository/brandRepository");
 router.post("/login", loginHandler);
@@ -52,5 +53,6 @@ router.post('/confirm-email', confirmEmailHandler);
 router.post('/forget', sendResetPassHandler);
 router.post('/reset-password', ResetPassHandler);
 router.put('/update-order-status/:orderId', updateOrderStatusHandler);
+router.post("/user-vouchers", addUserVoucherHandler);
 
 module.exports = router;
