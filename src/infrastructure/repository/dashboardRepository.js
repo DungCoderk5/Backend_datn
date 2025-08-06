@@ -12,7 +12,6 @@ const {
   eachMonthOfInterval,
 } = require("date-fns");
 
-
 const dashboardRepository = {
   async getWeeklyRevenueByDate(inputDateStr) {
     const inputDate = new Date(inputDateStr);
@@ -344,35 +343,116 @@ const dashboardRepository = {
       },
     });
   },
-  async getRecentOrders(limit = 10) {
+  async getOrdersWithFilters({
+    page = 1,
+    limit = 10,
+    search = "",
+    status,
+    categoryId = null,
+  }) {
+    const offset = (page - 1) * limit;
+
     return await prisma.orders.findMany({
+      skip: offset,
       take: limit,
       orderBy: {
         created_at: "desc",
+      },
+      where: {
+        status: status || undefined,
+        user: {
+          OR: [
+            { name: { contains: search, lte: "insensitive" } },
+            { phone: { contains: search, lte: "insensitive" } },
+          ],
+        },
+        order_items: categoryId
+          ? {
+              some: {
+                variant: {
+                  product: {
+                    categories_id: Number(categoryId), // hoặc là category: { id: categoryId } nếu dùng quan hệ
+                  },
+                },
+              },
+            }
+          : undefined,
       },
       include: {
         user: {
           select: {
             name: true,
             email: true,
-            phone:true
+            phone: true,
+          },
+        },
+        shipping_address: {
+          select: {
+            address_line: true,
+          },
+        },
+        payment_method: {
+          select: {
+            name_method: true,
           },
         },
         order_items: {
           select: {
             quantity: true,
             unit_price: true,
+
             variant: {
               select: {
                 product: {
                   select: {
                     name: true,
+                    category: {
+                      select: {
+                        categories_id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+                color: {
+                  select: {
+                    name_color: true,
+                    images: true,
+                  },
+                },
+                size: {
+                  select: {
+                    number_size: true,
                   },
                 },
               },
             },
           },
         },
+      },
+    });
+  },
+  async countOrdersWithFilters({ search = "", status, categoryId = null }) {
+    return await prisma.orders.count({
+      where: {
+        status: status || undefined,
+        user: {
+          OR: [
+            { name: { contains: search, lte: "insensitive" } },
+            { phone: { contains: search, lte: "insensitive" } },
+          ],
+        },
+        order_items: categoryId
+          ? {
+              some: {
+                variant: {
+                  product: {
+                    categories_id: Number(categoryId), // hoặc category: { id: categoryId }
+                  },
+                },
+              },
+            }
+          : undefined,
       },
     });
   },
