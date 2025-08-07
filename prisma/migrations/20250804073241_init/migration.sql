@@ -32,6 +32,7 @@ CREATE TABLE `categories` (
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NULL,
     `parent_id` INTEGER NULL,
+    `image` VARCHAR(255) NULL,
 
     PRIMARY KEY (`categories_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -170,6 +171,18 @@ CREATE TABLE `coupons` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `user_vouchers` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `coupons_id` INTEGER NOT NULL,
+    `is_used` BOOLEAN NOT NULL DEFAULT false,
+    `saved_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `user_vouchers_user_id_coupons_id_key`(`user_id`, `coupons_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `ship_address` (
     `ship_address_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
@@ -189,6 +202,8 @@ CREATE TABLE `orders` (
     `total_amount` INTEGER NOT NULL,
     `payment_method_id` INTEGER NULL,
     `shipping_address_id` INTEGER NULL,
+    `shipping_fee` INTEGER NOT NULL,
+    `payment_status` ENUM('PAID', 'FAILED', 'PROCESSING') NOT NULL DEFAULT 'PROCESSING',
     `coupons_id` INTEGER NULL,
     `comment` TEXT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -225,6 +240,8 @@ CREATE TABLE `categories_post` (
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
     `parent_id` INTEGER NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `categories_post_slug_key`(`slug`),
     PRIMARY KEY (`category_post_id`)
@@ -297,6 +314,12 @@ ALTER TABLE `cart_items` ADD CONSTRAINT `cart_items_cart_id_fkey` FOREIGN KEY (`
 
 -- AddForeignKey
 ALTER TABLE `cart_items` ADD CONSTRAINT `cart_items_variant_id_fkey` FOREIGN KEY (`variant_id`) REFERENCES `product_variants`(`product_variants_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `user_vouchers` ADD CONSTRAINT `user_vouchers_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `user_vouchers` ADD CONSTRAINT `user_vouchers_coupons_id_fkey` FOREIGN KEY (`coupons_id`) REFERENCES `coupons`(`coupons_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `ship_address` ADD CONSTRAINT `ship_address_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE;

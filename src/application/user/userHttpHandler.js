@@ -26,6 +26,10 @@ const getAddressesByIdUsecase = require("../../infrastructure/usecase/user/getAd
 const sendResetPassUsecase = require("../../infrastructure/usecase/user/sendResetPassUsecase");
 const ResetPassUsecase = require("../../infrastructure/usecase/user/ResetPassUsecase");
 const updateOrderStatusUsecase = require("../../infrastructure/usecase/user/updateOrderStatusUsecase");
+const addUserVoucherUsecase = require("../../infrastructure/usecase/user/addUserVoucherUsecase");
+
+
+
 
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
@@ -397,7 +401,17 @@ async function sendMailHandler(req, res) {
     res.status(500).json({ error: "Không thể gửi email." });
   }
 }
+async function addUserVoucherHandler(req, res) {
+  try {
+    const { user_id, coupon_code } = req.body;
 
+    const result = await addUserVoucherUsecase({ user_id, coupon_code });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi thêm voucher cho người dùng:", error);
+    res.status(500).json({ error: "Lỗi khi lưu mã giảm giá cho người dùng." });
+  }
+}
 module.exports = {
   loginHandler,
   logoutHandler,
@@ -423,4 +437,5 @@ module.exports = {
   sendResetPassHandler,
   ResetPassHandler,
   updateOrderStatusHandler,
+  addUserVoucherHandler
 };

@@ -282,48 +282,48 @@ const productRepository = {
 
     return { products, total };
   },
-async findDealProducts({ page = 1, limit = 20 }) {
-  const skip = (page - 1) * limit;
+  async findDealProducts({ page = 1, limit = 20 }) {
+    const skip = (page - 1) * limit;
 
-  const [products, total] = await Promise.all([
-    prisma.products.findMany({
-      where: {
-        status: 1,
-        NOT: [{ sale_price: null }],
-        AND: [{ sale_price: { lt: prisma.products.fields.price } }],
-      },
-      include: {
-        brand: true,
-        category: true,
-        gender: true,
-        images: true,
-        product_variants: {
-          include: {
-            color: true,
-            size: true,
-          },
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where: {
+          status: 1,
+          NOT: [{ sale_price: null }],
+          AND: [{ sale_price: { lt: prisma.products.fields.price } }],
         },
-        product_reviews: true,
-      },
-      skip,
-      take: limit,
-      orderBy: [
-        { sale_price: "asc" }, // cố định tăng dần
-        { price: "asc" },
-      ],
-    }),
+        include: {
+          brand: true,
+          category: true,
+          gender: true,
+          images: true,
+          product_variants: {
+            include: {
+              color: true,
+              size: true,
+            },
+          },
+          product_reviews: true,
+        },
+        skip,
+        take: limit,
+        orderBy: [
+          { sale_price: "asc" }, // cố định tăng dần
+          { price: "asc" },
+        ],
+      }),
 
-    prisma.products.count({
-      where: {
-        status: 1,
-        NOT: [{ sale_price: null }],
-        AND: [{ sale_price: { lt: prisma.products.fields.price } }],
-      },
-    }),
-  ]);
+      prisma.products.count({
+        where: {
+          status: 1,
+          NOT: [{ sale_price: null }],
+          AND: [{ sale_price: { lt: prisma.products.fields.price } }],
+        },
+      }),
+    ]);
 
-  return { products, total };
-},
+    return { products, total };
+  },
 
   async findRelatedProducts(productId, page = 1, limit = 8) {
     const product = await prisma.products.findUnique({
@@ -577,6 +577,20 @@ async findDealProducts({ page = 1, limit = 20 }) {
         end_date: {
           gte: new Date(),
         },
+        start_date: {
+          lte: new Date(),
+        },
+      },
+      select: {
+        coupons_id: true,
+        code: true,
+        discount_type: true,
+        discount_value: true,
+        usage_limit: true,
+        used_count: true,
+        min_order: true,
+        start_date: true,
+        end_date: true,
       },
       orderBy: {
         created_at: "desc",
@@ -932,6 +946,8 @@ async findDealProducts({ page = 1, limit = 20 }) {
     coupons_id,
     comment,
     items,
+    shipping_fee,
+    payment_status = "PROCESSING",
   }) {
     const orderData = {
       user_id,
@@ -941,6 +957,8 @@ async findDealProducts({ page = 1, limit = 20 }) {
       shipping_address_id,
       coupons_id,
       comment,
+      shipping_fee: shipping_fee ?? 0,
+      payment_status,
       order_items: {
         create: items.map((item) => ({
           variant: {
@@ -952,7 +970,6 @@ async findDealProducts({ page = 1, limit = 20 }) {
       },
     };
 
-    // 👇 Nếu orders_id được truyền thì thêm vào
     if (orders_id) {
       orderData.orders_id = orders_id;
     }
@@ -960,11 +977,26 @@ async findDealProducts({ page = 1, limit = 20 }) {
     return await prisma.orders.create({
       data: orderData,
       include: {
+        user: true, // ✅ Tên người nhận
+        shipping_address: true, // ✅ Địa chỉ
+        payment_method: true, // ✅ Phương thức thanh toán
+        coupon: true, // ✅ Nếu có mã giảm giá
         order_items: {
           include: {
             variant: {
               include: {
-                product: true,
+                product: {
+                  include: {
+                    images: {
+                      select: {
+                        url: true,
+                      },
+                      take: 1,
+                    },
+                  },
+                },
+                color: true, // ✅ Màu
+                size: true, // ✅ Size
               },
             },
           },
@@ -980,6 +1012,22 @@ async findDealProducts({ page = 1, limit = 20 }) {
       },
     });
   },
+  async findUserVouchers(userId, page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
+
+  return await prisma.user_vouchers.findMany({
+    where: { user_id: Number(userId) },
+    include: {
+      coupon: true,
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      saved_at: "desc", // sắp xếp mới nhất (nếu cần)
+    },
+  });
+},
+
   async updatePaymentStatus(orderId, status) {
     await prisma.orders.update({
       where: { orders_id: orderId },
@@ -987,11 +1035,37 @@ async findDealProducts({ page = 1, limit = 20 }) {
     });
   },
 
-  async getOrderById(orderId) {
-    return await prisma.orders.findUnique({
-      where: { orders_id: orderId },
-    });
-  },
+ async getOrderById(orderId) {
+  return await prisma.orders.findUnique({
+    where: { orders_id: orderId },
+    include: {
+      user: true,
+      shipping_address: true,
+      payment_method: true,
+      coupon: true,
+      order_items: {
+        include: {
+          variant: {
+            include: {
+              product: {
+                include: {
+                  images: {
+                    select: {
+                      url: true,
+                    },
+                    take: 1,
+                  },
+                },
+              },
+              color: true,
+              size: true,
+            },
+          },
+        },
+      },
+    },
+  });
+},
   async getVoucherById(id) {
     return await prisma.coupons.findUnique({
       where: {
