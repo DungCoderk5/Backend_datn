@@ -28,6 +28,7 @@ const getOrdersByUserUsecase = require("../../infrastructure/usecase/product/get
 const updateProductUsecase = require("../../infrastructure/usecase/product/updateProductUsecase");
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
+const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -61,6 +62,31 @@ async function getCouponsHandler(req, res) {
     res
       .status(500)
       .json({ error: "Lỗi máy chủ khi lấy danh sách mã giảm giá." });
+  }
+}
+async function getUserVouchersHandler(req, res) {
+  const { userId } = req.params;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  if (!userId || isNaN(userId)) {
+    return res.status(400).json({ error: "Thiếu hoặc sai userId." });
+  }
+
+  try {
+    const vouchers = await getUserVouchersUsecase(userId, page, limit);
+    res.status(200).json({
+      data: vouchers,
+      pagination: {
+        page,
+        limit,
+      },
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi getUserVouchers:", error);
+    res
+      .status(500)
+      .json({ error: "Lỗi máy chủ khi lấy danh sách voucher người dùng." });
   }
 }
 
@@ -197,9 +223,9 @@ async function getProductDetailHandler(req, res) {
 async function getBestSellingHandler(req, res) {
   try {
     const top = parseInt(req.query.top) || 6;
-    console.log("Top best selling products:", top);
+  
     const result = await getBestSellingUsecase(top);
-    console.log("Best Selling Products:", result);
+   
     res.status(200).json(result);
   } catch (err) {
     console.error("Lỗi lấy sản phẩm bán chạy:", err);
@@ -263,8 +289,9 @@ async function getDealProductsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
+    const sort = req.query.sort || "asc"; // "asc" hoặc "desc"
 
-    const result = await getDealProductsUsecase({ page, limit });
+    const result = await getDealProductsUsecase({ page, limit, sort });
 
     res.json({
       products: result.products,
@@ -277,6 +304,7 @@ async function getDealProductsHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
 
 async function getRelatedProductsHandler(req, res) {
   try {
@@ -545,7 +573,7 @@ async function checkoutHandler(req, res) {
 
     return res
       .status(201)
-      .json({ message: "Thanh toán thành công", data: order, orders_id: order.id, });
+      .json({ message: "Thanh toán thành công", data: order, });
   } catch (err) {
     console.error("Checkout Error:", err);
     return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
@@ -607,4 +635,5 @@ module.exports = {
   updateProductHandler,
   deleteProductHandler,
   getCouponsHandler,
+  getUserVouchersHandler,
 };
