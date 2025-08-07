@@ -45,7 +45,11 @@ async function updateOrderStatusHandler(req, res) {
 
   try {
     const result = await updateOrderStatusUsecase(orderId, status);
-    res.status(200).json(result);
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật trạng thái đơn hàng thành công.",
+      data: result,
+    });
   } catch (error) {
     console.error("[Handler] Lỗi cập nhật trạng thái đơn hàng:", error);
     res.status(500).json({ error: "Lỗi khi cập nhật trạng thái đơn hàng." });

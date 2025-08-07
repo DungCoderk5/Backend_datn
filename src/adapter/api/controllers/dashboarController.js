@@ -40,7 +40,6 @@ router.get('/posts', getTotalPostsHandler);
 router.get('/post-categories', getTotalPostCategoriesHandler);
 router.get('/orders', getTotalOrdersHandler);
 router.get('/stock', getLowStockProductsHandler);
-router.get('/stock', getLowStockProductsHandler);
 router.get('/best-selling-products', getBestSellingProductHandler);
 router.get('/pending-orders', getPendingOrdersHandler);
 router.get('/recent-orders', getRecentOrdersHandler);
