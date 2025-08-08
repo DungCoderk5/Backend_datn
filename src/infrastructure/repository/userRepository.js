@@ -183,6 +183,7 @@ async function getOrderDetailById(orderId) {
   });
 }
 
+
 async function findAll({ page = 1, limit = 20 }) {
   const skip = (page - 1) * limit;
 
@@ -375,6 +376,59 @@ async function findReviewsByUserId(userId) {
       data: userVoucher,
     };
   }
+
+
+
+  // Admin 
+  async function findAllUsers(page = 1, limit = 20) {
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1) limit = 20;
+
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    prisma.users.findMany({
+      skip: skip,
+      take: limit,
+      orderBy: { created_at: 'desc' },
+      select: {
+        user_id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        avatar: true,
+        verify_otp: true,
+        created_at: true,
+        updated_at: true,
+      },
+    }),
+    prisma.users.count(),
+  ]);
+
+  return {
+    users,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+async function updateUser(userId, data) {
+  return prisma.users.update({
+    where: { user_id: Number(userId) },
+    data: {
+      name: data.name,
+      phone: data.phone,
+      role: data.role,
+      status: data.status,
+      updated_at: new Date(), // nếu bạn cần cập nhật thủ công
+    },
+  });
+}
 module.exports = {
   findByUsernameOrEmail,
   createAddress,
@@ -399,4 +453,6 @@ module.exports = {
   ResetPass,
   updateOrderStatus,
   addUserVoucher,
+  findAllUsers,
+  updateUser
 };
