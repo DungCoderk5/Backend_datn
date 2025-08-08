@@ -1,53 +1,68 @@
 const prisma = require("../../shared/prisma");
 
 const postRepository = {
-async findAll({ page = 1, limit = 10, title = "", status }) {
-    const skip = (page - 1) * limit;
-    const validStatuses = [0, 1];
-    const whereClause = {
-      AND: [
-        title
-          ? {
-              title: {
-                contains: title,
-                lte: "insensitive",
-              },
-            }
-          : {},
-        validStatuses.includes(status) ? { status: Number(status) } : {},
-      ],
-    };
+async findAll({
+  page = 1,
+  limit = 10,
+  title = "",
+  status,
+  sortBy = "created_at", // created_at, updated_at, or title
+  sortOrder = "desc",    // asc or desc
+}) {
+  const skip = (page - 1) * limit;
+  const validStatuses = [0, 1];
 
-    const [posts, total] = await Promise.all([
-      prisma.posts.findMany({
-        skip,
-        take: limit,
-        orderBy: { created_at: "desc" },
-        where: whereClause,
-        include: {
-          category_post: true,
-          author: {
-            select: {
-              user_id: true,
-              name: true,
-              avatar: true,
+  const whereClause = {
+    AND: [
+      title
+        ? {
+            title: {
+              contains: title,
+              mode: "insensitive",
             },
+          }
+        : {},
+      validStatuses.includes(status) ? { status: Number(status) } : {},
+    ],
+  };
+
+  // Validate sortBy to prevent invalid fields
+  const allowedSortFields = ["title", "created_at", "updated_at"];
+  const sortField = allowedSortFields.includes(sortBy) ? sortBy : "created_at";
+  const sortDirection = sortOrder === "asc" ? "asc" : "desc";
+
+  const [posts, total] = await Promise.all([
+    prisma.posts.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        [sortField]: sortDirection,
+      },
+      where: whereClause,
+      include: {
+        category_post: true,
+        author: {
+          select: {
+            user_id: true,
+            name: true,
+            avatar: true,
           },
         },
-      }),
+      },
+    }),
 
-      prisma.posts.count({
-        where: whereClause,
-      }),
-    ]);
+    prisma.posts.count({
+      where: whereClause,
+    }),
+  ]);
 
-    return {
-      posts,
-      total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-    };
-  },
+  return {
+    posts,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+  };
+},
 
   async findCate({ page = 1, limit = 10, id, name, status }) {
   const where = {};
