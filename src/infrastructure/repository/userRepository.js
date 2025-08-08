@@ -421,11 +421,8 @@ async function updateUser(userId, data) {
   return prisma.users.update({
     where: { user_id: Number(userId) },
     data: {
-      name: data.name,
-      phone: data.phone,
       role: data.role,
       status: data.status,
-      updated_at: new Date(), // nếu bạn cần cập nhật thủ công
     },
   });
 }

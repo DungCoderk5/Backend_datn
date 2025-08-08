@@ -429,10 +429,10 @@ async function getAllUsersHandler(req, res) {
 async function updateUsersHandler(req, res) {
   const userId = req.params.userId;
 
-  const { name, phone, role, status } = req.body;
+  const { role, status } = req.body;
 
   try {
-    const updated = await updateUsersUsecase(userId, { name, phone, role, status });
+    const updated = await updateUsersUsecase(userId, { role, status });
 
     res.status(200).json({
       success: true,
