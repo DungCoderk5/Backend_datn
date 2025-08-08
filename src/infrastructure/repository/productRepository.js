@@ -450,6 +450,7 @@ const productRepository = {
         brand_id,
         gender_id,
         status: 1,
+        view: 0,
         images: {
           create: images, // mảng: [{ url, alt_text, type }]
         },

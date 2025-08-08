@@ -16,6 +16,7 @@ const categoryRepository = {
         name,
         slug,
         parent_id: parent_id || null,
+        status: 1,
       },
     });
   },
@@ -27,6 +28,7 @@ const categoryRepository = {
         name,
         slug,
         parent_id: parent_id || null,
+        status: 1,
       },
     });
   },

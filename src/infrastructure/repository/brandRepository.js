@@ -13,17 +13,19 @@ const brandRepository = {
         name,
         slug,
         logo_url,
+        status: 1,
       },
     });
   },
 
-  async update({ brand_id, name, slug, logo_url }) {
+  async update({ brand_id, name, slug, logo_url, status }) {
     return await prisma.brands.update({
       where: { brand_id },
       data: {
         name,
         slug,
         logo_url,
+        status: 1,
       },
     });
   },
