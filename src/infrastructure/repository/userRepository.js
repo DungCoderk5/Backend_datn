@@ -402,7 +402,7 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
   }
 
   if (filters.email) {
-    where.email = { contains: filters.email };
+    where.email = { contains: filters.email };  
   }
 
   if (filters.user_id) {
