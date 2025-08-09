@@ -9,8 +9,8 @@ CREATE TABLE `users` (
     `status` TINYINT NULL DEFAULT 1,
     `avatar` TEXT NULL,
     `verify_otp` TEXT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     UNIQUE INDEX `users_email_key`(`email`),
     PRIMARY KEY (`user_id`)
@@ -22,6 +22,9 @@ CREATE TABLE `brands` (
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NULL,
     `logo_url` TEXT NULL,
+    `status` TINYINT NULL DEFAULT 1,
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`brand_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -33,6 +36,9 @@ CREATE TABLE `categories` (
     `slug` VARCHAR(191) NULL,
     `parent_id` INTEGER NULL,
     `image` VARCHAR(255) NULL,
+    `status` TINYINT NULL DEFAULT 1,
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`categories_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -76,8 +82,9 @@ CREATE TABLE `products` (
     `brand_id` INTEGER NULL,
     `gender_id` INTEGER NULL,
     `status` TINYINT NULL DEFAULT 1,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `view` INTEGER NULL DEFAULT 0,
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`products_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -112,8 +119,8 @@ CREATE TABLE `product_reviews` (
     `product_id` INTEGER NOT NULL,
     `rating` INTEGER NULL,
     `content` TEXT NULL,
-    `created_at` TIMESTAMP(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
-    `updated_at` TIMESTAMP(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     UNIQUE INDEX `product_reviews_user_id_product_id_key`(`user_id`, `product_id`),
     PRIMARY KEY (`product_reviews_id`)
@@ -123,8 +130,8 @@ CREATE TABLE `product_reviews` (
 CREATE TABLE `carts` (
     `carts_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`carts_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -136,8 +143,8 @@ CREATE TABLE `cart_items` (
     `variant_id` INTEGER NOT NULL,
     `quantity` INTEGER NOT NULL,
     `price` INTEGER NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`cart_items_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -162,8 +169,8 @@ CREATE TABLE `coupons` (
     `end_date` DATE NULL,
     `usage_limit` INTEGER NULL,
     `used_count` INTEGER NOT NULL DEFAULT 0,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `min_order` INTEGER NOT NULL DEFAULT 0,
 
     UNIQUE INDEX `coupons_code_key`(`code`),
@@ -206,8 +213,8 @@ CREATE TABLE `orders` (
     `payment_status` ENUM('PAID', 'FAILED', 'PROCESSING') NOT NULL DEFAULT 'PROCESSING',
     `coupons_id` INTEGER NULL,
     `comment` TEXT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`orders_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -228,8 +235,8 @@ CREATE TABLE `wishlist_items` (
     `wishlist_items_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
     `product_id` INTEGER NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     PRIMARY KEY (`wishlist_items_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -240,8 +247,8 @@ CREATE TABLE `categories_post` (
     `name` VARCHAR(191) NOT NULL,
     `slug` VARCHAR(191) NOT NULL,
     `parent_id` INTEGER NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     UNIQUE INDEX `categories_post_slug_key`(`slug`),
     PRIMARY KEY (`category_post_id`)
@@ -258,8 +265,8 @@ CREATE TABLE `posts` (
     `status` TINYINT NULL DEFAULT 1,
     `category_post_id` INTEGER NULL,
     `author_id` INTEGER NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     UNIQUE INDEX `posts_slug_key`(`slug`),
     PRIMARY KEY (`post_id`)
@@ -270,7 +277,8 @@ CREATE TABLE `product_compares` (
     `product_compare_id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
     `product_id` INTEGER NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
     UNIQUE INDEX `product_compares_user_id_product_id_key`(`user_id`, `product_id`),
     PRIMARY KEY (`product_compare_id`)

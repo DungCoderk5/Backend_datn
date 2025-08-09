@@ -450,6 +450,7 @@ const productRepository = {
         brand_id,
         gender_id,
         status: 1,
+        view: 0,
         images: {
           create: images, // mảng: [{ url, alt_text, type }]
         },
@@ -1013,20 +1014,20 @@ const productRepository = {
     });
   },
   async findUserVouchers(userId, page = 1, limit = 10) {
-  const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-  return await prisma.user_vouchers.findMany({
-    where: { user_id: Number(userId) },
-    include: {
-      coupon: true,
-    },
-    skip,
-    take: limit,
-    orderBy: {
-      saved_at: "desc", // sắp xếp mới nhất (nếu cần)
-    },
-  });
-},
+    return await prisma.user_vouchers.findMany({
+      where: { user_id: Number(userId) },
+      include: {
+        coupon: true,
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        saved_at: "desc", // sắp xếp mới nhất (nếu cần)
+      },
+    });
+  },
 
   async updatePaymentStatus(orderId, status) {
     await prisma.orders.update({
@@ -1035,37 +1036,37 @@ const productRepository = {
     });
   },
 
- async getOrderById(orderId) {
-  return await prisma.orders.findUnique({
-    where: { orders_id: orderId },
-    include: {
-      user: true,
-      shipping_address: true,
-      payment_method: true,
-      coupon: true,
-      order_items: {
-        include: {
-          variant: {
-            include: {
-              product: {
-                include: {
-                  images: {
-                    select: {
-                      url: true,
+  async getOrderById(orderId) {
+    return await prisma.orders.findUnique({
+      where: { orders_id: orderId },
+      include: {
+        user: true,
+        shipping_address: true,
+        payment_method: true,
+        coupon: true,
+        order_items: {
+          include: {
+            variant: {
+              include: {
+                product: {
+                  include: {
+                    images: {
+                      select: {
+                        url: true,
+                      },
+                      take: 1,
                     },
-                    take: 1,
                   },
                 },
+                color: true,
+                size: true,
               },
-              color: true,
-              size: true,
             },
           },
         },
       },
-    },
-  });
-},
+    });
+  },
   async getVoucherById(id) {
     return await prisma.coupons.findUnique({
       where: {
@@ -1177,6 +1178,11 @@ const productRepository = {
     });
 
     return updateProduct;
+  },
+  async countByBrandId(brand_id) {
+    return await prisma.products.count({
+      where: { brand_id: Number(brand_id) },
+    });
   },
 };
 
