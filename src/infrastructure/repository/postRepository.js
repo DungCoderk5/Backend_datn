@@ -18,7 +18,7 @@ async findAll({
         ? {
             title: {
               contains: title,
-              mode: "insensitive",
+              lte: "insensitive",
             },
           }
         : {},
