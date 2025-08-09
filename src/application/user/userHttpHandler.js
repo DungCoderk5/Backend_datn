@@ -30,9 +30,6 @@ const addUserVoucherUsecase = require("../../infrastructure/usecase/user/addUser
 const getAllUsersUsecase = require("../../infrastructure/usecase/user/getAllUserUsecase");
 const updateUsersUsecase = require("../../infrastructure/usecase/user/updateUsersUsecase");
 
-
-
-
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -412,15 +409,25 @@ async function addUserVoucherHandler(req, res) {
 }
 async function getAllUsersHandler(req, res) {
   try {
-    const { page, limit, sortField, sortDirection, role, status, name, email } = req.query;
+    const {
+      page,
+      limit,
+      sortField,
+      sortDirection,
+      role,
+      status,
+      name,
+      email,
+      user_id,
+      phone,
+    } = req.query;
 
-    const filters = { role, status, name, email };
-
+    const filters = { role, status, name, email, user_id, phone };
     const result = await getAllUsersUsecase({
       page,
       limit,
-      sortField: sortField || 'created_at',
-      sortDirection: sortDirection === 'asc' ? 'asc' : 'desc',
+      sortField: sortField || "created_at",
+      sortDirection: sortDirection === "asc" ? "asc" : "desc",
       filters,
     });
 
@@ -429,8 +436,8 @@ async function getAllUsersHandler(req, res) {
       data: result,
     });
   } catch (error) {
-    console.error('[Handler] Lỗi getAllUsers:', error);
-    res.status(500).json({ error: 'Lỗi khi lấy danh sách người dùng.' });
+    console.error("[Handler] Lỗi getAllUsers:", error);
+    res.status(500).json({ error: "Lỗi khi lấy danh sách người dùng." });
   }
 }
 async function updateUsersHandler(req, res) {
@@ -443,12 +450,12 @@ async function updateUsersHandler(req, res) {
 
     res.status(200).json({
       success: true,
-      message: 'Cập nhật người dùng thành công.',
+      message: "Cập nhật người dùng thành công.",
       data: updated,
     });
   } catch (error) {
-    console.error('[Handler] Lỗi updateUser:', error);
-    res.status(500).json({ error: 'Lỗi khi cập nhật người dùng.' });
+    console.error("[Handler] Lỗi updateUser:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật người dùng." });
   }
 }
 module.exports = {
@@ -478,5 +485,5 @@ module.exports = {
   updateOrderStatusHandler,
   addUserVoucherHandler,
   getAllUsersHandler,
-  updateUsersHandler
+  updateUsersHandler,
 };

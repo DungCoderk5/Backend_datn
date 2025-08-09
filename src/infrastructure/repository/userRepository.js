@@ -183,7 +183,6 @@ async function getOrderDetailById(orderId) {
   });
 }
 
-
 async function findAll({ page = 1, limit = 20 }) {
   const skip = (page - 1) * limit;
 
@@ -341,45 +340,43 @@ async function findReviewsByUserId(userId) {
     },
   });
 }
- async function addUserVoucher({ user_id, coupon_code }) {
-    // Tìm mã giảm giá theo code
-    const coupon = await prisma.coupons.findUnique({
-      where: { code: coupon_code },
-    });
+async function addUserVoucher({ user_id, coupon_code }) {
+  // Tìm mã giảm giá theo code
+  const coupon = await prisma.coupons.findUnique({
+    where: { code: coupon_code },
+  });
 
-    if (!coupon) {
-      return { error: "Mã giảm giá không tồn tại." };
-    }
-
-    // Kiểm tra xem user đã có chưa
-    const existing = await prisma.user_vouchers.findFirst({
-      where: {
-        user_id,
-        coupons_id: coupon.coupons_id,
-      },
-    });
-
-    if (existing) {
-      return { message: "Bạn đã lưu mã giảm giá này rồi." };
-    }
-
-    // Tạo user_voucher mới
-    const userVoucher = await prisma.user_vouchers.create({
-      data: {
-        user_id,
-        coupons_id: coupon.coupons_id,
-      },
-    });
-
-    return {
-      message: "Lưu mã giảm giá thành công.",
-      data: userVoucher,
-    };
+  if (!coupon) {
+    return { error: "Mã giảm giá không tồn tại." };
   }
 
+  // Kiểm tra xem user đã có chưa
+  const existing = await prisma.user_vouchers.findFirst({
+    where: {
+      user_id,
+      coupons_id: coupon.coupons_id,
+    },
+  });
 
+  if (existing) {
+    return { message: "Bạn đã lưu mã giảm giá này rồi." };
+  }
 
-  // Admin 
+  // Tạo user_voucher mới
+  const userVoucher = await prisma.user_vouchers.create({
+    data: {
+      user_id,
+      coupons_id: coupon.coupons_id,
+    },
+  });
+
+  return {
+    message: "Lưu mã giảm giá thành công.",
+    data: userVoucher,
+  };
+}
+
+// Admin
 async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', sortDirection = 'desc', filters = {} }) {
   page = parseInt(page);
   limit = parseInt(limit);
@@ -405,6 +402,14 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
 
   if (filters.email) {
     where.email = { contains: filters.email };
+  }
+
+  if (filters.user_id) {
+    where.user_id = parseInt(filters.user_id);
+  }
+
+  if (filters.phone) {
+    where.phone = { contains: filters.phone };
   }
 
   const [users, total] = await Promise.all([
@@ -436,6 +441,7 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
     totalPages: Math.ceil(total / limit),
   };
 }
+
 
 async function updateUser(userId, data) {
   return prisma.users.update({
@@ -471,5 +477,5 @@ module.exports = {
   updateOrderStatus,
   addUserVoucher,
   findAllUsers,
-  updateUser
+  updateUser,
 };
