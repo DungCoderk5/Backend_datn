@@ -412,10 +412,17 @@ async function addUserVoucherHandler(req, res) {
 }
 async function getAllUsersHandler(req, res) {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const { page, limit, sortField, sortDirection, role, status, name, email } = req.query;
 
-    const result = await getAllUsersUsecase(page, limit);
+    const filters = { role, status, name, email };
+
+    const result = await getAllUsersUsecase({
+      page,
+      limit,
+      sortField: sortField || 'created_at',
+      sortDirection: sortDirection === 'asc' ? 'asc' : 'desc',
+      filters,
+    });
 
     res.status(200).json({
       success: true,

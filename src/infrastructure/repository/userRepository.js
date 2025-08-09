@@ -380,7 +380,7 @@ async function findReviewsByUserId(userId) {
 
 
   // Admin 
-  async function findAllUsers(page = 1, limit = 20) {
+async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', sortDirection = 'desc', filters = {} }) {
   page = parseInt(page);
   limit = parseInt(limit);
 
@@ -389,25 +389,44 @@ async function findReviewsByUserId(userId) {
 
   const skip = (page - 1) * limit;
 
+  const where = {};
+
+  if (filters.role) {
+    where.role = filters.role;
+  }
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (filters.name) {
+    where.name = { contains: filters.name };
+  }
+
+  if (filters.email) {
+    where.email = { contains: filters.email };
+  }
+
   const [users, total] = await Promise.all([
     prisma.users.findMany({
-      skip: skip,
+      skip,
       take: limit,
-      orderBy: { created_at: 'desc' },
+      where,
+      orderBy: { [sortField]: sortDirection },
       select: {
         user_id: true,
         name: true,
         email: true,
         phone: true,
         role: true,
-        status: true,
+        status: 1,
         avatar: true,
         verify_otp: true,
         created_at: true,
         updated_at: true,
       },
     }),
-    prisma.users.count(),
+    prisma.users.count({ where }),
   ]);
 
   return {
@@ -417,6 +436,7 @@ async function findReviewsByUserId(userId) {
     totalPages: Math.ceil(total / limit),
   };
 }
+
 async function updateUser(userId, data) {
   return prisma.users.update({
     where: { user_id: Number(userId) },

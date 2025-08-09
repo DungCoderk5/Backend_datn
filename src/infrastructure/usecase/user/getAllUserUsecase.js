@@ -1,7 +1,6 @@
 const userRepository = require('../../repository/userRepository');
 
-async function getAllUsersUsecase({ page = 1, limit = 20 }) {
-  return await userRepository.findAllUsers({ page, limit });
+async function getAllUsersUsecase({ page = 1, limit = 20, sortField, sortDirection, filters }) {
+  return await userRepository.findAllUsers({ page, limit, sortField, sortDirection, filters });
 }
-
 module.exports = getAllUsersUsecase;
