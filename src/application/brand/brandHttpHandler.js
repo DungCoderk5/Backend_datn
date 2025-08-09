@@ -64,19 +64,33 @@ async function updateBrandHandler(req, res) {
   }
 }
 
-async function addBrandHandler(req, r) {
+async function addBrandHandler(req, res) {
   try {
-    const { name, slug, logo_url } = req.body;
+    const { name, slug, logo_url, status } = req.body;
+
     if (!name || !slug) {
-      throw new Error("Thiếu thông tin cần thiết để thêm thương hiệu.");
+      return res.status(400).json({
+        message: "Thiếu thông tin cần thiết để thêm thương hiệu.",
+      });
     }
-    const result = await createBrandUsecase({ name, slug, logo_url });
-    res
-      .status(201)
-      .json({ message: "Thêm thương hiệu thành công.", data: result });
+
+    const result = await createBrandUsecase({
+      name,
+      slug,
+      logo_url,
+      status: status ?? 1, // mặc định là 1 nếu không gửi
+    });
+
+    return res.status(201).json({
+      message: "Thêm thương hiệu thành công.",
+      data: result,
+    });
   } catch (error) {
     console.error("[Handler] Lỗi addBrand:", error);
-    throw new Error("Lỗi máy chủ khi thêm thương hiệu sản phẩm.");
+    return res.status(500).json({
+      message: "Lỗi máy chủ khi thêm thương hiệu sản phẩm.",
+      error: error.message,
+    });
   }
 }
 

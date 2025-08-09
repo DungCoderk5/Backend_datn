@@ -46,16 +46,16 @@ async findAll({ page = 1, limit = 5, id, name, status, keyword, sortBy = 'create
     hasNextPage: Number(page) < Math.ceil(total / limit),
   };
 },
-  async create({ name, slug, logo_url }) {
-    return await prisma.brands.create({
-      data: {
-        name,
-        slug,
-        logo_url,
-        status: 1,
-      },
-    });
-  },
+async create({ name, slug, logo_url, status }) {
+  return await prisma.brands.create({
+    data: {
+      name,
+      slug,
+      logo_url,
+      status: status ?? 1,
+    },
+  });
+},
   async update({ brand_id, name, slug, logo_url, status }) {
     return await prisma.brands.update({
       where: { brand_id },
