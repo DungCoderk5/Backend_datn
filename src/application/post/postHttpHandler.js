@@ -6,6 +6,9 @@ const getPostByIdUsecase = require("../../infrastructure/usecase/post/getPostByI
 const getPostBySlugUsecase = require("../../infrastructure/usecase/post/getPostBySlugUsecase");
 const getPostByCategoryUsecase = require("../../infrastructure/usecase/post/getPostByCategoryUsecase");
 const getPostCategoryUsecase = require("../../infrastructure/usecase/post/getPostCategoryUsecase");
+const createCategoryPostUsecase = require("../../infrastructure/usecase/post/createCategoryPostUseCase");
+const deleteCategoryPostUsecase = require("../../infrastructure/usecase/post/deleteCategoryPostUseCase");
+const updateCategoryUsecase = require("../../infrastructure/usecase/post/updateCategoryPostUseCase");
 
 async function getAllPostsHandler(req, res) {
   try {
@@ -34,14 +37,16 @@ async function getAllPostsHandler(req, res) {
 
 async function getPostCategoryHandler(req, res) {
   try {
-    const { page, limit, id, name, status } = req.query;
+    const { page, limit, id, name, slug, sortBy, sortOrder } = req.query;
 
     const result = await getPostCategoryUsecase({
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 10,
       id: id ? parseInt(id) : undefined,
       name,
-      status,
+      slug,
+      sortBy,
+      sortOrder,
     });
 
     res.status(200).json({
@@ -57,19 +62,20 @@ async function getPostCategoryHandler(req, res) {
 async function getPostByCategoryHandler(req, res) {
   try {
     const category_post_id = parseInt(req.params.categoryId);
-    if (!category_post_id) {
+    if (!category_post_id || isNaN(category_post_id)) {
       return res.status(400).json({ error: "ID danh mục không hợp lệ." });
     }
 
-    const posts = await getPostByCategoryUsecase({ category_post_id });
-    res
-      .status(200)
-      .json({ message: "Lấy bài viết theo danh mục thành công.", data: posts });
+    const posts = await getPostByCategoryUsecase(category_post_id);
+    res.status(200).json({
+      message: "Lấy bài viết theo danh mục thành công.",
+      data: posts,
+    });
   } catch (error) {
-    console.error("[Handler] Lỗi getPostByCategory:", error);
-    res
-      .status(500)
-      .json({ error: "Lỗi máy chủ khi lấy bài viết theo danh mục." });
+    console.error("[Handler] Lỗi getPostByCategory:", error.message);
+    res.status(500).json({
+      error: error.message || "Lỗi máy chủ khi lấy bài viết theo danh mục.",
+    });
   }
 }
 
@@ -214,6 +220,61 @@ async function upLoadHandler(req, res) {
     return res.status(500).json({ error: "Đã xảy ra lỗi khi tải ảnh." });
   }
 }
+async function createCategoryPostHandler(req,res) {
+  try {
+    const { name, slug, parent_id } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Tên danh mục không được để trống." });
+    }
+
+    const newCategory = await createCategoryPostUsecase({ name, slug, parent_id });
+
+    res.status(201).json({
+      message: "Tạo danh mục bài viết thành công.",
+      data: newCategory,
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi createCategoryPost:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi tạo danh mục bài viết." });
+  }
+  
+}
+async function deleteCategoryPostHandler(req, res) {
+  try {
+    const categoryId = parseInt(req.params.id);
+    if (!categoryId) {
+      return res.status(400).json({ error: "ID danh mục không hợp lệ." });
+    }
+
+    const result = await deleteCategoryPostUsecase(categoryId);
+    res.status(200).json({ message: "Xóa danh mục thành công.", data: result });
+  } catch (error) {
+    console.error("[Handler] Lỗi deleteCategoryPost:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi xóa danh mục." });
+  }
+}
+async function updateCategoryHandler(req, res) {
+  try {
+    const category_post_id = parseInt(req.params.id);
+    if (!category_post_id || isNaN(category_post_id)) {
+      return res.status(400).json({ error: "ID danh mục không hợp lệ." });
+    }
+
+    const data = req.body;
+    const updatedCategory = await updateCategoryUsecase(category_post_id, data);
+
+    res.status(200).json({
+      message: "Cập nhật danh mục thành công.",
+      data: updatedCategory,
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi updateCategory:", error.message);
+    res.status(500).json({
+      error: error.message || "Lỗi máy chủ khi cập nhật danh mục.",
+    });
+  }
+}
 
 module.exports = {
   getAllPostsHandler,
@@ -225,4 +286,7 @@ module.exports = {
   getPostCategoryHandler,
   upLoadHandler,
   getPostBySlugHandler,
+  createCategoryPostHandler,
+  deleteCategoryPostHandler,
+  updateCategoryHandler
 };

@@ -12,7 +12,11 @@ const {
   getPostByCategoryHandler,
   getPostCategoryHandler,
   upLoadHandler,
-  getPostBySlugHandler
+  getPostBySlugHandler,
+  createCategoryPostHandler,
+  deleteCategoryPostHandler,
+  updateCategoryHandler
+  
 } = require('../../../application/post/postHttpHandler');
 
 router.get('/', getAllPostsHandler);
@@ -24,4 +28,8 @@ router.post('/', uploadBlog.single('thumbnail'), validateRealImage, addPostHandl
 router.post('/upload', uploadBlog.single('image'), validateRealImage, upLoadHandler);
 router.delete('/delete/:id', deletePostHandler);
 router.put('/update/:id',uploadBlog.single('thumbnail'),validateRealImage, updatePostHandler);
+router.post('/create-category', createCategoryPostHandler);
+router.delete('/delete-category/:id', deleteCategoryPostHandler);
+router.put('/update-category/:id',updateCategoryHandler
+);
 module.exports = router;
