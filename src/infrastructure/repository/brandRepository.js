@@ -90,7 +90,7 @@ const brandRepository = {
   },
   async delete(brand_id) {
     return await prisma.brands.delete({
-      where: { brand_id },
+      where: { brand_id: Number(brand_id) },
     });
   },
 };

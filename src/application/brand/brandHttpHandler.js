@@ -4,7 +4,7 @@ const updateBrandUsecase = require("../../infrastructure/usecase/brand/updateBra
 const deleteBrandUsecase = require("../../infrastructure/usecase/brand/deleteBrandUsecase");
 const getBrandByIdUsecase = require("../../infrastructure/usecase/brand/getBrandByIdUsecase");
 const brandRepository = require("../../infrastructure/repository/brandRepository");
-
+const productRepository = require("../../infrastructure/repository/productRepository"); 
 const slugify = require("slugify");
 // Handler
 async function getAllProductBrandHandler(req, res) {
@@ -38,13 +38,20 @@ async function deleteBrandHandler(req, res) {
     if (isNaN(brand_id)) {
       return res.status(400).json({ error: "ID thương hiệu không hợp lệ." });
     }
+
+    // Kiểm tra xem brand có sản phẩm nào không
+    const productCount = await productRepository.countByBrandId(brand_id);
+    if (productCount > 0) {
+      return res.status(400).json({
+        error: "Không thể xóa thương hiệu vì còn sản phẩm liên quan.",
+      });
+    }
+
     const result = await deleteBrandUsecase(brand_id);
     res.status(200).json({ message: "Xóa thương hiệu thành công.", result });
   } catch (error) {
     console.error("[Handler] Lỗi deleteBrand:", error);
-    res
-      .status(500)
-      .json({ error: "Lỗi máy chủ khi xóa thương hiệu sản phẩm." });
+    res.status(500).json({ error: "Lỗi máy chủ khi xóa thương hiệu sản phẩm." });
   }
 }
 async function getBrandByIdHandler(req, res) {
