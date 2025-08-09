@@ -392,9 +392,10 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
     where.role = filters.role;
   }
 
-  if (filters.status) {
-    where.status = filters.status;
-  }
+ if (filters.status !== undefined) {
+  where.status = parseInt(filters.status);
+}
+
 
   if (filters.name) {
     where.name = { contains: filters.name };
@@ -424,7 +425,7 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
         email: true,
         phone: true,
         role: true,
-        status: 1,
+        status: true,
         avatar: true,
         verify_otp: true,
         created_at: true,
