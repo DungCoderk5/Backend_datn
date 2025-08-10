@@ -29,13 +29,59 @@ const updateProductUsecase = require("../../infrastructure/usecase/product/updat
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
-
+const getAllProductVariantUsecase = require("../../infrastructure/usecase/product//getAllProductVariantUsecase");
 async function getAllProductsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
 
     const result = await getAllProductsUsecase({ page, limit });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllProducts:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách sản phẩm." });
+  }
+}
+async function getAllProductVariantHandler(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 5,
+      sortField = "created_at",
+      sortOrder = "desc",
+      productCode,
+      productName,
+      brandId,
+      categoryId,
+      minImportPrice,
+      maxImportPrice,
+      minSalePrice,
+      maxSalePrice,
+      minQuantity,
+      maxQuantity,
+    } = req.query;
+
+    const filters = {
+      productCode,
+      productName,
+      brandId: brandId ? Number(brandId) : undefined,
+      categoryId: categoryId ? Number(categoryId) : undefined,
+      minImportPrice: minImportPrice ? Number(minImportPrice) : undefined,
+      maxImportPrice: maxImportPrice ? Number(maxImportPrice) : undefined,
+      minSalePrice: minSalePrice ? Number(minSalePrice) : undefined,
+      maxSalePrice: maxSalePrice ? Number(maxSalePrice) : undefined,
+      minQuantity: minQuantity ? Number(minQuantity) : undefined,
+      maxQuantity: maxQuantity ? Number(maxQuantity) : undefined,
+    };
+
+    const result = await getAllProductVariantUsecase({
+      page: Number(page),
+      limit: Number(limit),
+      sortField,
+      sortOrder,
+      filters,
+    });
 
     res.status(200).json(result);
   } catch (error) {
@@ -636,4 +682,5 @@ module.exports = {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getAllProductVariantHandler,
 };

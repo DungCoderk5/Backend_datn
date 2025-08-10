@@ -1,7 +1,7 @@
-const brandRepository = require('../../repository/brandRepository');
+const brandRepository = require("../../repository/brandRepository");
 
-async function getAllProductBrandUsecase() {
-  return await brandRepository.findAll();
+async function getAllProductBrandUsecase(filters) {
+  return await brandRepository.findAll(filters);
 }
 
 module.exports = getAllProductBrandUsecase;

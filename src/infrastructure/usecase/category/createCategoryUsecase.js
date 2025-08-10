@@ -1,7 +1,14 @@
-const categoryRepository = require('../../repository/categoryRepository');
+const categoryRepository = require("../../repository/categoryRepository");
 
-async function createCategoriesUsecase({name, slug, parent_id}) {
-  return await categoryRepository.create({name, slug, parent_id});
+async function createCategoryUsecase({ name, slug, parent_id, image, status }) {
+  return await categoryRepository.create({
+    name,
+    slug,
+    parent_id,
+    image,
+    status,
+  });
 }
 
-module.exports = createCategoriesUsecase;
+
+module.exports = createCategoryUsecase;

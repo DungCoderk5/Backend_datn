@@ -219,25 +219,29 @@ async function getRecentOrdersHandler(req, res) {
       page = 1,
       limit = 10,
       search = "",
-      status ,
+      status,
       categoryId = "",
+      sortField = "created_at", // mặc định ngày đặt
+      sortOrder = "desc",       // mặc định giảm dần
     } = req.query;
 
-    const pageNum = parseInt(page );
-    const limitNum = parseInt(limit );
-    const category = categoryId ? parseInt(categoryId ) : null;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const category = categoryId ? parseInt(categoryId) : null;
 
     const [orders, total] = await Promise.all([
       dashboardRepository.getOrdersWithFilters({
         page: pageNum,
         limit: limitNum,
-        search: search,
-        status: status,
+        search,
+        status,
         categoryId: category,
+        sortField,  // thêm
+        sortOrder,  // thêm
       }),
       dashboardRepository.countOrdersWithFilters({
-        search: search ,
-        status: status ,
+        search,
+        status,
         categoryId: category,
       }),
     ]);
@@ -257,6 +261,7 @@ async function getRecentOrdersHandler(req, res) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
+
 module.exports = {
   getTotalProductsHandler,
   getTotalBrandsHandler,
