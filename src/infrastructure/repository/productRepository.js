@@ -1184,6 +1184,11 @@ const productRepository = {
       where: { brand_id: Number(brand_id) },
     });
   },
+  async countByCategoryId(category_id) {
+    return await prisma.products.count({
+      where: { categories_id: Number(category_id) },
+    });
+  },
 };
 
 module.exports = productRepository;

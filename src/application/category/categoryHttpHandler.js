@@ -141,12 +141,44 @@ async function getCategoryByIdHandler(req, res) {
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh mục." });
   }
 }
+async function updateCategoryStatusHandler(req, res) {
+  try {
+    const categories_id = Number(req.params.id);
+    if (!categories_id) {
+      return res.status(400).json({ error: "ID danh mục không hợp lệ" });
+    }
+
+    const { status } = req.body;
+    if (status === undefined) {
+      return res.status(400).json({ error: "Thiếu trạng thái để cập nhật." });
+    }
+
+    const updatedCategory = await categoryRepository.updateStatus(categories_id, Number(status));
+
+    res.status(200).json({
+      message: "Cập nhật trạng thái thành công",
+      data: updatedCategory
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi updateCategoryStatus:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi cập nhật trạng thái danh mục." });
+  }
+}
 async function deleteCategoryHandler(req, res) {
   try {
     const category_id = parseInt(req.params.id, 10);
     if (isNaN(category_id)) {
       return res.status(400).json({ error: "ID danh mục không hợp lệ." });
     }
+
+    // Kiểm tra danh mục có sản phẩm không
+    const productCount = await productRepository.countByCategoryId(category_id);
+    if (productCount > 0) {
+      return res.status(400).json({
+        error: "Không thể xóa danh mục vì còn sản phẩm liên quan.",
+      });
+    }
+
     const result = await deleteCategoryUsecase(category_id);
     res.status(200).json({ message: "Xóa danh mục thành công.", result });
   } catch (error) {
@@ -154,10 +186,12 @@ async function deleteCategoryHandler(req, res) {
     res.status(500).json({ error: "Lỗi máy chủ khi xóa danh mục sản phẩm." });
   }
 }
+
 module.exports = {
   getAllProductCategoriesHandler,
   addCategoryHandler,
   updateCategoryHandler,
   deleteCategoryHandler,
   getCategoryByIdHandler,
+  updateCategoryStatusHandler,
 };

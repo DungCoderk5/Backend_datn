@@ -7,6 +7,7 @@ const {
   updateCategoryHandler,
   deleteCategoryHandler,
   getCategoryByIdHandler,
+  updateCategoryStatusHandler,
 } = require("../../../application/category/categoryHttpHandler");
 const { upload, validateRealImage } = require("../../middlewares/upload");
 router.get("/", getAllProductCategoriesHandler);
@@ -23,6 +24,8 @@ router.put(
   updateCategoryHandler
 );
 router.get("/:id", getCategoryByIdHandler);
+router.patch("/:id/status", updateCategoryStatusHandler);
+
 router.delete("/delete/:id", deleteCategoryHandler);
 
 module.exports = router;

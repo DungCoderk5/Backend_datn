@@ -70,17 +70,17 @@ const categoryRepository = {
       hasNextPage: page < Math.ceil(total / limit),
     };
   },
- async create({ name, slug, parent_id, image, status }) {
-  return await prisma.categories.create({
-    data: {
-      name,
-      slug,
-      parent_id: parent_id || null,
-      image: image || null,
-      status: status ?? 1, // giữ nguyên nếu 0, mặc định là 1
-    },
-  });
-},
+  async create({ name, slug, parent_id, image, status }) {
+    return await prisma.categories.create({
+      data: {
+        name,
+        slug,
+        parent_id: parent_id || null,
+        image: image || null,
+        status: status ?? 1, // giữ nguyên nếu 0, mặc định là 1
+      },
+    });
+  },
   async findById(categories_id) {
     return await prisma.categories.findUnique({
       where: { categories_id: Number(categories_id) },
@@ -99,6 +99,14 @@ const categoryRepository = {
       },
     });
   },
+
+  async updateStatus(categories_id, status) {
+    return await prisma.categories.update({
+      where: { categories_id: Number(categories_id) },
+      data: { status },
+    });
+  },
+
   async delete(categories_id) {
     return await prisma.categories.deleteMany({
       where: { categories_id },

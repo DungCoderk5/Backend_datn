@@ -1,7 +1,7 @@
-const categoryRepository = require('../../repository/categoryRepository');
+const categoryRepository = require("../../repository/categoryRepository");
 
-async function deleteCategoriesUsecase(categories_id) {
+async function deleteCategoryUsecase(categories_id) {
   return await categoryRepository.delete(categories_id);
 }
 
-module.exports = deleteCategoriesUsecase;
+module.exports = deleteCategoryUsecase;
