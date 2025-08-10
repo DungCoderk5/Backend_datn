@@ -8,6 +8,7 @@ const {
   deleteBrandHandler,
   getBrandByIdHandler,
   updateBrandStatusHandler,
+  getAllBrandsHandler,
 } = require("../../../application/brand/brandHttpHandler");
 const { upload, validateRealImage } = require("../../middlewares/upload");
 router.get("/", getAllProductBrandHandler);
@@ -23,8 +24,9 @@ router.put(
   validateRealImage,
   updateBrandHandler
 );
-router.get("/:id", getBrandByIdHandler);
 router.patch("/:id/status", updateBrandStatusHandler);
 router.delete("/delete/:id", deleteBrandHandler);
+router.get("/all", getAllBrandsHandler);
+router.get("/:id", getBrandByIdHandler);
 
 module.exports = router;

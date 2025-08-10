@@ -3,6 +3,7 @@ const createCategoryUsecase = require("../../infrastructure/usecase/category/cre
 const updateCategoryUsecase = require("../../infrastructure/usecase/category/updateCategoryUsecase");
 const deleteCategoryUsecase = require("../../infrastructure/usecase/category/deleteCategoryUsecase");
 const getCategoryByIdUsecase = require("../../infrastructure/usecase/category/getCategoryByIdUsecase");
+const getAllCategoriesUsecase = require("../../infrastructure/usecase/category/getAllCategoriesUsecase");
 const categoryRepository = require("../../infrastructure/repository/categoryRepository");
 const productRepository = require("../../infrastructure/repository/productRepository");
 const slugify = require("slugify");
@@ -186,6 +187,15 @@ async function deleteCategoryHandler(req, res) {
     res.status(500).json({ error: "Lỗi máy chủ khi xóa danh mục sản phẩm." });
   }
 }
+async function getAllCategoriesHandler(req, res) {
+  try {
+    const result = await getAllCategoriesUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllCategories:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy tất cả danh mục." });
+  }
+}
 
 module.exports = {
   getAllProductCategoriesHandler,
@@ -194,4 +204,5 @@ module.exports = {
   deleteCategoryHandler,
   getCategoryByIdHandler,
   updateCategoryStatusHandler,
+  getAllCategoriesHandler,
 };

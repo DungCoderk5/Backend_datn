@@ -3,6 +3,7 @@ const createBrandUsecase = require("../../infrastructure/usecase/brand/createBra
 const updateBrandUsecase = require("../../infrastructure/usecase/brand/updateBrandUsecase");
 const deleteBrandUsecase = require("../../infrastructure/usecase/brand/deleteBrandUsecase");
 const getBrandByIdUsecase = require("../../infrastructure/usecase/brand/getBrandByIdUsecase");
+const getAllBrandsUsecase = require("../../infrastructure/usecase/brand/getAllBrandsUsecase");
 const brandRepository = require("../../infrastructure/repository/brandRepository");
 const productRepository = require("../../infrastructure/repository/productRepository"); 
 const slugify = require("slugify");
@@ -167,7 +168,15 @@ async function addBrandHandler(req, res) {
     });
   }
 }
-
+async function getAllBrandsHandler(req, res) {
+  try {
+    const result = await getAllBrandsUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllBrands:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy tất cả thương hiệu." });
+  }
+}
 module.exports = {
   getAllProductBrandHandler,
   addBrandHandler,
@@ -175,4 +184,5 @@ module.exports = {
   deleteBrandHandler,
   getBrandByIdHandler,
   updateBrandStatusHandler,
+  getAllBrandsHandler,
 };

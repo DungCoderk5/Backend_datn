@@ -112,6 +112,14 @@ const categoryRepository = {
       where: { categories_id },
     });
   },
+  async findAllWithoutPaging() {
+  return await prisma.categories.findMany({
+    include: { children: true },
+    orderBy: { name: "asc" }
+  });
+}
+
 };
+
 
 module.exports = categoryRepository;
