@@ -231,6 +231,16 @@ const postRepository = {
       data,
     });
   },
+async findCategoryById(category_post_id) {
+  return await prisma.categories_post.findUnique({
+    where: { category_post_id: Number(category_post_id) },
+     }
+   
+   
+  );
+}
+
+
 
 };
 

@@ -462,5 +462,8 @@ const dashboardRepository = {
       },
     });
   },
+  async findAllCategoryProduct(){
+    return await prisma.categories.findMany();
+  }
 };
 module.exports = dashboardRepository;
