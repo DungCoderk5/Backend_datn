@@ -85,7 +85,7 @@ async function getAllProductVariantHandler(req, res) {
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("[Handler] Lỗi getAllProducts:", error);
+    console.error("[Handler] Lỗi Variant:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách sản phẩm." });
   }
 }

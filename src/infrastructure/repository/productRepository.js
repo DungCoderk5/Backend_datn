@@ -1189,87 +1189,132 @@ const productRepository = {
       where: { categories_id: Number(category_id) },
     });
   },
-  async findAllPro({ page = 1, limit = 5, sortField = "created_at", sortOrder = "desc", filters = {} }) {
-  const skip = (page - 1) * limit;
+  async findAllPro({
+    page = 1,
+    limit = 5,
+    sortField = "created_at",
+    sortOrder = "desc",
+    filters = {},
+  }) {
+    const skip = (page - 1) * limit;
 
-  // Xây dựng điều kiện where
-  const where = {
-    status: 1,
-    AND: [],
-  };
+    const andConditions = [];
 
-  if (filters.productCode) {
-    where.AND.push({
-      product_code: { contains: filters.productCode, mode: "insensitive" },
-    });
-  }
-  if (filters.productName) {
-    where.AND.push({
-      product_name: { contains: filters.productName, mode: "insensitive" },
-    });
-  }
-  if (filters.brandId) {
-    where.AND.push({ brand_id: filters.brandId });
-  }
-  if (filters.categoryId) {
-    where.AND.push({ category_id: filters.categoryId });
-  }
-  if (filters.minImportPrice !== undefined || filters.maxImportPrice !== undefined) {
-    const importPriceFilter = {};
-    if (filters.minImportPrice !== undefined) importPriceFilter.gte = filters.minImportPrice;
-    if (filters.maxImportPrice !== undefined) importPriceFilter.lte = filters.maxImportPrice;
-    where.AND.push({ import_price: importPriceFilter });
-  }
-  if (filters.minSalePrice !== undefined || filters.maxSalePrice !== undefined) {
-    const salePriceFilter = {};
-    if (filters.minSalePrice !== undefined) salePriceFilter.gte = filters.minSalePrice;
-    if (filters.maxSalePrice !== undefined) salePriceFilter.lte = filters.maxSalePrice;
-    where.AND.push({ sale_price: salePriceFilter });
-  }
-  if (filters.minQuantity !== undefined || filters.maxQuantity !== undefined) {
-    const quantityFilter = {};
-    if (filters.minQuantity !== undefined) quantityFilter.gte = filters.minQuantity;
-    if (filters.maxQuantity !== undefined) quantityFilter.lte = filters.maxQuantity;
-    where.AND.push({ quantity: quantityFilter });
-  }
+    if (filters.productName) {
+      andConditions.push({
+        name: { contains: filters.productName /* , mode: "insensitive" */ },
+      });
+    }
 
-  // Nếu không có filter nào, Prisma sẽ xử lý AND: [] như true, tức lấy tất cả
-
-  // Xây dựng orderBy
-  const orderBy = {};
-  orderBy[sortField] = sortOrder.toLowerCase() === "desc" ? "desc" : "asc";
-
-  // Lấy dữ liệu và tổng
-  const [products, total] = await Promise.all([
-    prisma.products.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy,
-      include: {
-        brand: true,
-        category: true,
-        gender: true,
-        images: true,
+    if (filters.productCode) {
+      andConditions.push({
         product_variants: {
-          include: {
-            color: true,
-            size: true,
+          some: {
+            sku: { contains: filters.productCode /* , mode: "insensitive" */ },
           },
         },
-      },
-    }),
-    prisma.products.count({ where }),
-  ]);
+      });
+    }
 
-  return {
-    products,
-    total,
-    currentPage: page,
-    totalPages: Math.ceil(total / limit),
-  };
-}
+    if (filters.brandId) {
+      andConditions.push({ brand_id: filters.brandId });
+    }
 
+    if (filters.categoryId) {
+      andConditions.push({ categories_id: filters.categoryId });
+    }
+
+    if (
+      filters.minSalePrice !== undefined ||
+      filters.maxSalePrice !== undefined
+    ) {
+      const salePriceFilter = {};
+      if (filters.minSalePrice !== undefined)
+        salePriceFilter.gte = filters.minSalePrice;
+      if (filters.maxSalePrice !== undefined)
+        salePriceFilter.lte = filters.maxSalePrice;
+      andConditions.push({ sale_price: salePriceFilter });
+    }
+
+    if (
+      filters.minImportPrice !== undefined ||
+      filters.maxImportPrice !== undefined
+    ) {
+      const priceFilter = {};
+      if (filters.minImportPrice !== undefined)
+        priceFilter.gte = filters.minImportPrice;
+      if (filters.maxImportPrice !== undefined)
+        priceFilter.lte = filters.maxImportPrice;
+      andConditions.push({ price: priceFilter });
+    }
+
+    if (
+      filters.minQuantity !== undefined ||
+      filters.maxQuantity !== undefined
+    ) {
+      const quantityFilter = {};
+      if (filters.minQuantity !== undefined)
+        quantityFilter.gte = filters.minQuantity;
+      if (filters.maxQuantity !== undefined)
+        quantityFilter.lte = filters.maxQuantity;
+      andConditions.push({
+        product_variants: {
+          some: {
+            stock_quantity: quantityFilter,
+          },
+        },
+      });
+    }
+
+    const where = {
+      status: 1,
+      AND: andConditions.length > 0 ? andConditions : undefined,
+    };
+
+    const validSortFields = [
+      "created_at",
+      "name",
+      "price",
+      "sale_price",
+      "view",
+    ];
+    const safeSortField = validSortFields.includes(sortField)
+      ? sortField
+      : "created_at";
+
+    const orderBy = {};
+    orderBy[safeSortField] =
+      sortOrder.toLowerCase() === "desc" ? "desc" : "asc";
+
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          brand: true,
+          category: true,
+          gender: true,
+          images: true,
+          product_variants: {
+            include: {
+              color: true,
+              size: true,
+            },
+          },
+        },
+      }),
+      prisma.products.count({ where }),
+    ]);
+
+    return {
+      products,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
 };
 
 module.exports = productRepository;
