@@ -444,25 +444,40 @@ const productRepository = {
         slug,
         description,
         short_desc,
-        price,
-        sale_price,
+        price: Number(price),
+        sale_price: Number(sale_price),
         categories_id,
         brand_id,
         gender_id,
         status: 1,
         view: 0,
-        images: {
-          create: images, // mảng: [{ url, alt_text, type }]
-        },
+        images: { create: images },
         product_variants: {
-          create: product_variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
+          create: product_variants.map((variant) => ({
+            color_id: variant.color_id,
+            size_id: variant.size_id,
+            stock_quantity: variant.stock_quantity,
+            sku: variant.sku,
+          })),
         },
       },
       include: {
         images: true,
-        product_variants: true,
+        product_variants: {
+          include: { color: true, size: true },
+        },
       },
     });
+
+    // Lưu ảnh variant vào bảng colors nếu có
+    for (const variant of product_variants) {
+      if (variant.color_id && variant.image_url) {
+        await prisma.colors.update({
+          where: { id: variant.color_id },
+          data: { images: variant.image_url },
+        });
+      }
+    }
 
     return newProduct;
   },

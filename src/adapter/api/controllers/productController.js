@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { upload, validateRealImage } = require("../../middlewares/upload");
+const { upload, validateRealImage } = require("../../middlewares/uploadProduct");
 
 const {
   getAllProductsHandler,
@@ -54,8 +54,11 @@ router.get("/related/:productId", getRelatedProductsHandler);
 router.get("/gender", getProductsByGenderHandler);
 router.post(
   "/add-product",
-  validateRealImage,
-  upload.single("product_img"),
+  upload.fields([
+    { name: "images", maxCount: 5 },           // ảnh chính
+    { name: "variant_images", maxCount: 20 }   // ảnh variant
+  ]),
+  validateRealImage, // tí nữa sửa lại middleware để xử lý nhiều ảnh
   addProductHandler
 );
 router.post("/addToCart", addToCart);

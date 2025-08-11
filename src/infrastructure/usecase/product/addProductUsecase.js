@@ -1,8 +1,7 @@
 const productRepository = require('../../repository/productRepository');
 
 async function addProductUsecase(data) {
-  const {...productData} = data;  
-  return await productRepository.create(productData);
+  return await productRepository.create(data);
 }
 
 module.exports = addProductUsecase;
