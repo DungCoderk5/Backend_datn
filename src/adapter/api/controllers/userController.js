@@ -27,6 +27,8 @@ const {
   ResetPassHandler,
   updateOrderStatusHandler,
   addUserVoucherHandler,
+  getAllUsersHandler,
+  updateUsersHandler
 } = require("../../../application/user/userHttpHandler");
 require("../../../infrastructure/repository/brandRepository");
 router.post("/login", loginHandler);
@@ -54,5 +56,6 @@ router.post('/forget', sendResetPassHandler);
 router.post('/reset-password', ResetPassHandler);
 router.put('/update-order-status/:orderId', updateOrderStatusHandler);
 router.post("/user-vouchers", addUserVoucherHandler);
-
+router.get('/all-user', getAllUsersHandler);
+router.put('/update-user/:userId', updateUsersHandler);
 module.exports = router;

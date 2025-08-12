@@ -93,6 +93,12 @@ const brandRepository = {
       where: { brand_id: Number(brand_id) },
     });
   },
+  async findAllWithoutPaging() {
+  return await prisma.brands.findMany({
+    orderBy: { created_at: "desc" }, // hoặc theo thứ tự bạn muốn
+  });
+}
+
 };
 
 module.exports = brandRepository;

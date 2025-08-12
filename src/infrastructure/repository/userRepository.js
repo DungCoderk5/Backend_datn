@@ -340,41 +340,132 @@ async function findReviewsByUserId(userId) {
     },
   });
 }
- async function addUserVoucher({ user_id, coupon_code }) {
-    // Tìm mã giảm giá theo code
-    const coupon = await prisma.coupons.findUnique({
-      where: { code: coupon_code },
-    });
+async function addUserVoucher({ user_id, coupon_code }) {
+  // Tìm mã giảm giá theo code
+  const coupon = await prisma.coupons.findUnique({
+    where: { code: coupon_code },
+  });
 
-    if (!coupon) {
-      return { error: "Mã giảm giá không tồn tại." };
-    }
-
-    // Kiểm tra xem user đã có chưa
-    const existing = await prisma.user_vouchers.findFirst({
-      where: {
-        user_id,
-        coupons_id: coupon.coupons_id,
-      },
-    });
-
-    if (existing) {
-      return { message: "Bạn đã lưu mã giảm giá này rồi." };
-    }
-
-    // Tạo user_voucher mới
-    const userVoucher = await prisma.user_vouchers.create({
-      data: {
-        user_id,
-        coupons_id: coupon.coupons_id,
-      },
-    });
-
-    return {
-      message: "Lưu mã giảm giá thành công.",
-      data: userVoucher,
-    };
+  if (!coupon) {
+    return { error: "Mã giảm giá không tồn tại." };
   }
+
+  // Kiểm tra xem user đã có chưa
+  const existing = await prisma.user_vouchers.findFirst({
+    where: {
+      user_id,
+      coupons_id: coupon.coupons_id,
+    },
+  });
+
+  if (existing) {
+    return { message: "Bạn đã lưu mã giảm giá này rồi." };
+  }
+
+  // Tạo user_voucher mới
+  const userVoucher = await prisma.user_vouchers.create({
+    data: {
+      user_id,
+      coupons_id: coupon.coupons_id,
+    },
+  });
+
+  return {
+    message: "Lưu mã giảm giá thành công.",
+    data: userVoucher,
+  };
+}
+
+// Admin
+async function findAllUsers({
+  page = 1,
+  limit = 20,
+  sortField = 'created_at',
+  sortDirection = 'desc',
+  filters = {},
+}) {
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1) limit = 20;
+
+  const skip = (page - 1) * limit;
+  const where = {};
+
+  // Filter theo role
+  if (filters.role) {
+    where.role = filters.role;
+  }
+
+  // Filter theo status
+  if (filters.status !== undefined) {
+    where.status = parseInt(filters.status);
+  }
+
+  // Nếu có search thì chỉ tìm theo nhiều trường, bỏ filter riêng
+  if (filters.search) {
+    where.OR = [
+      { name: { contains: filters.search } },
+      { email: { contains: filters.search } },
+      { phone: { contains: filters.search } },
+      { user_id: { equals: parseInt(filters.search) || 0 } },
+    ];
+  } else {
+    // Các filter riêng lẻ khi không có search
+    if (filters.name) {
+      where.name = { contains: filters.name };
+    }
+    if (filters.email) {
+      where.email = { contains: filters.email };
+    }
+    if (filters.phone) {
+      where.phone = { contains: filters.phone };
+    }
+    if (filters.user_id) {
+      where.user_id = parseInt(filters.user_id);
+    }
+  }
+
+  const [users, total] = await Promise.all([
+    prisma.users.findMany({
+      skip,
+      take: limit,
+      where,
+      orderBy: { [sortField]: sortDirection },
+      select: {
+        user_id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        avatar: true,
+        verify_otp: true,
+        created_at: true,
+        updated_at: true,
+      },
+    }),
+    prisma.users.count({ where }),
+  ]);
+
+  return {
+    users,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+async function updateUser(userId, data) {
+  return prisma.users.update({
+    where: { user_id: Number(userId) },
+    data: {
+      role: data.role,
+      status: data.status,
+    },
+  });
+}
 module.exports = {
   findByUsernameOrEmail,
   createAddress,
@@ -399,4 +490,6 @@ module.exports = {
   ResetPass,
   updateOrderStatus,
   addUserVoucher,
+  findAllUsers,
+  updateUser,
 };

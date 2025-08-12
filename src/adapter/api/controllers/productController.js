@@ -34,9 +34,11 @@ const {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getAllProductVariantHandler,
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
+router.get("/prodashboard", getAllProductVariantHandler);
 router.put("/update/:id", updateProductHandler);
 router.delete("/delete/:id", deleteProductHandler);
 router.get("/filter", filterProductsHandler);
