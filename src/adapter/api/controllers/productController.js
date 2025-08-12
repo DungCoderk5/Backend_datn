@@ -33,6 +33,7 @@ const {
   updateProductHandler,
   deleteProductHandler,
   getCouponsHandler,
+  getUserVouchersHandler,
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
@@ -71,5 +72,5 @@ router.delete("/wishlist", removeWishlistItemHandler);
 router.post("/checkout", checkoutHandler);
 router.get("/order/:userId", getOrderHandler);
 router.get("/couponsByCode", getCouponsHandler);
-
+router.get("/user_vouchers/:userId", getUserVouchersHandler);
 module.exports = router;

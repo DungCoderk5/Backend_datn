@@ -16,10 +16,11 @@ model users {
   status     Int?     @default(1) @db.TinyInt
   avatar     String?  @db.Text
   verify_otp String?  @db.Text
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
+  user_vouchers  user_vouchers[]
   product_compares product_compares[] @relation("UserProductCompares")
   carts           carts[]
   orders          orders[]
@@ -34,6 +35,9 @@ model brands {
   name     String  @db.VarChar(191)
   slug     String? @db.VarChar(191)
   logo_url String? @db.Text
+  status        Int?     @default(1) @db.TinyInt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   products products[]
@@ -44,7 +48,10 @@ model categories {
   name          String  @db.VarChar(191)
   slug          String? @db.VarChar(191)
   parent_id     Int?
-
+  image         String? @db.VarChar(255)
+  status        Int?     @default(1) @db.TinyInt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
   // Relations
   parent   categories?  @relation("CategoryChildren", fields: [parent_id], references: [categories_id])
   children categories[] @relation("CategoryChildren")
@@ -89,8 +96,10 @@ model products {
   brand_id      Int?
   gender_id     Int?
   status        Int?     @default(1) @db.TinyInt
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now()) @updatedAt
+  view          Int?     @default(0)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
+
 
   // Relations
   product_compares product_compares[] @relation("ProductCompares")
@@ -136,8 +145,8 @@ model product_reviews {
   product_id         Int
   rating             Int?
   content            String?   @db.Text
-  created_at         DateTime? @default(now()) @db.Timestamp(0)
-  updated_at         DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   user    users    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
@@ -150,8 +159,8 @@ model product_reviews {
 model carts {
   carts_id   Int      @id @default(autoincrement())
   user_id    Int
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   user       users        @relation(fields: [user_id], references: [user_id])
@@ -164,8 +173,8 @@ model cart_items {
   variant_id    Int
   quantity      Int
   price         Int
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   cart    carts           @relation(fields: [cart_id], references: [carts_id])
@@ -191,17 +200,31 @@ model coupons {
   end_date       DateTime?              @db.Date
   usage_limit    Int?
   used_count     Int                    @default(0)
-  created_at     DateTime               @default(now())
-  updated_at     DateTime               @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
   min_order      Int                    @default(0)
 
   // Relations
+  user_vouchers  user_vouchers[]
   orders orders[]
 }
 
 enum CouponDiscountType {
   percentage
   fixed
+}
+model user_vouchers {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  coupons_id Int
+  is_used    Boolean   @default(false)
+  saved_at   DateTime  @default(now())
+
+  // Relations
+  user    users    @relation(fields: [user_id], references: [user_id])
+  coupon  coupons  @relation(fields: [coupons_id], references: [coupons_id])
+
+  @@unique([user_id, coupons_id])
 }
 
 model ship_address {
@@ -216,6 +239,11 @@ model ship_address {
   user   users    @relation(fields: [user_id], references: [user_id])
   orders orders[]
 }
+enum PaymentStatus {
+  PAID        // 1 - Thành công
+  FAILED      // 2 - Thất bại
+  PROCESSING  // 3 - Chờ xử lý hoặc chưa thanh toán
+}
 
 model orders {
   orders_id           Int      @id @default(autoincrement())
@@ -224,10 +252,12 @@ model orders {
   total_amount        Int
   payment_method_id   Int?
   shipping_address_id Int?
+  shipping_fee        Int
+  payment_status PaymentStatus @default(PROCESSING)
   coupons_id          Int?
   comment             String?  @db.Text
-  created_at          DateTime @default(now())
-  updated_at          DateTime @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   user             users          @relation(fields: [user_id], references: [user_id])
@@ -253,8 +283,8 @@ model wishlist_items {
   wishlist_items_id Int      @id @default(autoincrement())
   user_id           Int
   product_id        Int
-  created_at        DateTime @default(now())
-  updated_at        DateTime @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   user    users    @relation(fields: [user_id], references: [user_id])
@@ -266,7 +296,8 @@ model categories_post {
   name             String  @db.VarChar(191)
   slug             String  @unique @db.VarChar(191)
   parent_id        Int?
-
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
   // Relations
   parent   categories_post? @relation("CategoryPostChildren", fields: [parent_id], references: [category_post_id])
   children categories_post[] @relation("CategoryPostChildren")
@@ -283,8 +314,8 @@ model posts {
   status           Int?     @default(1) @db.TinyInt
   category_post_id Int?
   author_id        Int?
-  created_at       DateTime @default(now())
-  updated_at       DateTime @default(now()) @updatedAt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   category_post categories_post? @relation(fields: [category_post_id], references: [category_post_id])
@@ -295,7 +326,8 @@ model product_compares {
   product_compare_id Int      @id @default(autoincrement())
   user_id            Int
   product_id         Int
-  created_at         DateTime @default(now())
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @updatedAt @db.DateTime(0)
 
   // Relations
   user    users    @relation("UserProductCompares", fields: [user_id], references: [user_id], onDelete: Cascade)

@@ -1,4 +1,4 @@
-const dashboardRepository = require('../../infrastructure/repository/dashboardRepository');
+const dashboardRepository = require("../../infrastructure/repository/dashboardRepository");
 
 // async function getTotalRevenueHandler(req, res) {
 //   try {
@@ -12,14 +12,28 @@ const dashboardRepository = require('../../infrastructure/repository/dashboardRe
 async function getMonthlyRevenueHandler(req, res) {
   const { date } = req.query;
 
-  if (!date) return res.status(400).json({ error: 'Thiếu ngày truy vấn' });
+  if (!date) return res.status(400).json({ error: "Thiếu ngày truy vấn" });
 
   try {
     const result = await dashboardRepository.getMonthlyRevenueByDate(date);
     return res.status(200).json(result);
   } catch (err) {
-    console.error('[Handler] Lỗi doanh thu tháng:', err);
-    return res.status(500).json({ error: 'Lỗi máy chủ' });
+    console.error("[Handler] Lỗi doanh thu tháng:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
+
+  }
+}
+
+async function getDaily(req, res) {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: "Thiếu ngày truy vấn" });
+
+  try {
+    const result = await dashboardRepository.getDailyRevenueByDate(date);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi doanh thu ngày:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
   }
 }
 
@@ -27,39 +41,83 @@ async function getWeeklyRevenueHandler(req, res) {
   const { date } = req.query;
 
   if (!date) {
-    return res.status(400).json({ error: 'Thiếu ngày truy vấn' });
+    return res.status(400).json({ error: "Thiếu ngày truy vấn" });
   }
 
   try {
     const result = await dashboardRepository.getWeeklyRevenueByDate(date);
     return res.status(200).json(result);
   } catch (err) {
-    console.error('[Handler] Lỗi doanh thu tuần:', err);
-    return res.status(500).json({ error: 'Lỗi máy chủ' });
+    console.error("[Handler] Lỗi doanh thu tuần:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
   }
 }
 
 async function getYearlyRevenueHandler(req, res) {
   const { date } = req.query;
 
-  if (!date) return res.status(400).json({ error: 'Thiếu ngày truy vấn' });
+  if (!date) return res.status(400).json({ error: "Thiếu ngày truy vấn" });
 
   try {
     const result = await dashboardRepository.getYearlyRevenueByDate(date);
     return res.status(200).json(result);
   } catch (err) {
-    console.error('[Handler] Lỗi doanh thu năm:', err);
-    return res.status(500).json({ error: 'Lỗi máy chủ' });
+    console.error("[Handler] Lỗi doanh thu năm:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
   }
 }
 
-
+async function getTotalRevvenueByDayHandler(req, res) {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: "Thiếu ngày truy vấn" });
+  try {
+    const result = await dashboardRepository.getTotalRevenueByDay(date);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("[Handler] Lỗi doanh thu theo ngày:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
+  }
+};
+async function getTotalRevenueByWeekHandler(req, res) {
+  const { week } = req.query;
+  if (!week) return res.status(400).json({ error: "Thiếu tuần truy vấn" });
+  try {
+    const result = await dashboardRepository.getTotalRevenueByWeek(week);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("[Handler] Lỗi doanh thu theo tuần:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
+  }
+}
+async function getTotalRevenueByMonthHandler(req, res) {
+  const { month } = req.query;
+  if (!month) return res.status(400).json({ error: "Thiếu tháng truy vấn" });
+  try {
+    const result = await dashboardRepository.getTotalRevenueByMonth(month);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("[Handler] Lỗi doanh thu theo tháng:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
+  }
+};
+async function getTotalRevenueByYearHandler(req, res) {
+  const { year } = req.query;
+  if (!year) return res.status(400).json({ error: "Thiếu năm truy vấn" });
+  try {
+    const result = await dashboardRepository.getTotalRevenueByYear(year);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("[Handler] Lỗi doanh thu theo năm:", err);
+    return res.status(500).json({ error: "Lỗi máy chủ" });
+  }
+  
+}
 async function getTotalProductsHandler(req, res) {
   try {
     const result = await dashboardRepository.getTotalProducts();
     res.status(200).json({ totalProducts: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng sản phẩm' });
+    res.status(500).json({ error: "Lỗi lấy tổng sản phẩm" });
   }
 }
 
@@ -68,7 +126,7 @@ async function getTotalBrandsHandler(req, res) {
     const result = await dashboardRepository.getTotalBrands();
     res.status(200).json({ totalBrands: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy số thương hiệu' });
+    res.status(500).json({ error: "Lỗi lấy số thương hiệu" });
   }
 }
 
@@ -77,7 +135,7 @@ async function getTotalCategoriesHandler(req, res) {
     const result = await dashboardRepository.getTotalCategories();
     res.status(200).json({ totalCategories: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng danh mục' });
+    res.status(500).json({ error: "Lỗi lấy tổng danh mục" });
   }
 }
 
@@ -86,7 +144,7 @@ async function getTotalUsersHandler(req, res) {
     const result = await dashboardRepository.getTotalUsers();
     res.status(200).json({ totalUsers: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng người dùng' });
+    res.status(500).json({ error: "Lỗi lấy tổng người dùng" });
   }
 }
 
@@ -95,7 +153,7 @@ async function getTotalReviewsHandler(req, res) {
     const result = await dashboardRepository.getTotalReviews();
     res.status(200).json({ totalReviews: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng đánh giá' });
+    res.status(500).json({ error: "Lỗi lấy tổng đánh giá" });
   }
 }
 
@@ -104,7 +162,7 @@ async function getTotalPostsHandler(req, res) {
     const result = await dashboardRepository.getTotalPosts();
     res.status(200).json({ totalPosts: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng bài viết' });
+    res.status(500).json({ error: "Lỗi lấy tổng bài viết" });
   }
 }
 
@@ -113,7 +171,7 @@ async function getTotalPostCategoriesHandler(req, res) {
     const result = await dashboardRepository.getTotalPostCategories();
     res.status(200).json({ totalPostCategories: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng danh mục bài viết' });
+    res.status(500).json({ error: "Lỗi lấy tổng danh mục bài viết" });
   }
 }
 
@@ -122,10 +180,101 @@ async function getTotalOrdersHandler(req, res) {
     const result = await dashboardRepository.getTotalOrders();
     res.status(200).json({ totalOrders: result });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi lấy tổng đơn hàng' });
+    res.status(500).json({ error: "Lỗi lấy tổng đơn hàng" });
   }
 }
+async function getLowStockProductsHandler(req, res) {
+  try {
+    const result = await dashboardRepository.getLowStockProducts();
+    res.status(200).json({ data: result });
+  } catch (err) {
+    console.error("[Handler] Lỗi lấy sản phẩm tồn kho thấp:", err);
+    res
+      .status(500)
+      .json({ error: "Lỗi máy chủ khi lấy sản phẩm tồn kho thấp." });
+  }
+}
+async function getBestSellingProductHandler(req, res) {
+  try {
+    const bestSellingProducts =
+      await dashboardRepository.getBestSellingProduct();
+    res.status(200).json(bestSellingProducts);
+  } catch (error) {
+    console.error("Lỗi khi lấy sản phẩm bán chạy:", error);
+    res.status(500).json({ error: "Đã xảy ra lỗi khi truy vấn dữ liệu" });
+  }
+}
+async function getPendingOrdersHandler(req, res) {
+  try {
+    const orders = await dashboardRepository.getPendingOrders();
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error("Error fetching pending orders:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+async function getRecentOrdersHandler(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status,
+      categoryId = "",
+      sortField = "created_at",
+      sortOrder = "desc",       
+    } = req.query;
 
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const category = categoryId ? parseInt(categoryId) : null;
+
+    const [orders, total] = await Promise.all([
+      dashboardRepository.getOrdersWithFilters({
+        page: pageNum,
+        limit: limitNum,
+        search,
+        status,
+        categoryId: category,
+        sortField,  // thêm
+        sortOrder,  // thêm
+      }),
+      dashboardRepository.countOrdersWithFilters({
+        search,
+        status,
+        categoryId: category,
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: orders,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching filtered orders:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+async function getAllCategoryProductHandler(req, res) {
+   try {
+    const categories = await dashboardRepository.findAllCategoryProduct();
+    res.status(200).json({
+      message: "Lấy danh sách danh mục sản phẩm thành công",
+      data: categories,
+    });
+  } catch (error) {
+    console.error("Error in getAllCategoryProductHandler:", error);
+    res.status(500).json({
+      error: "Lỗi máy chủ khi lấy danh sách danh mục sản phẩm",
+    });
+  }
+}
 module.exports = {
   getTotalProductsHandler,
   getTotalBrandsHandler,
@@ -138,4 +287,13 @@ module.exports = {
   getYearlyRevenueHandler,
   getMonthlyRevenueHandler,
   getWeeklyRevenueHandler,
+  getLowStockProductsHandler,
+  getBestSellingProductHandler,
+  getPendingOrdersHandler,
+  getRecentOrdersHandler,
+  getTotalRevvenueByDayHandler,
+  getTotalRevenueByMonthHandler,
+  getTotalRevenueByYearHandler,
+  getTotalRevenueByWeekHandler,
+  getAllCategoryProductHandler
 };
