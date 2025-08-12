@@ -424,9 +424,15 @@ async function getAllUsersHandler(req, res) {
       email,
       user_id,
       phone,
+      search,
     } = req.query;
 
     const filters = { role, status, name, email, user_id, phone };
+
+    if (search) {
+      filters.search = search;
+    }
+
     const result = await getAllUsersUsecase({
       page,
       limit,
@@ -444,6 +450,7 @@ async function getAllUsersHandler(req, res) {
     res.status(500).json({ error: "Lỗi khi lấy danh sách người dùng." });
   }
 }
+
 async function updateUsersHandler(req, res) {
   const userId = req.params.userId;
 

@@ -377,7 +377,13 @@ async function addUserVoucher({ user_id, coupon_code }) {
 }
 
 // Admin
-async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', sortDirection = 'desc', filters = {} }) {
+async function findAllUsers({
+  page = 1,
+  limit = 20,
+  sortField = 'created_at',
+  sortDirection = 'desc',
+  filters = {},
+}) {
   page = parseInt(page);
   limit = parseInt(limit);
 
@@ -385,32 +391,40 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
   if (isNaN(limit) || limit < 1) limit = 20;
 
   const skip = (page - 1) * limit;
-
   const where = {};
 
+  // Filter theo role
   if (filters.role) {
     where.role = filters.role;
   }
 
- if (filters.status !== undefined) {
-  where.status = parseInt(filters.status);
-}
-
-
-  if (filters.name) {
-    where.name = { contains: filters.name };
+  // Filter theo status
+  if (filters.status !== undefined) {
+    where.status = parseInt(filters.status);
   }
 
-  if (filters.email) {
-    where.email = { contains: filters.email };  
-  }
-
-  if (filters.user_id) {
-    where.user_id = parseInt(filters.user_id);
-  }
-
-  if (filters.phone) {
-    where.phone = { contains: filters.phone };
+  // Nếu có search thì chỉ tìm theo nhiều trường, bỏ filter riêng
+  if (filters.search) {
+    where.OR = [
+      { name: { contains: filters.search } },
+      { email: { contains: filters.search } },
+      { phone: { contains: filters.search } },
+      { user_id: { equals: parseInt(filters.search) || 0 } },
+    ];
+  } else {
+    // Các filter riêng lẻ khi không có search
+    if (filters.name) {
+      where.name = { contains: filters.name };
+    }
+    if (filters.email) {
+      where.email = { contains: filters.email };
+    }
+    if (filters.phone) {
+      where.phone = { contains: filters.phone };
+    }
+    if (filters.user_id) {
+      where.user_id = parseInt(filters.user_id);
+    }
   }
 
   const [users, total] = await Promise.all([
@@ -442,7 +456,6 @@ async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', so
     totalPages: Math.ceil(total / limit),
   };
 }
-
 
 async function updateUser(userId, data) {
   return prisma.users.update({
