@@ -31,6 +31,8 @@ const getCouponsUsecase = require("../../infrastructure/usecase/product/getCoupo
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
 const getAllProductVariantUsecase = require("../../infrastructure/usecase/product//getAllProductVariantUsecase");
 const prisma = require("../../shared/prisma");
+const slugify = require('slugify');
+const crypto = require('crypto');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -395,92 +397,160 @@ async function getProductsByGenderHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+// Hàm tạo SKU duy nhất
+async function generateUniqueSKU(baseSKU) {
+  let sku = baseSKU;
+  let counter = 1;
+
+  while (true) {
+    const exists = await prisma.product_variants.findFirst({
+      where: { sku }
+    });
+
+    if (!exists) return sku; // Không trùng → dùng luôn
+
+    sku = `${baseSKU}-${counter}`;
+    counter++;
+  }
+}
+
+async function generateUniqueSKU(baseSKU) {
+  let sku = baseSKU;
+  let count = 1;
+  while (true) {
+    const existing = await prisma.product_variants.findFirst({
+      where: { sku }
+    });
+    if (!existing) break;
+    sku = `${baseSKU}-${count}`;
+    count++;
+  }
+  return sku;
+}
+
 async function addProductHandler(req, res) {
   try {
-    const data = req.body;
+    let data = { ...req.body };
 
-    // Parse product_variants nếu là string JSON
+    // Debug log
+    console.log("Body nhận được:", req.body);
+
+    // Parse product_variants nếu là chuỗi JSON
     if (data.product_variants && typeof data.product_variants === "string") {
       try {
         data.product_variants = JSON.parse(data.product_variants);
       } catch (err) {
-        return res
-          .status(400)
-          .json({ error: "product_variants không phải JSON hợp lệ" });
+        return res.status(400).json({ error: "product_variants không phải JSON hợp lệ" });
       }
     } else if (!Array.isArray(data.product_variants)) {
       data.product_variants = [];
     }
 
-    // Ép kiểu số hoặc null
-    data.categories_id = data.categories_id
-      ? parseInt(data.categories_id, 10)
-      : null;
+    // Ép kiểu số cho các field
+    data.categories_id = data.categories_id ? parseInt(data.categories_id, 10) : null;
     data.brand_id = data.brand_id ? parseInt(data.brand_id, 10) : null;
-    data.gender_id = data.gender_id ? parseInt(data.gender_id, 10) : null;
-
-    // Chuẩn hóa giá tiền
+    data.gender_id = data.gender_id ? parseInt(data.gender_id, 10) : 1; // default = 1
     data.price = data.price ? Number(data.price) : 0;
     data.sale_price = data.sale_price ? Number(data.sale_price) : 0;
 
-    // Lấy ảnh chính
-    const productImages = (req.files["images"] || []).map((file) => ({
+    console.log("Giá trị gender_id sau parse:", data.gender_id);
+
+    // Validate category, brand, gender
+    const categoryRecord = await prisma.categories.findUnique({
+      where: { categories_id: data.categories_id },
+    });
+    if (!categoryRecord) return res.status(400).json({ error: "categories_id không tồn tại" });
+
+    const brandRecord = await prisma.brands.findUnique({
+      where: { brand_id: data.brand_id },
+    });
+    if (!brandRecord) return res.status(400).json({ error: "brand_id không tồn tại" });
+
+    const genderRecord = await prisma.genders.findUnique({
+      where: { id: data.gender_id },
+    });
+    if (!genderRecord) return res.status(400).json({ error: "gender_id không tồn tại" });
+
+    // Validate ảnh chính
+    const productImages = (req.files.filter(f => f.fieldname === "images") || []).map(file => ({
       url: file.filename,
       alt_text: file.originalname,
       type: "main",
     }));
+    if (productImages.length === 0) {
+      return res.status(400).json({ error: "Sản phẩm phải có ít nhất 1 ảnh chính" });
+    }
 
-    // Gán ảnh cho từng variant nếu có
-    // Lấy ảnh variant
-    const variantFiles = req.files["variant_images"] || [];
-
-    data.product_variants = data.product_variants.map((variant) => {
-      const colorId = variant.color_id ? parseInt(variant.color_id, 10) : null;
-
-      // Tìm file có prefix = colorId
-      const matchFile = variantFiles.find((file) => {
-        const prefix = file.originalname.split("__")[0];
-        return parseInt(prefix, 10) === colorId;
-      });
-
-      return {
-        ...variant,
-        color_id: colorId,
-        size_id: variant.size_id ? parseInt(variant.size_id, 10) : null,
-        stock_quantity: variant.stock_quantity
-          ? parseInt(variant.stock_quantity, 10)
-          : 0,
-        sku: variant.sku || null,
-        image_url: matchFile ? matchFile.filename : null,
-      };
+    // Map ảnh variant theo mã màu
+    const colorImageMap = {};
+    req.files.forEach(file => {
+      if (file.fieldname.startsWith("variant_image_")) {
+        const codeColor = file.fieldname.replace("variant_image_", "");
+        colorImageMap[codeColor] = file.filename;
+      }
     });
 
-    // Validate categories, brand, gender nếu có
-    if (data.categories_id) {
-      const categoryExists = await prisma.categories.findUnique({
-        where: { categories_id: data.categories_id },
-      });
-      if (!categoryExists) {
-        return res.status(400).json({ error: "categories_id không tồn tại" });
+    // Validate mỗi màu phải có ảnh
+    for (let variant of data.product_variants) {
+      if (!colorImageMap[variant.code_color]) {
+        return res.status(400).json({ error: `Màu ${variant.code_color} chưa có ảnh` });
       }
     }
 
-    if (data.brand_id) {
-      const brandExists = await prisma.brands.findUnique({
-        where: { brand_id: data.brand_id },
-      });
-      if (!brandExists) {
-        return res.status(400).json({ error: "brand_id không tồn tại" });
-      }
-    }
+    // Tạo slug từ name
+    data.slug = slugify(data.name, { lower: true, strict: true });
 
-    if (data.gender_id) {
-      const genderExists = await prisma.genders.findUnique({
-        where: { id: data.gender_id },
-      });
-      if (!genderExists) {
-        return res.status(400).json({ error: "gender_id không tồn tại" });
+    // Lấy chữ cái đầu từ category, brand, gender
+    const cateLetter = categoryRecord.name?.charAt(0).toUpperCase() || "X";
+    const brandLetter = brandRecord.name?.charAt(0).toUpperCase() || "X";
+    const genderLetter = genderRecord.name?.charAt(0).toUpperCase() || "X";
+    const prefix = `${cateLetter}${brandLetter}${genderLetter}`;
+
+    // Cache màu đã tạo
+    const colorCache = {};
+    const processedVariants = [];
+
+    for (let variant of data.product_variants) {
+      const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
+      const stock = variant.stock_quantity ? parseInt(variant.stock_quantity, 10) : 0;
+
+      let colorRecord = colorCache[variant.code_color];
+      if (!colorRecord) {
+        colorRecord = await prisma.colors.findFirst({
+          where: { code_color: variant.code_color },
+        });
+
+        if (!colorRecord) {
+          colorRecord = await prisma.colors.create({
+            data: {
+              code_color: variant.code_color,
+              name_color: variant.name_color,
+              images: colorImageMap[variant.code_color],
+            },
+          });
+        } else {
+          colorRecord = await prisma.colors.update({
+            where: { id: colorRecord.id },
+            data: { images: colorImageMap[variant.code_color] },
+          });
+        }
+
+        colorCache[variant.code_color] = colorRecord;
       }
+
+      // Lấy ký tự đại diện màu
+      const colorLetter = variant.code_color?.charAt(0).toUpperCase() || "X";
+
+      // Tạo SKU duy nhất: PREFIX-MAUMOI-SIZE
+      const baseSKU = `${prefix}-${colorLetter}-${sizeId}`;
+      const sku = await generateUniqueSKU(baseSKU);
+
+      processedVariants.push({
+        color_id: colorRecord.id,
+        size_id: sizeId,
+        stock_quantity: stock,
+        sku,
+      });
     }
 
     // Tạo sản phẩm
@@ -498,40 +568,26 @@ async function addProductHandler(req, res) {
         status: 1,
         view: 0,
         images: { create: productImages },
-        product_variants: {
-          create: data.product_variants.map((v) => ({
-            color_id: v.color_id,
-            size_id: v.size_id,
-            stock_quantity: v.stock_quantity,
-            sku: v.sku,
-          })),
-        },
+        product_variants: { create: processedVariants },
       },
       include: {
         images: true,
-        product_variants: true,
+        product_variants: {
+          include: { color: true, size: true },
+        },
       },
     });
 
-    // Cập nhật ảnh cho bảng colors nếu có
-    for (const variant of data.product_variants) {
-      if (variant.color_id && variant.image_url) {
-        await prisma.colors.update({
-          where: { id: variant.color_id },
-          data: { images: variant.image_url },
-        });
-      }
-    }
-
-    res.status(200).json({
-      message: "Tạo sản phẩm thành công",
-      product: newProduct,
-    });
+    res.status(200).json({ message: "Tạo sản phẩm thành công", product: newProduct });
   } catch (error) {
     console.error("Lỗi khi thêm sản phẩm:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+
+
+
 
 const updateProductHandler = async (req, res) => {
   try {

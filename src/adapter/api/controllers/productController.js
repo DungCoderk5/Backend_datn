@@ -54,11 +54,8 @@ router.get("/related/:productId", getRelatedProductsHandler);
 router.get("/gender", getProductsByGenderHandler);
 router.post(
   "/add-product",
-  upload.fields([
-    { name: "images", maxCount: 5 },           // ảnh chính
-    { name: "variant_images", maxCount: 20 }   // ảnh variant
-  ]),
-  validateRealImage, // tí nữa sửa lại middleware để xử lý nhiều ảnh
+  upload.any(), // cho phép tất cả field name, không giới hạn
+  validateRealImage,
   addProductHandler
 );
 router.post("/addToCart", addToCart);

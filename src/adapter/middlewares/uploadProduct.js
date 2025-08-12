@@ -30,29 +30,22 @@ const multerUpload = multer({
   },
 });
 
-// Middleware kiểm tra nội dung file sau khi lưu
+// validateRealImage sửa lại
 const validateRealImage = async (req, res, next) => {
-  // Gom tất cả file lại từ req.file hoặc req.files
   const allFiles = [];
+
   if (req.file) {
     allFiles.push(req.file);
   }
-  if (req.files) {
-    Object.values(req.files).forEach(fileArray => {
-      allFiles.push(...fileArray);
-    });
+  if (Array.isArray(req.files)) {
+    allFiles.push(...req.files);
   }
 
   if (allFiles.length === 0) return next();
 
   const allowedMimeTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'image/bmp',
-    'image/tiff',
-    'image/svg+xml'
+    'image/jpeg', 'image/png', 'image/webp',
+    'image/gif', 'image/bmp', 'image/tiff', 'image/svg+xml'
   ];
 
   for (const file of allFiles) {
@@ -72,6 +65,7 @@ const validateRealImage = async (req, res, next) => {
 
   next();
 };
+
 
 
 module.exports = {
