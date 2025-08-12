@@ -35,6 +35,8 @@ const {
   getCouponsHandler,
   getUserVouchersHandler,
   getAllProductVariantHandler,
+  getAllSizesHandler,
+  getAllGendersHandler,
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
@@ -58,6 +60,8 @@ router.post(
   validateRealImage,
   addProductHandler
 );
+router.get("/genderadmin", getAllGendersHandler);
+router.get("/size", getAllSizesHandler);
 router.post("/addToCart", addToCart);
 router.post("/compare/add", addToCompareHandler);
 router.get("/search", searchProductsHandler);

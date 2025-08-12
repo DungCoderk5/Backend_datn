@@ -29,10 +29,30 @@ const updateProductUsecase = require("../../infrastructure/usecase/product/updat
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
-const getAllProductVariantUsecase = require("../../infrastructure/usecase/product//getAllProductVariantUsecase");
+const getAllProductVariantUsecase = require("../../infrastructure/usecase/product/getAllProductVariantUsecase");
+const getAllSizesUsecase = require("../../infrastructure/usecase/product/getAllSizesUsecase");
+const getAllGendersUsecase = require("../../infrastructure/usecase/product/getAllGendersUsecase");
 const prisma = require("../../shared/prisma");
-const slugify = require('slugify');
-const crypto = require('crypto');
+const slugify = require("slugify");
+const crypto = require("crypto");
+async function getAllSizesHandler(req, res) {
+  try {
+    const result = await getAllSizesUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllSizes:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy tất cả size." });
+  }
+}
+async function getAllGendersHandler(req, res) {
+  try {
+    const result = await getAllGendersUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllGenders:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy tất cả gender." });
+  }
+}
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -404,7 +424,7 @@ async function generateUniqueSKU(baseSKU) {
 
   while (true) {
     const exists = await prisma.product_variants.findFirst({
-      where: { sku }
+      where: { sku },
     });
 
     if (!exists) return sku; // Không trùng → dùng luôn
@@ -417,73 +437,90 @@ async function generateUniqueSKU(baseSKU) {
 async function generateUniqueSKU(baseSKU) {
   let sku = baseSKU;
   let count = 1;
-  while (true) {
-    const existing = await prisma.product_variants.findFirst({
-      where: { sku }
-    });
+  const maxAttempts = 100;
+  while (count <= maxAttempts) {
+    const existing = await prisma.product_variants.findFirst({ where: { sku } });
     if (!existing) break;
     sku = `${baseSKU}-${count}`;
     count++;
   }
+  if (count > maxAttempts) {
+    throw new Error("Không thể tạo SKU duy nhất sau 100 lần thử");
+  }
   return sku;
 }
 
+
 async function addProductHandler(req, res) {
   try {
-    let data = { ...req.body };
-
-    // Debug log
     console.log("Body nhận được:", req.body);
+    console.log("Raw product_variants:", req.body.product_variants);
+
+    let data = { ...req.body };
 
     // Parse product_variants nếu là chuỗi JSON
     if (data.product_variants && typeof data.product_variants === "string") {
       try {
         data.product_variants = JSON.parse(data.product_variants);
+        console.log("Parsed product_variants:", data.product_variants);
       } catch (err) {
-        return res.status(400).json({ error: "product_variants không phải JSON hợp lệ" });
+        return res
+          .status(400)
+          .json({ error: "product_variants không phải JSON hợp lệ" });
       }
     } else if (!Array.isArray(data.product_variants)) {
       data.product_variants = [];
     }
 
     // Ép kiểu số cho các field
-    data.categories_id = data.categories_id ? parseInt(data.categories_id, 10) : null;
+    data.categories_id = data.categories_id
+      ? parseInt(data.categories_id, 10)
+      : null;
     data.brand_id = data.brand_id ? parseInt(data.brand_id, 10) : null;
     data.gender_id = data.gender_id ? parseInt(data.gender_id, 10) : 1; // default = 1
+    data.status = data.status ? parseInt(data.status, 10) : 1; // default = 1
     data.price = data.price ? Number(data.price) : 0;
     data.sale_price = data.sale_price ? Number(data.sale_price) : 0;
 
     console.log("Giá trị gender_id sau parse:", data.gender_id);
+    console.log("Giá trị status sau parse:", data.status);
 
     // Validate category, brand, gender
     const categoryRecord = await prisma.categories.findUnique({
       where: { categories_id: data.categories_id },
     });
-    if (!categoryRecord) return res.status(400).json({ error: "categories_id không tồn tại" });
+    if (!categoryRecord)
+      return res.status(400).json({ error: "categories_id không tồn tại" });
 
     const brandRecord = await prisma.brands.findUnique({
       where: { brand_id: data.brand_id },
     });
-    if (!brandRecord) return res.status(400).json({ error: "brand_id không tồn tại" });
+    if (!brandRecord)
+      return res.status(400).json({ error: "brand_id không tồn tại" });
 
     const genderRecord = await prisma.genders.findUnique({
       where: { id: data.gender_id },
     });
-    if (!genderRecord) return res.status(400).json({ error: "gender_id không tồn tại" });
+    if (!genderRecord)
+      return res.status(400).json({ error: "gender_id không tồn tại" });
 
     // Validate ảnh chính
-    const productImages = (req.files.filter(f => f.fieldname === "images") || []).map(file => ({
+    const productImages = (
+      req.files.filter((f) => f.fieldname === "images") || []
+    ).map((file) => ({
       url: file.filename,
       alt_text: file.originalname,
       type: "main",
     }));
     if (productImages.length === 0) {
-      return res.status(400).json({ error: "Sản phẩm phải có ít nhất 1 ảnh chính" });
+      return res
+        .status(400)
+        .json({ error: "Sản phẩm phải có ít nhất 1 ảnh chính" });
     }
 
     // Map ảnh variant theo mã màu
     const colorImageMap = {};
-    req.files.forEach(file => {
+    req.files.forEach((file) => {
       if (file.fieldname.startsWith("variant_image_")) {
         const codeColor = file.fieldname.replace("variant_image_", "");
         colorImageMap[codeColor] = file.filename;
@@ -491,9 +528,12 @@ async function addProductHandler(req, res) {
     });
 
     // Validate mỗi màu phải có ảnh
-    for (let variant of data.product_variants) {
-      if (!colorImageMap[variant.code_color]) {
-        return res.status(400).json({ error: `Màu ${variant.code_color} chưa có ảnh` });
+    const uniqueColors = [
+      ...new Set(data.product_variants.map((v) => v.code_color)),
+    ];
+    for (let codeColor of uniqueColors) {
+      if (!colorImageMap[codeColor]) {
+        return res.status(400).json({ error: `Màu ${codeColor} chưa có ảnh` });
       }
     }
 
@@ -512,7 +552,9 @@ async function addProductHandler(req, res) {
 
     for (let variant of data.product_variants) {
       const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
-      const stock = variant.stock_quantity ? parseInt(variant.stock_quantity, 10) : 0;
+      const stock = variant.stock_quantity
+        ? parseInt(variant.stock_quantity, 10)
+        : 0;
 
       let colorRecord = colorCache[variant.code_color];
       if (!colorRecord) {
@@ -552,6 +594,20 @@ async function addProductHandler(req, res) {
         sku,
       });
     }
+console.log("Dữ liệu tạo product:", {
+  name: data.name,
+  slug: data.slug,
+  description: data.description,
+  short_desc: data.short_desc,
+  price: data.price,
+  sale_price: data.sale_price,
+  categories_id: data.categories_id,
+  brand_id: data.brand_id,
+  gender_id: data.gender_id,
+  status: data.status,
+  images: productImages,
+  product_variants: processedVariants,
+});
 
     // Tạo sản phẩm
     const newProduct = await prisma.products.create({
@@ -565,7 +621,7 @@ async function addProductHandler(req, res) {
         categories_id: data.categories_id,
         brand_id: data.brand_id,
         gender_id: data.gender_id,
-        status: 1,
+        status: data.status,
         view: 0,
         images: { create: productImages },
         product_variants: { create: processedVariants },
@@ -578,16 +634,14 @@ async function addProductHandler(req, res) {
       },
     });
 
-    res.status(200).json({ message: "Tạo sản phẩm thành công", product: newProduct });
+    res
+      .status(200)
+      .json({ message: "Tạo sản phẩm thành công", product: newProduct });
   } catch (error) {
     console.error("Lỗi khi thêm sản phẩm:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
-
-
-
-
 
 const updateProductHandler = async (req, res) => {
   try {
@@ -863,4 +917,6 @@ module.exports = {
   getCouponsHandler,
   getUserVouchersHandler,
   getAllProductVariantHandler,
+  getAllSizesHandler,
+  getAllGendersHandler,
 };

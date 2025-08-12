@@ -1330,6 +1330,17 @@ const productRepository = {
       totalPages: Math.ceil(total / limit),
     };
   },
+  async findAllWithoutPaging() {
+    return await prisma.sizes.findMany({
+      orderBy: { id: "asc" }, // hoặc created_at nếu bạn có cột này
+    });
+  },
+  async findAllGenders() {
+  return await prisma.genders.findMany({
+    orderBy: { id: "asc" }
+  });
+}
+
 };
 
 module.exports = productRepository;
