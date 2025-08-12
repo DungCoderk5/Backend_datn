@@ -449,8 +449,6 @@ async function generateUniqueSKU(baseSKU) {
   }
   return sku;
 }
-
-
 async function addProductHandler(req, res) {
   try {
     console.log("Body nhận được:", req.body);
@@ -528,9 +526,7 @@ async function addProductHandler(req, res) {
     });
 
     // Validate mỗi màu phải có ảnh
-    const uniqueColors = [
-      ...new Set(data.product_variants.map((v) => v.code_color)),
-    ];
+    const uniqueColors = [...new Set(data.product_variants.map((v) => v.code_color))];
     for (let codeColor of uniqueColors) {
       if (!colorImageMap[codeColor]) {
         return res.status(400).json({ error: `Màu ${codeColor} chưa có ảnh` });
@@ -546,70 +542,7 @@ async function addProductHandler(req, res) {
     const genderLetter = genderRecord.name?.charAt(0).toUpperCase() || "X";
     const prefix = `${cateLetter}${brandLetter}${genderLetter}`;
 
-    // Cache màu đã tạo
-    const colorCache = {};
-    const processedVariants = [];
-
-    for (let variant of data.product_variants) {
-      const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
-      const stock = variant.stock_quantity
-        ? parseInt(variant.stock_quantity, 10)
-        : 0;
-
-      let colorRecord = colorCache[variant.code_color];
-      if (!colorRecord) {
-        colorRecord = await prisma.colors.findFirst({
-          where: { code_color: variant.code_color },
-        });
-
-        if (!colorRecord) {
-          colorRecord = await prisma.colors.create({
-            data: {
-              code_color: variant.code_color,
-              name_color: variant.name_color,
-              images: colorImageMap[variant.code_color],
-            },
-          });
-        } else {
-          colorRecord = await prisma.colors.update({
-            where: { id: colorRecord.id },
-            data: { images: colorImageMap[variant.code_color] },
-          });
-        }
-
-        colorCache[variant.code_color] = colorRecord;
-      }
-
-      // Lấy ký tự đại diện màu
-      const colorLetter = variant.code_color?.charAt(0).toUpperCase() || "X";
-
-      // Tạo SKU duy nhất: PREFIX-MAUMOI-SIZE
-      const baseSKU = `${prefix}-${colorLetter}-${sizeId}`;
-      const sku = await generateUniqueSKU(baseSKU);
-
-      processedVariants.push({
-        color_id: colorRecord.id,
-        size_id: sizeId,
-        stock_quantity: stock,
-        sku,
-      });
-    }
-console.log("Dữ liệu tạo product:", {
-  name: data.name,
-  slug: data.slug,
-  description: data.description,
-  short_desc: data.short_desc,
-  price: data.price,
-  sale_price: data.sale_price,
-  categories_id: data.categories_id,
-  brand_id: data.brand_id,
-  gender_id: data.gender_id,
-  status: data.status,
-  images: productImages,
-  product_variants: processedVariants,
-});
-
-    // Tạo sản phẩm
+    // --- Tạo sản phẩm trước, chưa tạo variant ---
     const newProduct = await prisma.products.create({
       data: {
         name: data.name,
@@ -624,8 +557,71 @@ console.log("Dữ liệu tạo product:", {
         status: data.status,
         view: 0,
         images: { create: productImages },
-        product_variants: { create: processedVariants },
       },
+      include: { images: true },
+    });
+
+    // Map lưu colorRecord tương ứng với code_color, để dùng chung cho nhiều size
+    const colorToColorRecordMap = {};
+
+    for (const codeColor of uniqueColors) {
+      // Kiểm tra xem màu này đã tồn tại chưa trong DB để tránh trùng
+      // Lưu ý: bạn có thể bổ sung điều kiện theo sản phẩm nếu cần
+      const existingColor = await prisma.colors.findFirst({
+        where: { code_color: codeColor },
+      });
+
+      if (existingColor) {
+        colorToColorRecordMap[codeColor] = existingColor;
+      } else {
+        // Lấy variant đại diện để tạo màu mới
+        const variantExample = data.product_variants.find((v) => v.code_color === codeColor);
+        const uniqueCodeColor = codeColor + "-" + Date.now();
+
+        const newColor = await prisma.colors.create({
+          data: {
+            code_color: uniqueCodeColor,
+            name_color: variantExample.name_color,
+            images: colorImageMap[codeColor],
+          },
+        });
+        colorToColorRecordMap[codeColor] = newColor;
+      }
+    }
+
+    // Tạo variants theo từng size, dùng chung color_id đã map
+    const variantsToCreate = data.product_variants.map((variant) => {
+      const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
+      const stock = variant.stock_quantity ? parseInt(variant.stock_quantity, 10) : 0;
+      const colorRecord = colorToColorRecordMap[variant.code_color];
+
+      // Tạo SKU theo format
+      const colorLetter = variant.code_color.charAt(0).toUpperCase() || "X";
+      const baseSKU = `${prefix}-${colorLetter}-${sizeId}`;
+
+      // Lưu tạm sku trước, sẽ generate sau vì hàm generateUniqueSKU async
+      return { ...variant, sizeId, stock, colorRecord, baseSKU };
+    });
+
+    // Generate SKU async tuần tự hoặc song song
+    for (let v of variantsToCreate) {
+      v.sku = await generateUniqueSKU(v.baseSKU);
+    }
+
+    // Tạo variants trong DB
+    await prisma.product_variants.createMany({
+      data: variantsToCreate.map((v) => ({
+        product_id: newProduct.products_id,
+        color_id: v.colorRecord.id,
+        size_id: v.sizeId,
+        stock_quantity: v.stock,
+        sku: v.sku,
+      })),
+    });
+
+    // Lấy lại sản phẩm với variants và ảnh đầy đủ để trả về
+    const productWithVariants = await prisma.products.findUnique({
+      where: { products_id: newProduct.products_id },
       include: {
         images: true,
         product_variants: {
@@ -634,14 +630,13 @@ console.log("Dữ liệu tạo product:", {
       },
     });
 
-    res
-      .status(200)
-      .json({ message: "Tạo sản phẩm thành công", product: newProduct });
+    res.status(200).json({ message: "Tạo sản phẩm thành công", product: productWithVariants });
   } catch (error) {
     console.error("Lỗi khi thêm sản phẩm:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
 
 const updateProductHandler = async (req, res) => {
   try {
