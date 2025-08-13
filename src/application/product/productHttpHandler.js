@@ -140,20 +140,43 @@ async function getOrderHandler(req, res) {
   const userId = parseInt(req.params.userId);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-
   const skip = (page - 1) * limit;
 
-  try {
-    const orders = await getOrdersByUserUsecase({ userId, skip, take: limit });
+  const filters = {
+  status: req.query.status || null,
+  payment_method_id: req.query.payment_method_id
+    ? parseInt(req.query.payment_method_id)
+    : null,
+  date_from: req.query.date_from || null,
+  date_to: req.query.date_to || null,
+};
 
-    return res.status(200).json({
-      data: orders,
+
+  const sort = {
+    field: req.query.sortField || "created_at",
+    direction: req.query.sortDirection || "desc",
+  };
+
+  const search = req.query.search || "";
+
+  try {
+    const orders = await getOrdersByUserUsecase({
+      userId,
+      skip,
+      page,
+      take: limit,
+      filters,
+      sort,
+      search,
     });
+
+    return res.status(200).json({ data: orders });
   } catch (error) {
     console.error("[Handler] Lỗi lấy đơn hàng theo user:", error);
     return res.status(500).json({ error: "Lỗi máy chủ khi lấy đơn hàng." });
   }
 }
+
 
 async function deleteProductHandler(req, res) {
   try {
