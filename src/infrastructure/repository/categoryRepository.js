@@ -113,13 +113,11 @@ const categoryRepository = {
     });
   },
   async findAllWithoutPaging() {
-  return await prisma.categories.findMany({
-    include: { children: true },
-    orderBy: { name: "asc" }
-  });
-}
-
+    return await prisma.categories.findMany({
+      include: { children: true },
+      orderBy: { name: "asc" },
+    });
+  },
 };
-
 
 module.exports = categoryRepository;
