@@ -31,6 +31,8 @@ const getCouponsUsecase = require("../../infrastructure/usecase/product/getCoupo
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
 const getAllProductReviewUsecase = require("../../infrastructure/usecase/product/getAllProductReviewUseCase");
 const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
+const getStatusReviewUsecase = require('../../infrastructure/usecase/product/getStatusReviewUsecase');
+
 async function getAllProductsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -459,6 +461,7 @@ async function createProductReviewHandler(req, res) {
       product_id,
       rating,
       content,
+      status:"approved"
     });
     res.status(201).json(review);
   } catch (err) {
@@ -671,6 +674,35 @@ async function getByIdReviewHandler(req, res) {
     });
   }
 }
+
+async function getStatusReviewHandler(req, res) {
+  try {
+    const product_reviews_id = parseInt(req.params.id);
+    if (!product_reviews_id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID không hợp lệ",
+      });
+    }
+
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ error: 'Thiếu trạng thái đánh giá.' });
+    }
+
+    const updatedReview = await getStatusReviewUsecase(product_reviews_id, status);
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật trạng thái thành công',
+      data: updatedReview
+    });
+
+  } catch (err) {
+    console.error('[Handler] Lỗi updateReviewStatus:', err);
+    res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái đánh giá.' });
+  }
+}
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -704,5 +736,6 @@ module.exports = {
   getCouponsHandler,
   getUserVouchersHandler,
   getAllProductReviewHandler,
-  getByIdReviewHandler
+  getByIdReviewHandler,
+  getStatusReviewHandler
 };

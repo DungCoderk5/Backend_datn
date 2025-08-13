@@ -819,14 +819,22 @@ const productRepository = {
     });
     return data;
   },
+async getStatusReview(product_reviews_id, status) {
+  return await prisma.product_reviews.update({
+    where: { product_reviews_id },
+    data: { status },
+  });
+},
 
-  async createReview({ user_id, product_id, rating, content }) {
+
+  async createReview({ user_id, product_id, rating, content,status }) {
     return await prisma.product_reviews.create({
       data: {
         user_id,
         product_id,
         rating,
         content,
+        status,
       },
     });
   },
