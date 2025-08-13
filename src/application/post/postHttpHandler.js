@@ -6,10 +6,10 @@ const getPostByIdUsecase = require("../../infrastructure/usecase/post/getPostByI
 const getPostBySlugUsecase = require("../../infrastructure/usecase/post/getPostBySlugUsecase");
 const getPostByCategoryUsecase = require("../../infrastructure/usecase/post/getPostByCategoryUsecase");
 const getPostCategoryUsecase = require("../../infrastructure/usecase/post/getPostCategoryUsecase");
-const createCategoryPostUsecase = require("../../infrastructure/usecase/post/createCategoryPostUseCase");
+const createCategoryPostUsecase = require("../../infrastructure/usecase/post/createCategoryPostUsecase");
 const deleteCategoryPostUsecase = require("../../infrastructure/usecase/post/deleteCategoryPostUseCase");
 const updateCategoryUsecase = require("../../infrastructure/usecase/post/updateCategoryPostUseCase");
-
+const getCategoryPostIdUseCase = require("../../infrastructure/usecase/post/getCategoryPostIdUseCase")
 async function getAllPostsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -137,6 +137,11 @@ async function updatePostHandler(req, res) {
       return res.status(400).json({ error: "ID bài viết không hợp lệ." });
     }
 
+    const oldPost = await getPostByIdUsecase(post_id);
+    if (!oldPost) {
+      return res.status(404).json({ error: "Bài viết không tồn tại." });
+    }
+
     const {
       title,
       slug,
@@ -144,30 +149,34 @@ async function updatePostHandler(req, res) {
       images,
       category_post_id,
       author_id,
-      status = 1,
+      status,
     } = req.body;
 
-    if (req.file) {
-      thumbnail = req.file.filename;
-    }
+    const thumbnail = req.file ? req.file.filename : oldPost.thumbnail;
+
+    const newCategoryPostId = category_post_id !== undefined && category_post_id !== null ? Number(category_post_id) : oldPost.category_post_id;
+    const newAuthorId = author_id !== undefined && author_id !== null ? Number(author_id) : oldPost.author_id;
+    const newStatus = status !== undefined && status !== null ? Number(status) : oldPost.status;
+
     const result = await updatePostUsecase(post_id, {
-      title,
-      slug,
-      content,
+      title: title !== undefined ? title : oldPost.title,
+      slug: slug !== undefined ? slug : oldPost.slug,
+      content: content !== undefined ? content : oldPost.content,
       thumbnail,
-      images,
-      category_post_id: Number(category_post_id),
-      author_id: Number(author_id),
-      status: Number(status),
+      images: images !== undefined ? images : oldPost.images,
+      category_post_id: newCategoryPostId,
+      author_id: newAuthorId,
+      status: newStatus,
     });
-    res
-      .status(200)
-      .json({ message: "Cập nhật bài viết thành công.", data: result });
+
+    res.status(200).json({ message: "Cập nhật bài viết thành công.", data: result });
   } catch (error) {
     console.error("[Handler] Lỗi updatePost:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật bài viết." });
   }
 }
+
+
 
 async function addPostHandler(req, res) {
   try {
@@ -206,9 +215,7 @@ async function upLoadHandler(req, res) {
   try {
     const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ error: "Không có file được tải lên." });
-    }
+
 
     const fileName = file.filename;
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -273,8 +280,26 @@ async function updateCategoryHandler(req, res) {
     res.status(500).json({
       error: error.message || "Lỗi máy chủ khi cập nhật danh mục.",
     });
+  };
+}
+async function getCategoryPostIdHandler(req, res) {
+  try {
+    const category_post_id = Number(req.params.id);
+
+    const category = await getCategoryPostIdUseCase(category_post_id);
+
+    return res.status(200).json({
+      success: true,
+      data: category
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 }
+
 
 module.exports = {
   getAllPostsHandler,
@@ -288,5 +313,6 @@ module.exports = {
   getPostBySlugHandler,
   createCategoryPostHandler,
   deleteCategoryPostHandler,
-  updateCategoryHandler
+  updateCategoryHandler,
+  getCategoryPostIdHandler
 };

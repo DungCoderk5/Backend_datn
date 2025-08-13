@@ -29,6 +29,9 @@ const updateProductUsecase = require("../../infrastructure/usecase/product/updat
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
+const getAllProductReviewUsecase = require("../../infrastructure/usecase/product/getAllProductReviewUseCase");
+const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
+const getStatusReviewUsecase = require('../../infrastructure/usecase/product/getStatusReviewUsecase');
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -223,9 +226,9 @@ async function getProductDetailHandler(req, res) {
 async function getBestSellingHandler(req, res) {
   try {
     const top = parseInt(req.query.top) || 6;
-  
+
     const result = await getBestSellingUsecase(top);
-   
+
     res.status(200).json(result);
   } catch (err) {
     console.error("Lỗi lấy sản phẩm bán chạy:", err);
@@ -304,7 +307,6 @@ async function getDealProductsHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
-
 
 async function getRelatedProductsHandler(req, res) {
   try {
@@ -389,9 +391,8 @@ async function addToCart(req, res) {
       .status(200)
       .json({ message: "thêm sản phẩm vào giỏ hàng thành công", cart: cart });
   } catch (error) {
-    console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error);
-    res.status(500).json({ error: 'Internal server error' });
-
+    console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
@@ -460,6 +461,7 @@ async function createProductReviewHandler(req, res) {
       product_id,
       rating,
       content,
+      status:"approved"
     });
     res.status(201).json(review);
   } catch (err) {
@@ -573,7 +575,7 @@ async function checkoutHandler(req, res) {
 
     return res
       .status(201)
-      .json({ message: "Thanh toán thành công", data: order, });
+      .json({ message: "Thanh toán thành công", data: order });
   } catch (err) {
     console.error("Checkout Error:", err);
     return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
@@ -603,7 +605,104 @@ async function removeWishlistItemHandler(req, res) {
     return res.status(500).json({ error: "Lỗi máy chủ." });
   }
 }
+async function getAllProductReviewHandler(req, res) {
+  try {
+    // Lấy query params từ request
+    const {
+      page,
+      limit,
+      product_reviews_id,
+      user_name,
+      product_name,
+      rating,
+      search,
+      sortBy,
+      sortOrder,
+    } = req.query;
 
+    // Gọi usecase
+    const result = await getAllProductReviewUsecase({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+      product_reviews_id,
+      user_name,
+      product_name,
+      rating,
+      search,
+      sortBy,
+      sortOrder,
+    });
+
+    // Trả về dữ liệu
+    return res.status(200).json({
+      success: true,
+      message: "Lấy danh sách đánh giá sản phẩm thành công",
+      ...result,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy đánh giá sản phẩm:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+}
+async function getByIdReviewHandler(req, res) {
+  try {
+    // Lấy id từ params
+    const product_reviews_id = parseInt(req.params.id);
+    if (!product_reviews_id)
+      return res.status(400).json({
+        success: false,
+        message: "ID không hợp lệ",
+      });
+    // Gọi usecase
+    const result = await getByIdReviewUsecase(product_reviews_id);
+    // Trả về dữ liệu
+    return res.status(200).json({
+      success: true,
+      message: "Lấy đánh giá sản phẩm thành công",
+      ...result,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy đánh giá sản phẩm:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+}
+
+async function getStatusReviewHandler(req, res) {
+  try {
+    const product_reviews_id = parseInt(req.params.id);
+    if (!product_reviews_id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID không hợp lệ",
+      });
+    }
+
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ error: 'Thiếu trạng thái đánh giá.' });
+    }
+
+    const updatedReview = await getStatusReviewUsecase(product_reviews_id, status);
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật trạng thái thành công',
+      data: updatedReview
+    });
+
+  } catch (err) {
+    console.error('[Handler] Lỗi updateReviewStatus:', err);
+    res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái đánh giá.' });
+  }
+}
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -636,4 +735,7 @@ module.exports = {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getAllProductReviewHandler,
+  getByIdReviewHandler,
+  getStatusReviewHandler
 };

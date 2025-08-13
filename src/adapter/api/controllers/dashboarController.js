@@ -20,7 +20,8 @@ const {
   getTotalRevvenueByDayHandler,
   getTotalRevenueByMonthHandler,
   getTotalRevenueByYearHandler,
-  getTotalRevenueByWeekHandler
+  getTotalRevenueByWeekHandler,
+  getAllCategoryProductHandler
 } = require('../../../application/dashboar/dashboarHttpHandler');
 
 router.get('/revenue/weekly', getWeeklyRevenueHandler);
@@ -43,5 +44,5 @@ router.get('/stock', getLowStockProductsHandler);
 router.get('/best-selling-products', getBestSellingProductHandler);
 router.get('/pending-orders', getPendingOrdersHandler);
 router.get('/recent-orders', getRecentOrdersHandler);
-
+router.get('/category_product',getAllCategoryProductHandler);
 module.exports = router;

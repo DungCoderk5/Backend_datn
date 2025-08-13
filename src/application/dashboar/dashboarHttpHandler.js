@@ -221,8 +221,8 @@ async function getRecentOrdersHandler(req, res) {
       search = "",
       status,
       categoryId = "",
-      sortField = "created_at", // mặc định ngày đặt
-      sortOrder = "desc",       // mặc định giảm dần
+      sortField = "created_at",
+      sortOrder = "desc",       
     } = req.query;
 
     const pageNum = parseInt(page);
@@ -261,7 +261,20 @@ async function getRecentOrdersHandler(req, res) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
-
+async function getAllCategoryProductHandler(req, res) {
+   try {
+    const categories = await dashboardRepository.findAllCategoryProduct();
+    res.status(200).json({
+      message: "Lấy danh sách danh mục sản phẩm thành công",
+      data: categories,
+    });
+  } catch (error) {
+    console.error("Error in getAllCategoryProductHandler:", error);
+    res.status(500).json({
+      error: "Lỗi máy chủ khi lấy danh sách danh mục sản phẩm",
+    });
+  }
+}
 module.exports = {
   getTotalProductsHandler,
   getTotalBrandsHandler,
@@ -282,4 +295,5 @@ module.exports = {
   getTotalRevenueByMonthHandler,
   getTotalRevenueByYearHandler,
   getTotalRevenueByWeekHandler,
+  getAllCategoryProductHandler
 };

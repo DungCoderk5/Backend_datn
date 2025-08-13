@@ -119,6 +119,7 @@ CREATE TABLE `product_reviews` (
     `product_id` INTEGER NOT NULL,
     `rating` INTEGER NULL,
     `content` TEXT NULL,
+    `status` VARCHAR(50) NOT NULL,
     `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `updated_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
 
