@@ -10,13 +10,16 @@ async function updateProductUsecase(req) {
   // Kiểm tra sản phẩm tồn tại
   const existingProduct = await prisma.products.findUnique({
     where: { products_id: productId },
-    include: { images: true, product_variants: true },
+    include: {
+      images: true,
+      product_variants: true,
+    },
   });
   if (!existingProduct) {
     throw { status: 404, message: "Sản phẩm không tồn tại" };
   }
 
-  // Parse variants
+  // Parse JSON cho variants
   if (data.product_variants && typeof data.product_variants === "string") {
     try {
       data.product_variants = JSON.parse(data.product_variants);
@@ -53,7 +56,7 @@ async function updateProductUsecase(req) {
   if (!brandRecord) throw { status: 400, message: "brand_id không tồn tại" };
   if (!genderRecord) throw { status: 400, message: "gender_id không tồn tại" };
 
-  // Ảnh mới (nếu có)
+  // Ảnh sản phẩm chính (nếu có upload mới)
   let productImages = [];
   if (req.files.some((f) => f.fieldname === "images")) {
     productImages = req.files
@@ -69,7 +72,6 @@ async function updateProductUsecase(req) {
       where: { product_id: productId },
     });
   }
-  data.images = productImages;
 
   // Map ảnh variant
   const colorImageMap = {};
@@ -115,11 +117,27 @@ async function updateProductUsecase(req) {
   const genderLetter = genderRecord.name?.charAt(0).toUpperCase() || "X";
   const prefix = `${cateLetter}${brandLetter}${genderLetter}`;
 
-  // Update sản phẩm qua repository
-  await productRepository.updateProduct(productId, data);
-  
+  // Update sản phẩm
+  await prisma.products.update({
+    where: { products_id: productId },
+    data: {
+      name: data.name,
+      slug: data.slug,
+      description: data.description,
+      short_desc: data.short_desc,
+      price: data.price,
+      sale_price: data.sale_price,
+      categories_id: data.categories_id,
+      brand_id: data.brand_id,
+      gender_id: data.gender_id,
+      status: data.status,
+      ...(productImages.length > 0 && {
+        images: { create: productImages },
+      }),
+    },
+  });
 
-  // Xử lý colors
+  // Xử lý colors (thêm mới nếu chưa có)
   const colorToColorRecordMap = {};
   for (const codeColor of uniqueColors) {
     let colorRecord = await prisma.colors.findFirst({
@@ -178,7 +196,7 @@ async function updateProductUsecase(req) {
     })),
   });
 
-  // Trả về sản phẩm đầy đủ
+  // Trả về sản phẩm đầy đủ sau update
   return await prisma.products.findUnique({
     where: { products_id: productId },
     include: {
@@ -187,6 +205,5 @@ async function updateProductUsecase(req) {
     },
   });
 }
-
 
 module.exports = updateProductUsecase;

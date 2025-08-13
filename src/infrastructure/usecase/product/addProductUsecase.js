@@ -54,16 +54,18 @@ async function addProductUsecase(req) {
     throw { status: 400, message: "Sản phẩm phải có ít nhất 1 ảnh chính" };
   }
 
-  // Map ảnh variant
-  const colorImageMap = {};
-  req.files.forEach((file) => {
-    if (file.fieldname.startsWith("variant_image_")) {
-      let codeColor = file.fieldname
-        .replace("variant_image_", "")
-        .split("-")[0];
-      colorImageMap[codeColor] = file.filename;
-    }
-  });
+  // Map ảnh variant: dùng file.filename chứ không dùng fieldname
+const colorImageMap = {};
+req.files.forEach(file => {
+  if (file.fieldname.startsWith("variant_image_")) {
+    // Lấy code màu từ fieldname: "variant_image_<colorCode>"
+    const codeColorRaw = file.fieldname.replace("variant_image_", "");
+    // Loại bỏ ký tự không hợp lệ
+    const codeColor = codeColorRaw.replace(/[\\/:*?"<>|#]/g, "_");
+    colorImageMap[codeColor] = file.filename;
+  }
+});
+
 
   // Danh sách màu duy nhất
   const uniqueColors = [
