@@ -34,6 +34,8 @@ const {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getAllProductReviewHandler,
+  getByIdReviewHandler
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
@@ -62,6 +64,8 @@ router.get("/search", searchProductsHandler);
 router.get("/coupons", getAllCouponsHandler);
 router.post("/wishlist", addToWishlistHandler);
 router.get("/reviews/:productId", getReviewsByProductHandler);
+router.get("/all/reviews",getAllProductReviewHandler)
+router.get("/all/reviews/:id",getByIdReviewHandler)
 router.post("/reviews/:productId", createProductReviewHandler);
 router.delete("/compare/remove", removeFromCompareHandler);
 router.get("/compare", getCompareProductsHandler);

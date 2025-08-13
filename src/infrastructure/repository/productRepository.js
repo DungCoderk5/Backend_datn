@@ -709,6 +709,117 @@ const productRepository = {
       },
     });
   },
+  async findAllReview({
+    page = 1,
+    limit = 10,
+    product_reviews_id,
+    user_name,
+    product_name,
+    rating,
+    search,
+    sortBy = "created_at",
+    sortOrder = "desc",
+  }) {
+    const where = {};
+
+    // Lọc theo ID
+    if (product_reviews_id) {
+      where.product_reviews_id = Number(product_reviews_id);
+    }
+
+    // Lọc theo tên user
+    if (user_name) {
+      where.user = {
+        name: {
+          contains: user_name,
+          lte: "insensitive",
+        },
+      };
+    }
+
+    // Lọc theo tên product
+    if (product_name) {
+      where.product = {
+        name: {
+          contains: product_name,
+          lte: "insensitive",
+        },
+      };
+    }
+
+    // Lọc theo đánh giá
+    if (rating) {
+      where.rating = Number(rating);
+    }
+
+    // Search nội dung
+    if (search) {
+      where.content = {
+        contains: search,
+        lte: "insensitive",
+      };
+    }
+
+    // Tính skip & take cho phân trang
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    // Lấy dữ liệu
+    const data = await prisma.product_reviews.findMany({
+      where,
+      skip,
+      take,
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+      include: {
+        user: true, // nếu muốn join user
+        product: true, // nếu muốn join product
+      },
+    });
+
+    // Đếm tổng số bản ghi (phục vụ phân trang)
+    const total = await prisma.product_reviews.count({ where });
+
+    return {
+      data,
+      total,
+      totalPages: Math.ceil(total / limit),
+      page,
+    };
+  },
+  async findByIdReview(product_reviews_id) {
+    const data = await prisma.product_reviews.findUnique({
+      where: {
+        product_reviews_id: Number(product_reviews_id),
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email:true,
+            phone: true,
+            avatar: true,
+            ship_addresses: true,
+          },
+        },
+        product: {
+          select: {
+            name: true,
+            short_desc:true,
+            product_variants: {
+              select: {
+                size: { select: { number_size: true } },
+                color: { select: { name_color: true, images: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    return data;
+  },
+
   async createReview({ user_id, product_id, rating, content }) {
     return await prisma.product_reviews.create({
       data: {
