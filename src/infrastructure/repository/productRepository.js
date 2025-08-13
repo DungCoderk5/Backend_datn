@@ -423,63 +423,24 @@ const productRepository = {
 
     return { products, total };
   },
-  async create(data) {
-    const {
-      name,
-      slug,
-      description,
-      short_desc,
-      price,
-      sale_price,
-      categories_id,
-      brand_id,
-      gender_id,
-      images = [],
-      product_variants = [],
-    } = data;
-
-    const newProduct = await prisma.products.create({
+  async createProduct(data) {
+    return await prisma.products.create({
       data: {
-        name,
-        slug,
-        description,
-        short_desc,
-        price: Number(price),
-        sale_price: Number(sale_price),
-        categories_id,
-        brand_id,
-        gender_id,
-        status: 1,
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        short_desc: data.short_desc,
+        price: data.price,
+        sale_price: data.sale_price,
+        categories_id: data.categories_id,
+        brand_id: data.brand_id,
+        gender_id: data.gender_id,
+        status: data.status,
         view: 0,
-        images: { create: images },
-        product_variants: {
-          create: product_variants.map((variant) => ({
-            color_id: variant.color_id,
-            size_id: variant.size_id,
-            stock_quantity: variant.stock_quantity,
-            sku: variant.sku,
-          })),
-        },
+        images: { create: data.images },
       },
-      include: {
-        images: true,
-        product_variants: {
-          include: { color: true, size: true },
-        },
-      },
+      include: { images: true },
     });
-
-    // Lưu ảnh variant vào bảng colors nếu có
-    for (const variant of product_variants) {
-      if (variant.color_id && variant.image_url) {
-        await prisma.colors.update({
-          where: { id: variant.color_id },
-          data: { images: variant.image_url },
-        });
-      }
-    }
-
-    return newProduct;
   },
   async addToCart({ user_id, variant_id, quantity }) {
     let cart = await prisma.carts.findFirst({
@@ -1336,11 +1297,10 @@ const productRepository = {
     });
   },
   async findAllGenders() {
-  return await prisma.genders.findMany({
-    orderBy: { id: "asc" }
-  });
-}
-
+    return await prisma.genders.findMany({
+      orderBy: { id: "asc" },
+    });
+  },
 };
 
 module.exports = productRepository;

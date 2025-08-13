@@ -439,7 +439,9 @@ async function generateUniqueSKU(baseSKU) {
   let count = 1;
   const maxAttempts = 100;
   while (count <= maxAttempts) {
-    const existing = await prisma.product_variants.findFirst({ where: { sku } });
+    const existing = await prisma.product_variants.findFirst({
+      where: { sku },
+    });
     if (!existing) break;
     sku = `${baseSKU}-${count}`;
     count++;
@@ -451,193 +453,13 @@ async function generateUniqueSKU(baseSKU) {
 }
 async function addProductHandler(req, res) {
   try {
-    console.log("Body nhận được:", req.body);
-    console.log("Raw product_variants:", req.body.product_variants);
-
-    let data = { ...req.body };
-
-    // Parse product_variants nếu là chuỗi JSON
-    if (data.product_variants && typeof data.product_variants === "string") {
-      try {
-        data.product_variants = JSON.parse(data.product_variants);
-        console.log("Parsed product_variants:", data.product_variants);
-      } catch (err) {
-        return res
-          .status(400)
-          .json({ error: "product_variants không phải JSON hợp lệ" });
-      }
-    } else if (!Array.isArray(data.product_variants)) {
-      data.product_variants = [];
-    }
-
-    // Ép kiểu số cho các field
-    data.categories_id = data.categories_id
-      ? parseInt(data.categories_id, 10)
-      : null;
-    data.brand_id = data.brand_id ? parseInt(data.brand_id, 10) : null;
-    data.gender_id = data.gender_id ? parseInt(data.gender_id, 10) : 1; // default = 1
-    data.status = data.status ? parseInt(data.status, 10) : 1; // default = 1
-    data.price = data.price ? Number(data.price) : 0;
-    data.sale_price = data.sale_price ? Number(data.sale_price) : 0;
-
-    console.log("Giá trị gender_id sau parse:", data.gender_id);
-    console.log("Giá trị status sau parse:", data.status);
-
-    // Validate category, brand, gender
-    const categoryRecord = await prisma.categories.findUnique({
-      where: { categories_id: data.categories_id },
-    });
-    if (!categoryRecord)
-      return res.status(400).json({ error: "categories_id không tồn tại" });
-
-    const brandRecord = await prisma.brands.findUnique({
-      where: { brand_id: data.brand_id },
-    });
-    if (!brandRecord)
-      return res.status(400).json({ error: "brand_id không tồn tại" });
-
-    const genderRecord = await prisma.genders.findUnique({
-      where: { id: data.gender_id },
-    });
-    if (!genderRecord)
-      return res.status(400).json({ error: "gender_id không tồn tại" });
-
-    // Validate ảnh chính
-    const productImages = (
-      req.files.filter((f) => f.fieldname === "images") || []
-    ).map((file) => ({
-      url: file.filename,
-      alt_text: file.originalname,
-      type: "main",
-    }));
-    if (productImages.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Sản phẩm phải có ít nhất 1 ảnh chính" });
-    }
-
-    // Map ảnh variant theo mã màu
-    const colorImageMap = {};
-    req.files.forEach((file) => {
-      if (file.fieldname.startsWith("variant_image_")) {
-        const codeColor = file.fieldname.replace("variant_image_", "");
-        colorImageMap[codeColor] = file.filename;
-      }
-    });
-
-    // Validate mỗi màu phải có ảnh
-    const uniqueColors = [...new Set(data.product_variants.map((v) => v.code_color))];
-    for (let codeColor of uniqueColors) {
-      if (!colorImageMap[codeColor]) {
-        return res.status(400).json({ error: `Màu ${codeColor} chưa có ảnh` });
-      }
-    }
-
-    // Tạo slug từ name
-    data.slug = slugify(data.name, { lower: true, strict: true });
-
-    // Lấy chữ cái đầu từ category, brand, gender
-    const cateLetter = categoryRecord.name?.charAt(0).toUpperCase() || "X";
-    const brandLetter = brandRecord.name?.charAt(0).toUpperCase() || "X";
-    const genderLetter = genderRecord.name?.charAt(0).toUpperCase() || "X";
-    const prefix = `${cateLetter}${brandLetter}${genderLetter}`;
-
-    // --- Tạo sản phẩm trước, chưa tạo variant ---
-    const newProduct = await prisma.products.create({
-      data: {
-        name: data.name,
-        slug: data.slug,
-        description: data.description,
-        short_desc: data.short_desc,
-        price: data.price,
-        sale_price: data.sale_price,
-        categories_id: data.categories_id,
-        brand_id: data.brand_id,
-        gender_id: data.gender_id,
-        status: data.status,
-        view: 0,
-        images: { create: productImages },
-      },
-      include: { images: true },
-    });
-
-    // Map lưu colorRecord tương ứng với code_color, để dùng chung cho nhiều size
-    const colorToColorRecordMap = {};
-
-    for (const codeColor of uniqueColors) {
-      // Kiểm tra xem màu này đã tồn tại chưa trong DB để tránh trùng
-      // Lưu ý: bạn có thể bổ sung điều kiện theo sản phẩm nếu cần
-      const existingColor = await prisma.colors.findFirst({
-        where: { code_color: codeColor },
-      });
-
-      if (existingColor) {
-        colorToColorRecordMap[codeColor] = existingColor;
-      } else {
-        // Lấy variant đại diện để tạo màu mới
-        const variantExample = data.product_variants.find((v) => v.code_color === codeColor);
-        const uniqueCodeColor = codeColor + "-" + Date.now();
-
-        const newColor = await prisma.colors.create({
-          data: {
-            code_color: uniqueCodeColor,
-            name_color: variantExample.name_color,
-            images: colorImageMap[codeColor],
-          },
-        });
-        colorToColorRecordMap[codeColor] = newColor;
-      }
-    }
-
-    // Tạo variants theo từng size, dùng chung color_id đã map
-    const variantsToCreate = data.product_variants.map((variant) => {
-      const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
-      const stock = variant.stock_quantity ? parseInt(variant.stock_quantity, 10) : 0;
-      const colorRecord = colorToColorRecordMap[variant.code_color];
-
-      // Tạo SKU theo format
-      const colorLetter = variant.code_color.charAt(0).toUpperCase() || "X";
-      const baseSKU = `${prefix}-${colorLetter}-${sizeId}`;
-
-      // Lưu tạm sku trước, sẽ generate sau vì hàm generateUniqueSKU async
-      return { ...variant, sizeId, stock, colorRecord, baseSKU };
-    });
-
-    // Generate SKU async tuần tự hoặc song song
-    for (let v of variantsToCreate) {
-      v.sku = await generateUniqueSKU(v.baseSKU);
-    }
-
-    // Tạo variants trong DB
-    await prisma.product_variants.createMany({
-      data: variantsToCreate.map((v) => ({
-        product_id: newProduct.products_id,
-        color_id: v.colorRecord.id,
-        size_id: v.sizeId,
-        stock_quantity: v.stock,
-        sku: v.sku,
-      })),
-    });
-
-    // Lấy lại sản phẩm với variants và ảnh đầy đủ để trả về
-    const productWithVariants = await prisma.products.findUnique({
-      where: { products_id: newProduct.products_id },
-      include: {
-        images: true,
-        product_variants: {
-          include: { color: true, size: true },
-        },
-      },
-    });
-
-    res.status(200).json({ message: "Tạo sản phẩm thành công", product: productWithVariants });
+    const result = await addProductUsecase(req);
+    res.status(200).json(result);
   } catch (error) {
-    console.error("Lỗi khi thêm sản phẩm:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("[Handler] Lỗi addProduct:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi thêm sản phẩm." });
   }
 }
-
-
 const updateProductHandler = async (req, res) => {
   try {
     const products_id = parseInt(req.params.id);
@@ -914,4 +736,5 @@ module.exports = {
   getAllProductVariantHandler,
   getAllSizesHandler,
   getAllGendersHandler,
+  generateUniqueSKU,
 };
