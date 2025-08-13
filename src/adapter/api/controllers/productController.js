@@ -37,11 +37,12 @@ const {
   getAllProductVariantHandler,
   getAllSizesHandler,
   getAllGendersHandler,
+  getProductAdminHandler,
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
 router.get("/prodashboard", getAllProductVariantHandler);
-router.put("/update/:id", updateProductHandler);
+// router.put("/update/:id", updateProductHandler);
 router.delete("/delete/:id", deleteProductHandler);
 router.get("/filter", filterProductsHandler);
 router.get("/brand/:brandId", getProductsByBrandHandler);
@@ -60,6 +61,13 @@ router.post(
   validateRealImage,
   addProductHandler
 );
+router.put(
+  "/update-product/:id",
+  upload.any(),
+  validateRealImage,
+  updateProductHandler
+);
+
 router.get("/genderadmin", getAllGendersHandler);
 router.get("/size", getAllSizesHandler);
 router.post("/addToCart", addToCart);
@@ -79,4 +87,6 @@ router.post("/checkout", checkoutHandler);
 router.get("/order/:userId", getOrderHandler);
 router.get("/couponsByCode", getCouponsHandler);
 router.get("/user_vouchers/:userId", getUserVouchersHandler);
+router.get("/proadmin/:id", getProductAdminHandler);
+
 module.exports = router;

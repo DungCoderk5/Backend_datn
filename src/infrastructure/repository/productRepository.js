@@ -124,6 +124,24 @@ const productRepository = {
       },
     });
   },
+  async findById(productId) {
+    return await prisma.products.findUnique({
+      where: { products_id: productId },
+      include: {
+        brand: true,
+        category: true,
+        gender: true,
+        images: true,
+        product_variants: {
+          include: {
+            color: true,
+            size: true,
+          },
+        },
+        product_reviews: true,
+      },
+    });
+  },
 
   async getCouponsByCode(code, total) {
     const coupon = await prisma.coupons.findFirst({
@@ -1108,52 +1126,26 @@ const productRepository = {
       throw error;
     }
   },
-  async update({ products_id, data }) {
-    const {
-      name,
-      slug,
-      description,
-      short_desc,
-      price,
-      sale_price,
-      categories_id,
-      brand_id,
-      gender_id,
-      images = [],
-      product_variants = [],
-    } = data;
-
-    if (!products_id) {
-      throw new Error("Missing products_id for update");
-    }
-
-    const updateProduct = await prisma.products.update({
-      where: { products_id },
+  async updateProduct(productId, data) {
+    return await prisma.products.update({
+      where: { products_id: productId },
       data: {
-        name,
-        slug,
-        description,
-        short_desc,
-        price,
-        sale_price,
-        categories_id,
-        brand_id,
-        gender_id,
-        status: 1,
-        images: {
-          create: images,
-        },
-        product_variants: {
-          create: product_variants,
-        },
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        short_desc: data.short_desc,
+        price: data.price,
+        sale_price: data.sale_price,
+        categories_id: data.categories_id,
+        brand_id: data.brand_id,
+        gender_id: data.gender_id,
+        status: data.status,
+        ...(data.images?.length > 0 && {
+          images: { create: data.images },
+        }),
       },
-      include: {
-        images: true,
-        product_variants: true,
-      },
+      include: { images: true },
     });
-
-    return updateProduct;
   },
   async countByBrandId(brand_id) {
     return await prisma.products.count({

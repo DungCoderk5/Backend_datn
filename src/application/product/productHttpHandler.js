@@ -32,9 +32,26 @@ const getUserVouchersUsecase = require("../../infrastructure/usecase/product/get
 const getAllProductVariantUsecase = require("../../infrastructure/usecase/product/getAllProductVariantUsecase");
 const getAllSizesUsecase = require("../../infrastructure/usecase/product/getAllSizesUsecase");
 const getAllGendersUsecase = require("../../infrastructure/usecase/product/getAllGendersUsecase");
+const getProductAdminUsecase = require("../../infrastructure/usecase/product/getProductAdminUsecase.js");
 const prisma = require("../../shared/prisma");
 const slugify = require("slugify");
 const crypto = require("crypto");
+async function getProductAdminHandler(req, res) {
+  try {
+    const productId = parseInt(req.params.id, 10);
+
+    if (isNaN(productId)) {
+      return res.status(400).json({ error: "ID sản phẩm không hợp lệ" });
+    }
+
+    const product = await getProductAdminUsecase(productId);
+    res.status(200).json(product);
+  } catch (error) {
+    console.error("[Handler] Lỗi getProductDetail:", error.message);
+    res.status(error.status || 404).json({ error: error.message });
+  }
+}
+
 async function getAllSizesHandler(req, res) {
   try {
     const result = await getAllSizesUsecase();
@@ -460,24 +477,18 @@ async function addProductHandler(req, res) {
     res.status(500).json({ error: "Lỗi máy chủ khi thêm sản phẩm." });
   }
 }
-const updateProductHandler = async (req, res) => {
+async function updateProductHandler(req, res) {
   try {
-    const products_id = parseInt(req.params.id);
-    const data = req.body;
-
-    if (!products_id || !data) {
-      return res.status(400).json({ error: "Thiếu dữ liệu cập nhật." });
-    }
-
-    const result = await updateProductUsecase({ products_id, data });
-    return res.status(200).json(result);
+    const result = await updateProductUsecase(req);
+    res.status(200).json(result);
   } catch (error) {
-    console.error("Lỗi khi cập nhật sản phẩm:", error.message);
-    return res
-      .status(500)
-      .json({ error: "Đã xảy ra lỗi khi cập nhật sản phẩm." });
+    console.error("[Handler] Lỗi updateProduct:", error);
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Lỗi máy chủ khi cập nhật sản phẩm." });
   }
-};
+}
+
 
 async function addToCart(req, res) {
   try {
@@ -737,4 +748,5 @@ module.exports = {
   getAllSizesHandler,
   getAllGendersHandler,
   generateUniqueSKU,
+  getProductAdminHandler,
 };
