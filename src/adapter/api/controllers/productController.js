@@ -34,11 +34,13 @@ const {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
-
   getAllProductVariantHandler,
   getAllSizesHandler,
   getAllGendersHandler,
   getProductAdminHandler,
+  getAllProductReviewHandler,
+  getStatusReviewHandler,
+  getByIdReviewHandler
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
