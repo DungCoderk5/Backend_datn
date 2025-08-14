@@ -48,11 +48,11 @@ async function updateProductUsecase(req) {
     await prisma.images.deleteMany({ where: { product_id: productId } });
   }
 
-  // Map ảnh variant, chuẩn hóa lowercase
+  // Map ảnh variant từ FE
   const colorImageMap = {};
   req.files.forEach(file => {
     if (file.fieldname.startsWith("variant_image_")) {
-      let codeColor = file.fieldname.replace("variant_image_", "").split("-")[0].toLowerCase();
+      const codeColor = file.fieldname.replace("variant_image_", "").toLowerCase();
       colorImageMap[codeColor] = file.filename;
     }
   });
@@ -87,7 +87,6 @@ async function updateProductUsecase(req) {
   // --- Xử lý xóa variant không còn trong request ---
   const existingVariantIds = existingProduct.product_variants.map(v => v.product_variants_id);
   const incomingVariantIds = data.product_variants.map(v => v.product_variants_id).filter(Boolean);
-
   const variantsToDelete = existingVariantIds.filter(id => !incomingVariantIds.includes(id));
   if (variantsToDelete.length > 0) {
     await prisma.product_variants.deleteMany({
@@ -97,38 +96,36 @@ async function updateProductUsecase(req) {
 
   // Xử lý variants thêm hoặc update
   for (const variant of data.product_variants) {
-    let baseColor = variant.code_color.split("-")[0];
+    let baseColor = variant.code_color;
     if (!baseColor.startsWith("#")) baseColor = `#${baseColor.replace(/^#/, "")}`;
     const colorKey = baseColor.replace(/^#/, "").toLowerCase();
-    const variantImage = colorImageMap[colorKey];
+
+    // Lấy ảnh: ưu tiên file mới FE, nếu không thì ảnh cũ trong payload
+    let variantImage = colorImageMap[colorKey] || data.variantImages?.[colorKey];
+
+    // Variant mới bắt buộc có ảnh
+    if (!variant.product_variants_id && !variantImage) {
+      throw { status: 400, message: `Màu ${baseColor} chưa có ảnh` };
+    }
 
     let colorRecord;
     if (variant.color_id) {
-      // giữ nguyên color_id cũ
+      // giữ nguyên color cũ
       colorRecord = await prisma.colors.findUnique({ where: { id: variant.color_id } });
       if (!colorRecord) throw { status: 400, message: "Color không tồn tại" };
-      if (variantImage) {
+      // Cập nhật ảnh nếu có file mới
+      if (variantImage && typeof variantImage === "string") {
         await prisma.colors.update({
           where: { id: colorRecord.id },
           data: { images: variantImage, name_color: variant.name_color }
         });
       }
     } else {
-      // variant mới
-      colorRecord = await prisma.colors.findFirst({ where: { code_color: baseColor } });
-      if (colorRecord) {
-        if (variantImage) {
-          await prisma.colors.update({
-            where: { id: colorRecord.id },
-            data: { images: variantImage, name_color: variant.name_color }
-          });
-        }
-      } else {
-        if (!variantImage) throw { status: 400, message: `Màu ${baseColor} chưa có ảnh` };
-        colorRecord = await prisma.colors.create({
-          data: { code_color: baseColor, name_color: variant.name_color, images: variantImage }
-        });
-      }
+      // Tạo color mới cho variant mới
+      if (!variantImage) throw { status: 400, message: `Màu ${baseColor} chưa có ảnh` };
+      colorRecord = await prisma.colors.create({
+        data: { code_color: baseColor, name_color: variant.name_color, images: variantImage }
+      });
     }
 
     const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
@@ -138,20 +135,17 @@ async function updateProductUsecase(req) {
     const sku = await generateUniqueSKU(baseSKU);
 
     if (variant.product_variants_id) {
-      // update variant cũ
       await prisma.product_variants.update({
         where: { product_variants_id: variant.product_variants_id },
         data: { color_id: colorRecord.id, size_id: sizeId, stock_quantity: stock, sku }
       });
     } else {
-      // tạo variant mới
       await prisma.product_variants.create({
         data: { product_id: productId, color_id: colorRecord.id, size_id: sizeId, stock_quantity: stock, sku }
       });
     }
   }
 
-  // Trả về sản phẩm đầy đủ sau update
   return await prisma.products.findUnique({
     where: { products_id: productId },
     include: { images: true, product_variants: { include: { color: true, size: true } } },
