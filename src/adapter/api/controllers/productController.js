@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { upload, validateRealImage } = require("../../middlewares/upload");
+const {
+  upload,
+  validateRealImage,
+} = require("../../middlewares/uploadProduct");
 
 const {
   getAllProductsHandler,
@@ -34,13 +37,18 @@ const {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getStatusReviewHandler,
+  getAllProductVariantHandler,
+  getAllSizesHandler,
+  getAllGendersHandler,
+  getProductAdminHandler,
   getAllProductReviewHandler,
   getByIdReviewHandler,
-  getStatusReviewHandler
 } = require("../../../application/product/productHttpHandler");
 
 router.get("/", getAllProductsHandler);
-router.put("/update/:id", updateProductHandler);
+router.get("/prodashboard", getAllProductVariantHandler);
+// router.put("/update/:id", updateProductHandler);
 router.delete("/delete/:id", deleteProductHandler);
 router.get("/filter", filterProductsHandler);
 router.get("/brand/:brandId", getProductsByBrandHandler);
@@ -55,19 +63,29 @@ router.get("/related/:productId", getRelatedProductsHandler);
 router.get("/gender", getProductsByGenderHandler);
 router.post(
   "/add-product",
+  upload.any(), // cho phép tất cả field name, không giới hạn
   validateRealImage,
-  upload.single("product_img"),
   addProductHandler
 );
+router.put(
+  "/update-product/:id",
+  upload.any(),
+  validateRealImage,
+  updateProductHandler
+);
+
+
+router.get("/genderadmin", getAllGendersHandler);
+router.get("/size", getAllSizesHandler);
 router.post("/addToCart", addToCart);
 router.post("/compare/add", addToCompareHandler);
 router.get("/search", searchProductsHandler);
 router.get("/coupons", getAllCouponsHandler);
 router.post("/wishlist", addToWishlistHandler);
 router.get("/reviews/:productId", getReviewsByProductHandler);
-router.get("/all/reviews",getAllProductReviewHandler);
-router.post('/reviews/status/:id', getStatusReviewHandler);
-router.get("/all/reviews/:id",getByIdReviewHandler);
+router.get("/all/reviews", getAllProductReviewHandler);
+router.post("/reviews/status/:id", getStatusReviewHandler);
+router.get("/all/reviews/:id", getByIdReviewHandler);
 router.post("/reviews/:productId", createProductReviewHandler);
 router.delete("/compare/remove", removeFromCompareHandler);
 router.get("/compare", getCompareProductsHandler);
@@ -79,4 +97,6 @@ router.post("/checkout", checkoutHandler);
 router.get("/order/:userId", getOrderHandler);
 router.get("/couponsByCode", getCouponsHandler);
 router.get("/user_vouchers/:userId", getUserVouchersHandler);
+router.get("/proadmin/:id", getProductAdminHandler);
+
 module.exports = router;

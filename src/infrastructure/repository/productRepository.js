@@ -124,6 +124,24 @@ const productRepository = {
       },
     });
   },
+  async findById(productId) {
+    return await prisma.products.findUnique({
+      where: { products_id: productId },
+      include: {
+        brand: true,
+        category: true,
+        gender: true,
+        images: true,
+        product_variants: {
+          include: {
+            color: true,
+            size: true,
+          },
+        },
+        product_reviews: true,
+      },
+    });
+  },
 
   async getCouponsByCode(code, total) {
     const coupon = await prisma.coupons.findFirst({
@@ -423,48 +441,24 @@ const productRepository = {
 
     return { products, total };
   },
-  async create(data) {
-    const {
-      name,
-      slug,
-      description,
-      short_desc,
-      price,
-      sale_price,
-      categories_id,
-      brand_id,
-      gender_id,
-      images = [],
-      product_variants = [],
-    } = data;
-
-    const newProduct = await prisma.products.create({
+  async createProduct(data) {
+    return await prisma.products.create({
       data: {
-        name,
-        slug,
-        description,
-        short_desc,
-        price,
-        sale_price,
-        categories_id,
-        brand_id,
-        gender_id,
-        status: 1,
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        short_desc: data.short_desc,
+        price: data.price,
+        sale_price: data.sale_price,
+        categories_id: data.categories_id,
+        brand_id: data.brand_id,
+        gender_id: data.gender_id,
+        status: data.status,
         view: 0,
-        images: {
-          create: images, // mảng: [{ url, alt_text, type }]
-        },
-        product_variants: {
-          create: product_variants, // mảng: [{ color_id, size_id, stock_quantity, sku, image }]
-        },
+        images: { create: data.images },
       },
-      include: {
-        images: true,
-        product_variants: true,
-      },
+      include: { images: true },
     });
-
-    return newProduct;
   },
   async addToCart({ user_id, variant_id, quantity }) {
     let cart = await prisma.carts.findFirst({
@@ -1251,56 +1245,171 @@ async getStatusReview(product_reviews_id, status) {
       throw error;
     }
   },
-  async update({ products_id, data }) {
-    const {
-      name,
-      slug,
-      description,
-      short_desc,
-      price,
-      sale_price,
-      categories_id,
-      brand_id,
-      gender_id,
-      images = [],
-      product_variants = [],
-    } = data;
-
-    if (!products_id) {
-      throw new Error("Missing products_id for update");
-    }
-
-    const updateProduct = await prisma.products.update({
-      where: { products_id },
+  async updateProduct(productId, data) {
+    return await prisma.products.update({
+      where: { products_id: productId },
       data: {
-        name,
-        slug,
-        description,
-        short_desc,
-        price,
-        sale_price,
-        categories_id,
-        brand_id,
-        gender_id,
-        status: 1,
-        images: {
-          create: images,
-        },
-        product_variants: {
-          create: product_variants,
-        },
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        short_desc: data.short_desc,
+        price: data.price,
+        sale_price: data.sale_price,
+        categories_id: data.categories_id,
+        brand_id: data.brand_id,
+        gender_id: data.gender_id,
+        status: data.status,
+        ...(data.images?.length > 0 && {
+          images: { create: data.images },
+        }),
       },
-      include: {
-        images: true,
-        product_variants: true,
-      },
+      include: { images: true },
     });
-
-    return updateProduct;
   },
   async countByBrandId(brand_id) {
     return await prisma.products.count({
       where: { brand_id: Number(brand_id) },
+    });
+  },
+  async countByCategoryId(category_id) {
+    return await prisma.products.count({
+      where: { categories_id: Number(category_id) },
+    });
+  },
+  async findAllPro({
+    page = 1,
+    limit = 5,
+    sortField = "created_at",
+    sortOrder = "desc",
+    filters = {},
+  }) {
+    const skip = (page - 1) * limit;
+
+    const andConditions = [];
+
+    if (filters.productName) {
+      andConditions.push({
+        name: { contains: filters.productName /* , mode: "insensitive" */ },
+      });
+    }
+
+    if (filters.productCode) {
+      andConditions.push({
+        product_variants: {
+          some: {
+            sku: { contains: filters.productCode /* , mode: "insensitive" */ },
+          },
+        },
+      });
+    }
+
+    if (filters.brandId) {
+      andConditions.push({ brand_id: filters.brandId });
+    }
+
+    if (filters.categoryId) {
+      andConditions.push({ categories_id: filters.categoryId });
+    }
+
+    if (
+      filters.minSalePrice !== undefined ||
+      filters.maxSalePrice !== undefined
+    ) {
+      const salePriceFilter = {};
+      if (filters.minSalePrice !== undefined)
+        salePriceFilter.gte = filters.minSalePrice;
+      if (filters.maxSalePrice !== undefined)
+        salePriceFilter.lte = filters.maxSalePrice;
+      andConditions.push({ sale_price: salePriceFilter });
+    }
+
+    if (
+      filters.minImportPrice !== undefined ||
+      filters.maxImportPrice !== undefined
+    ) {
+      const priceFilter = {};
+      if (filters.minImportPrice !== undefined)
+        priceFilter.gte = filters.minImportPrice;
+      if (filters.maxImportPrice !== undefined)
+        priceFilter.lte = filters.maxImportPrice;
+      andConditions.push({ price: priceFilter });
+    }
+
+    if (
+      filters.minQuantity !== undefined ||
+      filters.maxQuantity !== undefined
+    ) {
+      const quantityFilter = {};
+      if (filters.minQuantity !== undefined)
+        quantityFilter.gte = filters.minQuantity;
+      if (filters.maxQuantity !== undefined)
+        quantityFilter.lte = filters.maxQuantity;
+      andConditions.push({
+        product_variants: {
+          some: {
+            stock_quantity: quantityFilter,
+          },
+        },
+      });
+    }
+
+    const where = {
+      status: 1,
+      AND: andConditions.length > 0 ? andConditions : undefined,
+    };
+
+    const validSortFields = [
+      "created_at",
+      "name",
+      "price",
+      "sale_price",
+      "view",
+    ];
+    const safeSortField = validSortFields.includes(sortField)
+      ? sortField
+      : "created_at";
+
+    const orderBy = {};
+    orderBy[safeSortField] =
+      sortOrder.toLowerCase() === "desc" ? "desc" : "asc";
+
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          brand: true,
+          category: true,
+          gender: true,
+          images: true,
+          product_variants: {
+            include: {
+              color: true,
+              size: true,
+            },
+          },
+        },
+      }),
+      prisma.products.count({ where }),
+    ]);
+
+    return {
+      products,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
+  async findAllWithoutPaging() {
+    return await prisma.sizes.findMany({
+      orderBy: { id: "asc" }, // hoặc created_at nếu bạn có cột này
+    });
+  },
+  async findAllGenders() {
+    return await prisma.genders.findMany({
+      orderBy: { id: "asc" },
     });
   },
 };
