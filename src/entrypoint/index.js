@@ -10,6 +10,7 @@ const postController = require('../adapter/api/controllers/postController');
 const dashboarController = require('../adapter/api/controllers/dashboarController');
 const brandController = require('../adapter/api/controllers/brandController');
 const paymentController = require("../adapter/api/controllers/paymentController");
+const voucherController = require('../adapter/api/controllers/voucherController');
 const cookieParser = require("cookie-parser"); 
 const cors = require('cors');
 const path = require("path");
@@ -43,4 +44,6 @@ app.use('/brand', brandController);
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 app.use('/payment',paymentController);
+
+app.use('/voucher', voucherController)
 module.exports = app; 

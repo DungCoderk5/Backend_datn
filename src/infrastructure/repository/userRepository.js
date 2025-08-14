@@ -340,41 +340,119 @@ async function findReviewsByUserId(userId) {
     },
   });
 }
- async function addUserVoucher({ user_id, coupon_code }) {
-    // Tìm mã giảm giá theo code
-    const coupon = await prisma.coupons.findUnique({
-      where: { code: coupon_code },
-    });
+async function addUserVoucher({ user_id, coupon_code }) {
+  // Tìm mã giảm giá theo code
+  const coupon = await prisma.coupons.findUnique({
+    where: { code: coupon_code },
+  });
 
-    if (!coupon) {
-      return { error: "Mã giảm giá không tồn tại." };
-    }
-
-    // Kiểm tra xem user đã có chưa
-    const existing = await prisma.user_vouchers.findFirst({
-      where: {
-        user_id,
-        coupons_id: coupon.coupons_id,
-      },
-    });
-
-    if (existing) {
-      return { message: "Bạn đã lưu mã giảm giá này rồi." };
-    }
-
-    // Tạo user_voucher mới
-    const userVoucher = await prisma.user_vouchers.create({
-      data: {
-        user_id,
-        coupons_id: coupon.coupons_id,
-      },
-    });
-
-    return {
-      message: "Lưu mã giảm giá thành công.",
-      data: userVoucher,
-    };
+  if (!coupon) {
+    return { error: "Mã giảm giá không tồn tại." };
   }
+
+  // Kiểm tra xem user đã có chưa
+  const existing = await prisma.user_vouchers.findFirst({
+    where: {
+      user_id,
+      coupons_id: coupon.coupons_id,
+    },
+  });
+
+  if (existing) {
+    return { message: "Bạn đã lưu mã giảm giá này rồi." };
+  }
+
+  // Tạo user_voucher mới
+  const userVoucher = await prisma.user_vouchers.create({
+    data: {
+      user_id,
+      coupons_id: coupon.coupons_id,
+    },
+  });
+
+  return {
+    message: "Lưu mã giảm giá thành công.",
+    data: userVoucher,
+  };
+}
+
+// Admin
+async function findAllUsers({ page = 1, limit = 20, sortField = 'created_at', sortDirection = 'desc', filters = {} }) {
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1) limit = 20;
+
+  const skip = (page - 1) * limit;
+
+  const where = {};
+
+  if (filters.role) {
+    where.role = filters.role;
+  }
+
+ if (filters.status !== undefined) {
+  where.status = parseInt(filters.status);
+}
+
+
+  if (filters.name) {
+    where.name = { contains: filters.name };
+  }
+
+  if (filters.email) {
+    where.email = { contains: filters.email };  
+  }
+
+  if (filters.user_id) {
+    where.user_id = parseInt(filters.user_id);
+  }
+
+  if (filters.phone) {
+    where.phone = { contains: filters.phone };
+  }
+
+  const [users, total] = await Promise.all([
+    prisma.users.findMany({
+      skip,
+      take: limit,
+      where,
+      orderBy: { [sortField]: sortDirection },
+      select: {
+        user_id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        avatar: true,
+        verify_otp: true,
+        created_at: true,
+        updated_at: true,
+      },
+    }),
+    prisma.users.count({ where }),
+  ]);
+
+  return {
+    users,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+
+async function updateUser(userId, data) {
+  return prisma.users.update({
+    where: { user_id: Number(userId) },
+    data: {
+      role: data.role,
+      status: data.status,
+    },
+  });
+}
 module.exports = {
   findByUsernameOrEmail,
   createAddress,
@@ -399,4 +477,6 @@ module.exports = {
   ResetPass,
   updateOrderStatus,
   addUserVoucher,
+  findAllUsers,
+  updateUser,
 };
