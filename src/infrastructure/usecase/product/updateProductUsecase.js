@@ -17,7 +17,8 @@ async function updateProductUsecase(req) {
   if (data.product_variants && typeof data.product_variants === "string") {
     try { data.product_variants = JSON.parse(data.product_variants); }
     catch { throw { status: 400, message: "product_variants không phải JSON hợp lệ" }; }
-  } else if (!Array.isArray(data.product_variants)) data.product_variants = [];
+  }
+  if (!Array.isArray(data.product_variants)) data.product_variants = [];
 
   // Ép kiểu số
   data.categories_id = data.categories_id ? parseInt(data.categories_id, 10) : null;
@@ -37,36 +38,61 @@ async function updateProductUsecase(req) {
   if (!brandRecord) throw { status: 400, message: "brand_id không tồn tại" };
   if (!genderRecord) throw { status: 400, message: "gender_id không tồn tại" };
 
-  // Ảnh sản phẩm chính (nếu có upload mới)
-  let productImages = [];
-  if (req.files.some(f => f.fieldname === "images")) {
-    productImages = req.files.filter(f => f.fieldname === "images").map(file => ({
-      url: file.filename,
-      alt_text: file.originalname,
-      type: "main"
-    }));
-    await prisma.images.deleteMany({ where: { product_id: productId } });
+  // Slug
+  data.slug = slugify(data.name, { lower: true, strict: true });
+
+  // Prefix SKU
+  const prefix = `${categoryRecord.name?.charAt(0).toUpperCase() || "X"}${brandRecord.name?.charAt(0).toUpperCase() || "X"}${genderRecord.name?.charAt(0).toUpperCase() || "X"}`;
+
+  // --- Cập nhật / thêm ảnh sản phẩm chính ---
+  const mainImagesFiles = req.files.filter(f => f.fieldname === "images");
+  for (let i = 0; i < mainImagesFiles.length; i++) {
+    const file = mainImagesFiles[i];
+    const existingImage = existingProduct.images[i];
+    if (existingImage) {
+      await prisma.images.update({
+        where: { images_id: existingImage.images_id },
+        data: { url: file.filename, alt_text: file.originalname },
+      });
+    } else {
+      await prisma.images.create({
+        data: { product_id: productId, url: file.filename, alt_text: file.originalname, type: "main" },
+      });
+    }
   }
 
-  // Map ảnh variant từ FE
+  // --- Xử lý colors ---
   const colorImageMap = {};
   req.files.forEach(file => {
     if (file.fieldname.startsWith("variant_image_")) {
-      const codeColor = file.fieldname.replace("variant_image_", "").toLowerCase();
+      let codeColor = file.fieldname.replace("variant_image_", "").split("-")[0];
       colorImageMap[codeColor] = file.filename;
     }
   });
 
-  // Slug mới
-  data.slug = slugify(data.name, { lower: true, strict: true });
+  const uniqueColors = [...new Set(data.product_variants.map(v => {
+    let baseColor = v.code_color.split("-")[0];
+    if (!baseColor.startsWith("#")) baseColor = `#${baseColor.replace(/^#/, "")}`;
+    return baseColor;
+  }))];
 
-  // Prefix SKU
-  const cateLetter = categoryRecord.name?.charAt(0).toUpperCase() || "X";
-  const brandLetter = brandRecord.name?.charAt(0).toUpperCase() || "X";
-  const genderLetter = genderRecord.name?.charAt(0).toUpperCase() || "X";
-  const prefix = `${cateLetter}${brandLetter}${genderLetter}`;
+  const colorToColorRecordMap = {};
+  for (const codeColor of uniqueColors) {
+    let colorRecord = await prisma.colors.findFirst({ where: { code_color: codeColor } });
+    if (!colorRecord) {
+      const variantExample = data.product_variants.find(v => `#${v.code_color.split("-")[0].replace(/^#/, "")}` === codeColor);
+      colorRecord = await prisma.colors.create({
+        data: {
+          code_color: codeColor,
+          name_color: variantExample.name_color,
+          images: colorImageMap[codeColor.replace(/^#/, "")] || null,
+        },
+      });
+    }
+    colorToColorRecordMap[codeColor] = colorRecord;
+  }
 
-  // Update sản phẩm
+  // --- Cập nhật sản phẩm ---
   await prisma.products.update({
     where: { products_id: productId },
     data: {
@@ -80,72 +106,42 @@ async function updateProductUsecase(req) {
       brand_id: data.brand_id,
       gender_id: data.gender_id,
       status: data.status,
-      ...(productImages.length > 0 && { images: { create: productImages } }),
     },
   });
 
-  // --- Xử lý xóa variant không còn trong request ---
-  const existingVariantIds = existingProduct.product_variants.map(v => v.product_variants_id);
-  const incomingVariantIds = data.product_variants.map(v => v.product_variants_id).filter(Boolean);
-  const variantsToDelete = existingVariantIds.filter(id => !incomingVariantIds.includes(id));
-  if (variantsToDelete.length > 0) {
-    await prisma.product_variants.deleteMany({
-      where: { product_variants_id: { in: variantsToDelete } }
-    });
-  }
+  // --- Xử lý variant ---
+  const oldVariants = await prisma.product_variants.findMany({ where: { product_id: productId } });
+  const newVariantIds = [];
 
-  // Xử lý variants thêm hoặc update
   for (const variant of data.product_variants) {
-    let baseColor = variant.code_color;
+    let baseColor = variant.code_color.split("-")[0];
     if (!baseColor.startsWith("#")) baseColor = `#${baseColor.replace(/^#/, "")}`;
-    const colorKey = baseColor.replace(/^#/, "").toLowerCase();
-
-    // Lấy ảnh: ưu tiên file mới FE, nếu không thì ảnh cũ trong payload
-    let variantImage = colorImageMap[colorKey] || data.variantImages?.[colorKey];
-
-    // Variant mới bắt buộc có ảnh
-    if (!variant.product_variants_id && !variantImage) {
-      throw { status: 400, message: `Màu ${baseColor} chưa có ảnh` };
-    }
-
-    let colorRecord;
-    if (variant.color_id) {
-      // giữ nguyên color cũ
-      colorRecord = await prisma.colors.findUnique({ where: { id: variant.color_id } });
-      if (!colorRecord) throw { status: 400, message: "Color không tồn tại" };
-      // Cập nhật ảnh nếu có file mới
-      if (variantImage && typeof variantImage === "string") {
-        await prisma.colors.update({
-          where: { id: colorRecord.id },
-          data: { images: variantImage, name_color: variant.name_color }
-        });
-      }
-    } else {
-      // Tạo color mới cho variant mới
-      if (!variantImage) throw { status: 400, message: `Màu ${baseColor} chưa có ảnh` };
-      colorRecord = await prisma.colors.create({
-        data: { code_color: baseColor, name_color: variant.name_color, images: variantImage }
-      });
-    }
-
+    const colorRecord = colorToColorRecordMap[baseColor];
     const sizeId = variant.size_id ? parseInt(variant.size_id, 10) : null;
     const stock = variant.stock_quantity ? parseInt(variant.stock_quantity, 10) : 0;
-    const colorLetter = colorKey.charAt(0).toUpperCase() || "X";
-    const baseSKU = `${prefix}-${colorLetter}-${sizeId}`;
-    const sku = await generateUniqueSKU(baseSKU);
+    const baseSKU = `${prefix}-${baseColor.replace(/^#/, "").charAt(0).toUpperCase()}-${sizeId}`;
 
     if (variant.product_variants_id) {
       await prisma.product_variants.update({
         where: { product_variants_id: variant.product_variants_id },
-        data: { color_id: colorRecord.id, size_id: sizeId, stock_quantity: stock, sku }
+        data: { color_id: colorRecord.id, size_id: sizeId, stock_quantity: stock, sku: await generateUniqueSKU(baseSKU, variant.product_variants_id) },
       });
+      newVariantIds.push(variant.product_variants_id);
     } else {
-      await prisma.product_variants.create({
-        data: { product_id: productId, color_id: colorRecord.id, size_id: sizeId, stock_quantity: stock, sku }
+      const created = await prisma.product_variants.create({
+        data: { product_id: productId, color_id: colorRecord.id, size_id: sizeId, stock_quantity: stock, sku: await generateUniqueSKU(baseSKU) },
       });
+      newVariantIds.push(created.product_variants_id);
     }
   }
 
+  // Xóa variant cũ không còn trong danh sách
+  const idsToDelete = oldVariants.map(v => v.product_variants_id).filter(id => !newVariantIds.includes(id));
+  if (idsToDelete.length) {
+    await prisma.product_variants.deleteMany({ where: { product_variants_id: { in: idsToDelete } } });
+  }
+
+  // --- Trả về sản phẩm ---
   return await prisma.products.findUnique({
     where: { products_id: productId },
     include: { images: true, product_variants: { include: { color: true, size: true } } },
