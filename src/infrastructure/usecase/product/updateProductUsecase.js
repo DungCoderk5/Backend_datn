@@ -201,7 +201,17 @@ for (const variant of data.product_variants) {
       colorRecord = await prisma.colors.update({
         where: { id: colorRecord.id },
         data: { images: imageFile },
+
       });
+    } else {
+      const newImage = colorImageMap[codeColor.replace(/^#/, "")];
+      if (newImage) {
+        colorRecord = await prisma.colors.update({
+          where: { id: colorRecord.id },
+          data: { images: newImage },
+        });
+      }
+      // Nếu không có ảnh mới, giữ nguyên ảnh cũ
     }
   }
 
