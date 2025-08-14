@@ -32,6 +32,7 @@ const getUserVouchersUsecase = require("../../infrastructure/usecase/product/get
 const getAllProductVariantUsecase = require("../../infrastructure/usecase/product/getAllProductVariantUsecase");
 const getAllSizesUsecase = require("../../infrastructure/usecase/product/getAllSizesUsecase");
 const getAllGendersUsecase = require("../../infrastructure/usecase/product/getAllGendersUsecase");
+const getAllProductReviewUsecase = require("../../infrastructure/usecase/product/getAllProductReviewUseCase");
 const getProductAdminUsecase = require("../../infrastructure/usecase/product/getProductAdminUsecase.js");
 const prisma = require("../../shared/prisma");
 const slugify = require("slugify");
@@ -872,5 +873,5 @@ module.exports = {
   getProductAdminHandler,
   getAllProductReviewHandler,
   getByIdReviewHandler,
-  getStatusReviewHandler
+  getStatusReviewHandler,
 };
