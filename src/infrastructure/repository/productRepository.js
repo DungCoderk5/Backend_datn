@@ -44,31 +44,38 @@ const productRepository = {
       },
     };
   },
-  async delete(products_id) {
-    await prisma.product_variants.deleteMany({
-      where: { product_id: products_id },
-    });
+ async delete(products_id) {
+  // Lấy tất cả color_id từ variants
+  const variantColors = await prisma.product_variants.findMany({
+    where: { product_id: products_id },
+    select: { color_id: true },
+  });
 
-    await prisma.images.deleteMany({
-      where: { product_id: products_id },
-    });
+  const colorIds = [...new Set(variantColors.map(v => v.color_id).filter(Boolean))];
 
-    await prisma.wishlist_items.deleteMany({
-      where: { product_id: products_id },
-    });
+  // Xoá product_variants
+  await prisma.product_variants.deleteMany({
+    where: { product_id: products_id },
+  });
 
-    await prisma.product_compares.deleteMany({
-      where: { product_id: products_id },
+  // Xoá colors (nếu cần)
+  if (colorIds.length > 0) {
+    await prisma.colors.deleteMany({
+      where: { id: { in: colorIds } },
     });
+  }
 
-    await prisma.product_reviews.deleteMany({
-      where: { product_id: products_id },
-    });
+  // Xoá các bảng liên quan
+  await prisma.images.deleteMany({ where: { product_id: products_id } });
+  await prisma.wishlist_items.deleteMany({ where: { product_id: products_id } });
+  await prisma.product_compares.deleteMany({ where: { product_id: products_id } });
+  await prisma.product_reviews.deleteMany({ where: { product_id: products_id } });
 
-    return await prisma.products.delete({
-      where: { products_id },
-    });
-  },
+  // Xoá sản phẩm
+  return await prisma.products.delete({
+    where: { products_id },
+  });
+},
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
