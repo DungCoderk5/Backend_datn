@@ -29,59 +29,16 @@ const updateProductUsecase = require("../../infrastructure/usecase/product/updat
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
-const getAllProductVariantUsecase = require("../../infrastructure/usecase/product//getAllProductVariantUsecase");
+const getAllProductReviewUsecase = require("../../infrastructure/usecase/product/getAllProductReviewUseCase");
+const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
+const getStatusReviewUsecase = require('../../infrastructure/usecase/product/getStatusReviewUsecase');
+
 async function getAllProductsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
 
     const result = await getAllProductsUsecase({ page, limit });
-
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("[Handler] Lỗi getAllProducts:", error);
-    res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách sản phẩm." });
-  }
-}
-async function getAllProductVariantHandler(req, res) {
-  try {
-    const {
-      page = 1,
-      limit = 5,
-      sortField = "created_at",
-      sortOrder = "desc",
-      productCode,
-      productName,
-      brandId,
-      categoryId,
-      minImportPrice,
-      maxImportPrice,
-      minSalePrice,
-      maxSalePrice,
-      minQuantity,
-      maxQuantity,
-    } = req.query;
-
-    const filters = {
-      productCode,
-      productName,
-      brandId: brandId ? Number(brandId) : undefined,
-      categoryId: categoryId ? Number(categoryId) : undefined,
-      minImportPrice: minImportPrice ? Number(minImportPrice) : undefined,
-      maxImportPrice: maxImportPrice ? Number(maxImportPrice) : undefined,
-      minSalePrice: minSalePrice ? Number(minSalePrice) : undefined,
-      maxSalePrice: maxSalePrice ? Number(maxSalePrice) : undefined,
-      minQuantity: minQuantity ? Number(minQuantity) : undefined,
-      maxQuantity: maxQuantity ? Number(maxQuantity) : undefined,
-    };
-
-    const result = await getAllProductVariantUsecase({
-      page: Number(page),
-      limit: Number(limit),
-      sortField,
-      sortOrder,
-      filters,
-    });
 
     res.status(200).json(result);
   } catch (error) {
@@ -140,43 +97,20 @@ async function getOrderHandler(req, res) {
   const userId = parseInt(req.params.userId);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+
   const skip = (page - 1) * limit;
 
-  const filters = {
-  status: req.query.status || null,
-  payment_method_id: req.query.payment_method_id
-    ? parseInt(req.query.payment_method_id)
-    : null,
-  date_from: req.query.date_from || null,
-  date_to: req.query.date_to || null,
-};
-
-
-  const sort = {
-    field: req.query.sortField || "created_at",
-    direction: req.query.sortDirection || "desc",
-  };
-
-  const search = req.query.search || "";
-
   try {
-    const orders = await getOrdersByUserUsecase({
-      userId,
-      skip,
-      page,
-      take: limit,
-      filters,
-      sort,
-      search,
-    });
+    const orders = await getOrdersByUserUsecase({ userId, skip, take: limit });
 
-    return res.status(200).json({ data: orders });
+    return res.status(200).json({
+      data: orders,
+    });
   } catch (error) {
     console.error("[Handler] Lỗi lấy đơn hàng theo user:", error);
     return res.status(500).json({ error: "Lỗi máy chủ khi lấy đơn hàng." });
   }
 }
-
 
 async function deleteProductHandler(req, res) {
   try {
@@ -292,9 +226,9 @@ async function getProductDetailHandler(req, res) {
 async function getBestSellingHandler(req, res) {
   try {
     const top = parseInt(req.query.top) || 6;
-  
+
     const result = await getBestSellingUsecase(top);
-   
+
     res.status(200).json(result);
   } catch (err) {
     console.error("Lỗi lấy sản phẩm bán chạy:", err);
@@ -373,7 +307,6 @@ async function getDealProductsHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
-
 
 async function getRelatedProductsHandler(req, res) {
   try {
@@ -458,9 +391,8 @@ async function addToCart(req, res) {
       .status(200)
       .json({ message: "thêm sản phẩm vào giỏ hàng thành công", cart: cart });
   } catch (error) {
-    console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error);
-    res.status(500).json({ error: 'Internal server error' });
-
+    console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
@@ -529,6 +461,7 @@ async function createProductReviewHandler(req, res) {
       product_id,
       rating,
       content,
+      status:"approved"
     });
     res.status(201).json(review);
   } catch (err) {
@@ -642,7 +575,7 @@ async function checkoutHandler(req, res) {
 
     return res
       .status(201)
-      .json({ message: "Thanh toán thành công", data: order, });
+      .json({ message: "Thanh toán thành công", data: order });
   } catch (err) {
     console.error("Checkout Error:", err);
     return res.status(500).json({ error: "Lỗi khi thanh toán đơn hàng" });
@@ -672,7 +605,104 @@ async function removeWishlistItemHandler(req, res) {
     return res.status(500).json({ error: "Lỗi máy chủ." });
   }
 }
+async function getAllProductReviewHandler(req, res) {
+  try {
+    // Lấy query params từ request
+    const {
+      page,
+      limit,
+      product_reviews_id,
+      user_name,
+      product_name,
+      rating,
+      search,
+      sortBy,
+      sortOrder,
+    } = req.query;
 
+    // Gọi usecase
+    const result = await getAllProductReviewUsecase({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+      product_reviews_id,
+      user_name,
+      product_name,
+      rating,
+      search,
+      sortBy,
+      sortOrder,
+    });
+
+    // Trả về dữ liệu
+    return res.status(200).json({
+      success: true,
+      message: "Lấy danh sách đánh giá sản phẩm thành công",
+      ...result,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy đánh giá sản phẩm:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+}
+async function getByIdReviewHandler(req, res) {
+  try {
+    // Lấy id từ params
+    const product_reviews_id = parseInt(req.params.id);
+    if (!product_reviews_id)
+      return res.status(400).json({
+        success: false,
+        message: "ID không hợp lệ",
+      });
+    // Gọi usecase
+    const result = await getByIdReviewUsecase(product_reviews_id);
+    // Trả về dữ liệu
+    return res.status(200).json({
+      success: true,
+      message: "Lấy đánh giá sản phẩm thành công",
+      ...result,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy đánh giá sản phẩm:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+}
+
+async function getStatusReviewHandler(req, res) {
+  try {
+    const product_reviews_id = parseInt(req.params.id);
+    if (!product_reviews_id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID không hợp lệ",
+      });
+    }
+
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ error: 'Thiếu trạng thái đánh giá.' });
+    }
+
+    const updatedReview = await getStatusReviewUsecase(product_reviews_id, status);
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật trạng thái thành công',
+      data: updatedReview
+    });
+
+  } catch (err) {
+    console.error('[Handler] Lỗi updateReviewStatus:', err);
+    res.status(500).json({ error: 'Lỗi khi cập nhật trạng thái đánh giá.' });
+  }
+}
 module.exports = {
   getAllProductsHandler,
   getProductDetailHandler,
@@ -705,5 +735,7 @@ module.exports = {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
-  getAllProductVariantHandler,
+  getAllProductReviewHandler,
+  getByIdReviewHandler,
+  getStatusReviewHandler
 };
