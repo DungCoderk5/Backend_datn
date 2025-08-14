@@ -847,4 +847,7 @@ module.exports = {
   getAllGendersHandler,
   generateUniqueSKU,
   getProductAdminHandler,
+  getAllProductReviewHandler,
+  getByIdReviewHandler,
+  getStatusReviewHandler
 };

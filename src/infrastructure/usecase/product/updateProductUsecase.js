@@ -137,11 +137,12 @@ async function updateProductUsecase(req) {
     },
   });
 
-  // Xử lý colors (thêm mới nếu chưa có)
   const colorToColorRecordMap = {};
   for (const codeColor of uniqueColors) {
     let colorRecord = await prisma.colors.findFirst({
-      where: { code_color: codeColor },
+      where: {
+        code_color: codeColor,
+      },
     });
 
     if (!colorRecord) {
@@ -152,10 +153,20 @@ async function updateProductUsecase(req) {
         data: {
           code_color: codeColor,
           name_color: variantExample.name_color,
-          images: colorImageMap[codeColor.replace(/^#/, "")],
+          images: colorImageMap[codeColor.replace(/^#/, "")] || null,
         },
       });
+    } else {
+      const newImage = colorImageMap[codeColor.replace(/^#/, "")];
+      if (newImage) {
+        colorRecord = await prisma.colors.update({
+          where: { id: colorRecord.id },
+          data: { images: newImage },
+        });
+      }
+      // Nếu không có ảnh mới, giữ nguyên ảnh cũ
     }
+
     colorToColorRecordMap[codeColor] = colorRecord;
   }
 
