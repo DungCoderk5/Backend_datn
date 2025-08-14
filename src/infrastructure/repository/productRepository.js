@@ -697,7 +697,7 @@ const productRepository = {
 
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
-      where: { product_id: productId },
+      where: { product_id: productId,status: "approved" },
       orderBy: { created_at: "desc" },
       include: {
         user: {
