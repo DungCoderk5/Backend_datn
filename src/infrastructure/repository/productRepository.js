@@ -1,11 +1,77 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
-  async findByUserId(userId, skip, take) {
+  async findByUserId(userId, skip, take, filters = {}, sort = {}, search = "") {
+    const normalizedSearch = search.trim().toLowerCase(); // đảm bảo tìm kiếm lowercase
+
+    const where = {
+      user_id: userId,
+      ...(filters.status && { status: filters.status }),
+      ...(filters.payment_method_id
+        ? { payment_method_id: filters.payment_method_id }
+        : {}),
+      ...(filters.date_from && {
+        created_at: { gte: new Date(filters.date_from) },
+      }),
+      ...(filters.date_to && {
+        created_at: {
+          ...(filters.date_from && { gte: new Date(filters.date_from) }),
+          lte: new Date(filters.date_to),
+        },
+      }),
+      ...(normalizedSearch && {
+        OR: [
+          {
+            shipping_address: {
+              address_line: {
+                contains: normalizedSearch,
+              },
+            },
+          },
+          {
+            shipping_address: {
+              full_name: {
+                contains: normalizedSearch,
+              },
+            },
+          },
+          {
+            shipping_address: {
+              phone: {
+                contains: normalizedSearch,
+              },
+            },
+          },
+          {
+            order_items: {
+              some: {
+                variant: {
+                  product: {
+                    name: {
+                      contains: normalizedSearch,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      }),
+    };
+
+    const sortFieldMap = {
+      total_price: "total_amount",
+    };
+
+    const orderBy = sort.field
+      ? { [sortFieldMap[sort.field] || sort.field]: sort.direction || "desc" }
+      : { created_at: "desc" };
+
     const page = Math.max(1, Math.ceil(skip / take) + 1);
+
     const [orders, total] = await Promise.all([
       prisma.orders.findMany({
-        where: { user_id: userId },
+        where,
         skip,
         take,
         include: {
@@ -24,13 +90,9 @@ const productRepository = {
           shipping_address: true,
           coupon: true,
         },
-        orderBy: {
-          created_at: "desc",
-        },
+        orderBy,
       }),
-      prisma.orders.count({
-        where: { user_id: userId },
-      }),
+      prisma.orders.count({ where }),
     ]);
 
     return {
@@ -1291,7 +1353,6 @@ async getStatusReview(product_reviews_id, status) {
     filters = {},
   }) {
     const skip = (page - 1) * limit;
-
     const andConditions = [];
 
     if (filters.productName) {
@@ -1401,6 +1462,7 @@ async getStatusReview(product_reviews_id, status) {
       }),
       prisma.products.count({ where }),
     ]);
+
 
     return {
       products,
