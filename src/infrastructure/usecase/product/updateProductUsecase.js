@@ -234,6 +234,23 @@ for (let codeColor of uniqueColors) {
       sku: v.sku,
     })),
   });
+  // Sau khi tạo variants mới, xoá các màu không còn dùng
+await prisma.colors.deleteMany({
+  where: {
+    id: {
+      in: existingColors
+        .filter(c => 
+          !data.product_variants.some(v => {
+            let baseColor = v.code_color.split("-")[0];
+            if (!baseColor.startsWith("#"))
+              baseColor = `#${baseColor.replace(/^#/, "")}`;
+            return c.code_color === baseColor;
+          })
+        )
+        .map(c => c.id)
+    }
+  }
+});
 
   // Trả về sản phẩm đầy đủ sau update
   return await prisma.products.findUnique({
