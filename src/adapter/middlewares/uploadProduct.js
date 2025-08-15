@@ -3,43 +3,38 @@ const path = require('path');
 const fs = require('fs');
 const { fromFile } = require('file-type');
 
-// Tạo thư mục uploads nếu chưa có
 const uploadDir = path.join(__dirname, '../../../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Cấu hình lưu file
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
-    const filename = `${Date.now()}-${file.fieldname}${ext}`;
+    const safeFieldName = file.fieldname
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // bỏ dấu tiếng Việt
+      .replace(/[^a-zA-Z0-9_-]/g, "_"); // bỏ ký tự đặc biệt
+
+    const filename = `${Date.now()}-${safeFieldName}${ext}`;
     cb(null, filename);
   },
 });
 
 const multerUpload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: async (req, file, cb) => {
-    // Tạm thời chấp nhận để multer lưu file, kiểm tra sau
     cb(null, true);
   },
 });
 
-// validateRealImage sửa lại
 const validateRealImage = async (req, res, next) => {
   const allFiles = [];
-
-  if (req.file) {
-    allFiles.push(req.file);
-  }
-  if (Array.isArray(req.files)) {
-    allFiles.push(...req.files);
-  }
+  if (req.file) allFiles.push(req.file);
+  if (Array.isArray(req.files)) allFiles.push(...req.files);
 
   if (allFiles.length === 0) return next();
 
@@ -50,13 +45,11 @@ const validateRealImage = async (req, res, next) => {
 
   for (const file of allFiles) {
     const filePath = file.path;
-
     if (!fs.existsSync(filePath)) {
       return res.status(400).json({ error: `File ${file.originalname} không tồn tại trên server!` });
     }
 
     const fileType = await fromFile(filePath);
-
     if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
       fs.unlinkSync(filePath);
       return res.status(400).json({ error: `File ${file.originalname} không đúng định dạng` });
@@ -65,8 +58,6 @@ const validateRealImage = async (req, res, next) => {
 
   next();
 };
-
-
 
 module.exports = {
   upload: multerUpload,
