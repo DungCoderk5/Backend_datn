@@ -1120,74 +1120,72 @@ async getStatusReview(product_reviews_id, status) {
     return deleted;
   },
 
-  async createOrder({
-    orders_id, // 👈 thêm tham số này
+async createOrder({
+  orders_id, 
+  user_id,
+  total_price,
+  shipping_address_id,
+  payment_method_id,
+  coupons_id,
+  comment,
+  items,
+  shipping_fee,
+  payment_status = "PROCESSING", 
+}) {
+  const orderData = {
     user_id,
-    total_price,
-    shipping_address_id,
+    total_amount: total_price,
+    status: "pending",              
     payment_method_id,
+    shipping_address_id,
     coupons_id,
     comment,
-    items,
-    shipping_fee,
-    payment_status = "PROCESSING",
-  }) {
-    const orderData = {
-      user_id,
-      total_amount: total_price,
-      status: "pending",
-      payment_method_id,
-      shipping_address_id,
-      coupons_id,
-      comment,
-      shipping_fee: shipping_fee ?? 0,
-      payment_status,
+    shipping_fee: shipping_fee ?? 0,
+    payment_status,                 
+    order_items: {
+      create: items.map((item) => ({
+        variant: {
+          connect: { product_variants_id: item.variant_id },
+        },
+        quantity: item.quantity,
+        unit_price: item.price,
+      })),
+    },
+  };
+
+  // Nếu có orders_id (vd: khi callback ZaloPay trả về) thì gắn vào
+  if (orders_id) {
+    orderData.orders_id = orders_id;
+  }
+
+  return await prisma.orders.create({
+    data: orderData,
+    include: {
+      user: true, 
+      shipping_address: true, 
+      payment_method: true, 
+      coupon: true, 
       order_items: {
-        create: items.map((item) => ({
+        include: {
           variant: {
-            connect: { product_variants_id: item.variant_id },
-          },
-          quantity: item.quantity,
-          unit_price: item.price,
-        })),
-      },
-    };
-
-    if (orders_id) {
-      orderData.orders_id = orders_id;
-    }
-
-    return await prisma.orders.create({
-      data: orderData,
-      include: {
-        user: true, // ✅ Tên người nhận
-        shipping_address: true, // ✅ Địa chỉ
-        payment_method: true, // ✅ Phương thức thanh toán
-        coupon: true, // ✅ Nếu có mã giảm giá
-        order_items: {
-          include: {
-            variant: {
-              include: {
-                product: {
-                  include: {
-                    images: {
-                      select: {
-                        url: true,
-                      },
-                      take: 1,
-                    },
+            include: {
+              product: {
+                include: {
+                  images: {
+                    select: { url: true },
+                    take: 1,
                   },
                 },
-                color: true, // ✅ Màu
-                size: true, // ✅ Size
               },
+              color: true,
+              size: true,
             },
           },
         },
       },
-    });
-  },
-
+    },
+  });
+},
   async getVoucherByCode(code) {
     return await prisma.coupons.findFirst({
       where: {

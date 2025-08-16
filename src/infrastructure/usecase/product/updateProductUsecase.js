@@ -73,40 +73,50 @@ async function updateProductUsecase(req) {
     });
   }
 
-  // Map ảnh variant
-  const colorImageMap = {};
-  req.files.forEach((file) => {
-    if (file.fieldname.startsWith("variant_image_")) {
-      let codeColor = file.fieldname
-        .replace("variant_image_", "")
-        .split("-")[0];
-      colorImageMap[codeColor] = file.filename;
-    }
+// Map ảnh variant: key = mã màu bỏ # + lowercase
+const colorImageMap = {};
+req.files.forEach((file) => {
+  if (file.fieldname.startsWith("variant_image_")) {
+    const codeColorKey = file.fieldname
+      .replace("variant_image_", "")
+      .replace(/^#/, "")
+      .toLowerCase()
+      .split("-")[0];
+
+    colorImageMap[codeColorKey] = file.filename;
+  }
+});
+
+console.log("DEBUG - colorImageMap:", colorImageMap);
+
+// Danh sách màu duy nhất từ variants
+const uniqueColors = [
+  ...new Set(
+    data.product_variants.map((v) => {
+      let baseColor = v.code_color.split("-")[0].toLowerCase();
+      if (!baseColor.startsWith("#")) {
+        baseColor = `#${baseColor.replace(/^#/, "")}`;
+      }
+      return baseColor;
+    })
+  ),
+];
+
+console.log("DEBUG - uniqueColors:", uniqueColors);
+
+// Validate ảnh cho màu mới
+for (let codeColor of uniqueColors) {
+  const codeWithoutHash = codeColor.replace(/^#/, "").toLowerCase();
+  console.log(`DEBUG - Checking color: ${codeColor}, key: ${codeWithoutHash}`);
+  
+  const colorExists = await prisma.colors.findFirst({
+    where: { code_color: codeColor },
   });
 
-  // Danh sách màu duy nhất
-  const uniqueColors = [
-    ...new Set(
-      data.product_variants.map((v) => {
-        let baseColor = v.code_color.split("-")[0];
-        if (!baseColor.startsWith("#"))
-          baseColor = `#${baseColor.replace(/^#/, "")}`;
-        return baseColor;
-      })
-    ),
-  ];
-
-  // Validate ảnh cho màu mới
-  for (let codeColor of uniqueColors) {
-    const codeWithoutHash = codeColor.replace(/^#/, "");
-    const colorExists = await prisma.colors.findFirst({
-      where: { code_color: codeColor },
-    });
-
-    if (!colorExists && !colorImageMap[codeWithoutHash]) {
-      throw { status: 400, message: `Màu ${codeColor} chưa có ảnh` };
-    }
+  if (!colorExists && !colorImageMap[codeWithoutHash]) {
+    throw { status: 400, message: `Màu ${codeColor} chưa có ảnh` };
   }
+}
 
   // Slug mới
   data.slug = slugify(data.name, { lower: true, strict: true });
@@ -137,87 +147,56 @@ async function updateProductUsecase(req) {
     },
   });
 
-const colorToColorRecordMap = {};
-
-// Lấy tất cả màu hiện có của sản phẩm này
-const existingColors = await prisma.colors.findMany({
-  where: {
-    product_variants: {
-      some: { product_id: productId }
-    }
-  }
-});
-
-for (const variant of data.product_variants) {
-  let baseColor = variant.code_color.split("-")[0];
-  if (!baseColor.startsWith("#"))
-    baseColor = `#${baseColor.replace(/^#/, "")}`;
-
-  const imageFile = colorImageMap[baseColor.replace(/^#/, "")] || null;
-
-  // Kiểm tra đã có màu này cho product_id này chưa
-  let colorRecord = existingColors.find(c =>
-    c.code_color === baseColor
-  );
-
-  if (!colorRecord) {
-    // Chưa có màu → tạo mới với ảnh
-    colorRecord = await prisma.colors.create({
-      data: {
-        code_color: baseColor,
-        name_color: variant.name_color,
-        images: imageFile,
+  // Lấy tất cả màu hiện có của sản phẩm này
+  const existingColors = await prisma.colors.findMany({
+    where: {
+      product_variants: {
+        some: { product_id: productId },
       },
-    });
-  }
+    },
+  });
 
-  colorToColorRecordMap[baseColor] = colorRecord;
-}
+  const colorToColorRecordMap = {};
 
-for (const variant of data.product_variants) {
-  let baseColor = variant.code_color.split("-")[0];
-  if (!baseColor.startsWith("#"))
-    baseColor = `#${baseColor.replace(/^#/, "")}`;
+  for (const variant of data.product_variants) {
+    let baseColor = variant.code_color.split("-")[0];
+    if (!baseColor.startsWith("#"))
+      baseColor = `#${baseColor.replace(/^#/, "")}`;
 
-  const imageFile = colorImageMap[baseColor.replace(/^#/, "")] || null;
+    const imageFile = colorImageMap[baseColor.replace(/^#/, "")] || null;
 
-  // Kiểm tra đã có màu này cho product_id này chưa
-  let colorRecord = existingColors.find(c =>
-    c.code_color === baseColor
-  );
+    // Tìm màu đã tồn tại
+    let colorRecord = existingColors.find((c) => c.code_color === baseColor);
 
-  if (!colorRecord) {
-    // Chưa có màu → tạo mới
-    colorRecord = await prisma.colors.create({
-      data: {
-        code_color: baseColor,
-        name_color: variant.name_color,
-        images: imageFile,
-      },
-    });
-  } else {
-    // Nếu có màu và có ảnh mới từ upload → update ảnh
-    if (imageFile) {
-      colorRecord = await prisma.colors.update({
-        where: { id: colorRecord.id },
-        data: { images: imageFile },
-
+    if (!colorRecord) {
+      // Màu mới → bắt buộc phải có ảnh
+      if (!imageFile) {
+        throw { status: 400, message: `Màu ${baseColor} chưa có ảnh` };
+      }
+      colorRecord = await prisma.colors.create({
+        data: {
+          code_color: baseColor,
+          name_color: variant.name_color,
+          images: imageFile,
+        },
       });
+      existingColors.push(colorRecord); // Cập nhật lại list để tránh bị lặp tạo
     } else {
-      const newImage = colorImageMap[codeColor.replace(/^#/, "")];
-      if (newImage) {
+      // Nếu có ảnh mới → update
+      if (imageFile) {
         colorRecord = await prisma.colors.update({
           where: { id: colorRecord.id },
-          data: { images: newImage },
+          data: { images: imageFile },
         });
+        // Update lại list
+        const idx = existingColors.findIndex((c) => c.id === colorRecord.id);
+        if (idx > -1) existingColors[idx] = colorRecord;
       }
-      // Nếu không có ảnh mới, giữ nguyên ảnh cũ
+      // Nếu không có ảnh mới → giữ ảnh cũ, không làm gì
     }
+    colorToColorRecordMap[baseColor] = colorRecord;
+
   }
-
-  colorToColorRecordMap[baseColor] = colorRecord;
-}
-
 
   // Xóa variants cũ
   await prisma.product_variants.deleteMany({
@@ -255,6 +234,23 @@ for (const variant of data.product_variants) {
       sku: v.sku,
     })),
   });
+  // Sau khi tạo variants mới, xoá các màu không còn dùng
+await prisma.colors.deleteMany({
+  where: {
+    id: {
+      in: existingColors
+        .filter(c => 
+          !data.product_variants.some(v => {
+            let baseColor = v.code_color.split("-")[0];
+            if (!baseColor.startsWith("#"))
+              baseColor = `#${baseColor.replace(/^#/, "")}`;
+            return c.code_color === baseColor;
+          })
+        )
+        .map(c => c.id)
+    }
+  }
+});
 
   // Trả về sản phẩm đầy đủ sau update
   return await prisma.products.findUnique({

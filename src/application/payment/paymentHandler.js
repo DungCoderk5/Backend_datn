@@ -34,7 +34,7 @@
         if (payment_method.code === "zalopay") {
           const payment = await paymentUsecase.createPayment({
             amount: orderData.total_price,
-            order_data: orderData, // ❗ Truyền dữ liệu tạm vào embed_data
+            order_data: orderData,
           });
 
           return res.status(200).json({

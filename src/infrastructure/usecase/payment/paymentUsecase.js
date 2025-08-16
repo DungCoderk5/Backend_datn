@@ -34,7 +34,7 @@ module.exports = {
       embed_data: JSON.stringify(embed_data),
       amount,
       description: `Thanh toán đơn hàng`,
-      callback_url: "https://866311514d5d.ngrok-free.app/payment/callback",
+      callback_url: "https://afc0257277c6.ngrok-free.app/payment/callback",
     };
 
     const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
@@ -66,8 +66,12 @@ module.exports = {
       const status = await module.exports.checkStatus(dataJson.app_trans_id);
 
       if (status.return_code === 1) {
-        const order = await productRepository.createOrder(orderData);
-        await productRepository.updatePaymentStatus(order.orders_id, "pending");
+        // ép trạng thái thanh toán thành PAID
+        const order = await productRepository.createOrder({
+          ...orderData,
+          payment_status: "PAID",
+        });
+
         await productRepository.clearCart(order.user_id);
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
 
@@ -80,7 +84,7 @@ module.exports = {
         if (fullOrder.user?.email) {
           await userRepository.sendMail({
             to: fullOrder.user.email,
-            subject: `✅ Đơn hàng #${order.orders_id} của bạn đã được xác nhận`,
+            subject: ` Đơn hàng #${order.orders_id} của bạn đã được xác nhận`,
             html,
           });
         }
