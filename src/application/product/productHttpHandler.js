@@ -33,6 +33,10 @@ const getAllProductVariantUsecase = require("../../infrastructure/usecase/produc
 const getAllSizesUsecase = require("../../infrastructure/usecase/product/getAllSizesUsecase");
 const getAllGendersUsecase = require("../../infrastructure/usecase/product/getAllGendersUsecase");
 const getProductAdminUsecase = require("../../infrastructure/usecase/product/getProductAdminUsecase.js");
+const getAllProductReviewUsecase = require("../../infrastructure/usecase/product/getAllProductReviewUseCase");
+const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
+const getStatusReviewUsecase = require("../../infrastructure/usecase/product/getStatusReviewUsecase");
+
 const prisma = require("../../shared/prisma");
 const slugify = require("slugify");
 const crypto = require("crypto");
