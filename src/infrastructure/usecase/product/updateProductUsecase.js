@@ -196,6 +196,7 @@ for (let codeColor of uniqueColors) {
     }
 
     colorToColorRecordMap[baseColor] = colorRecord;
+
   }
 
   // Xóa variants cũ

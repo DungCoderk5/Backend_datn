@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { upload, validateRealImage } = require("../../middlewares/uploadProduct");
+const {
+  upload,
+  validateRealImage,
+} = require("../../middlewares/uploadProduct");
 
 const {
   getAllProductsHandler,
@@ -34,12 +37,12 @@ const {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getStatusReviewHandler,
   getAllProductVariantHandler,
   getAllSizesHandler,
   getAllGendersHandler,
   getProductAdminHandler,
   getAllProductReviewHandler,
-  getStatusReviewHandler,
   getByIdReviewHandler
 } = require("../../../application/product/productHttpHandler");
 
@@ -71,6 +74,7 @@ router.put(
   updateProductHandler
 );
 
+
 router.get("/genderadmin", getAllGendersHandler);
 router.get("/size", getAllSizesHandler);
 router.post("/addToCart", addToCart);
@@ -79,9 +83,9 @@ router.get("/search", searchProductsHandler);
 router.get("/coupons", getAllCouponsHandler);
 router.post("/wishlist", addToWishlistHandler);
 router.get("/reviews/:productId", getReviewsByProductHandler);
-router.get("/all/reviews",getAllProductReviewHandler);
-router.post('/reviews/status/:id', getStatusReviewHandler);
-router.get("/all/reviews/:id",getByIdReviewHandler);
+router.get("/all/reviews", getAllProductReviewHandler);
+router.post("/reviews/status/:id", getStatusReviewHandler);
+router.get("/all/reviews/:id", getByIdReviewHandler);
 router.post("/reviews/:productId", createProductReviewHandler);
 router.delete("/compare/remove", removeFromCompareHandler);
 router.get("/compare", getCompareProductsHandler);
