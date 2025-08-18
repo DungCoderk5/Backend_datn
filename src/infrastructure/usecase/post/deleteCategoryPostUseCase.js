@@ -1,6 +1,6 @@
 const postRepository = require("../../repository/postRepository");
 async function deleteCategoryPostUsecase(categoryId) {
-  const category = await postRepository.findById(categoryId);
+  const category = await postRepository.findCategoryById(categoryId);
   
   if (!category) {
     throw new Error("Danh mục không tồn tại.");

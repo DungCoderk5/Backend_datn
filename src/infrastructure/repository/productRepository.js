@@ -1,11 +1,77 @@
 const prisma = require("../../shared/prisma");
 
 const productRepository = {
-  async findByUserId(userId, skip, take) {
+  async findByUserId(userId, skip, take, filters = {}, sort = {}, search = "") {
+    const normalizedSearch = search.trim().toLowerCase(); // đảm bảo tìm kiếm lowercase
+
+    const where = {
+      user_id: userId,
+      ...(filters.status && { status: filters.status }),
+      ...(filters.payment_method_id
+        ? { payment_method_id: filters.payment_method_id }
+        : {}),
+      ...(filters.date_from && {
+        created_at: { gte: new Date(filters.date_from) },
+      }),
+      ...(filters.date_to && {
+        created_at: {
+          ...(filters.date_from && { gte: new Date(filters.date_from) }),
+          lte: new Date(filters.date_to),
+        },
+      }),
+      ...(normalizedSearch && {
+        OR: [
+          {
+            shipping_address: {
+              address_line: {
+                contains: normalizedSearch,
+              },
+            },
+          },
+          {
+            shipping_address: {
+              full_name: {
+                contains: normalizedSearch,
+              },
+            },
+          },
+          {
+            shipping_address: {
+              phone: {
+                contains: normalizedSearch,
+              },
+            },
+          },
+          {
+            order_items: {
+              some: {
+                variant: {
+                  product: {
+                    name: {
+                      contains: normalizedSearch,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      }),
+    };
+
+    const sortFieldMap = {
+      total_price: "total_amount",
+    };
+
+    const orderBy = sort.field
+      ? { [sortFieldMap[sort.field] || sort.field]: sort.direction || "desc" }
+      : { created_at: "desc" };
+
     const page = Math.max(1, Math.ceil(skip / take) + 1);
+
     const [orders, total] = await Promise.all([
       prisma.orders.findMany({
-        where: { user_id: userId },
+        where,
         skip,
         take,
         include: {
@@ -24,13 +90,9 @@ const productRepository = {
           shipping_address: true,
           coupon: true,
         },
-        orderBy: {
-          created_at: "desc",
-        },
+        orderBy,
       }),
-      prisma.orders.count({
-        where: { user_id: userId },
-      }),
+      prisma.orders.count({ where }),
     ]);
 
     return {
@@ -45,26 +107,41 @@ const productRepository = {
     };
   },
   async delete(products_id) {
+    // Lấy tất cả color_id từ variants
+    const variantColors = await prisma.product_variants.findMany({
+      where: { product_id: products_id },
+      select: { color_id: true },
+    });
+
+    const colorIds = [
+      ...new Set(variantColors.map((v) => v.color_id).filter(Boolean)),
+    ];
+
+    // Xoá product_variants
     await prisma.product_variants.deleteMany({
       where: { product_id: products_id },
     });
 
-    await prisma.images.deleteMany({
-      where: { product_id: products_id },
-    });
+    // Xoá colors (nếu cần)
+    if (colorIds.length > 0) {
+      await prisma.colors.deleteMany({
+        where: { id: { in: colorIds } },
+      });
+    }
 
+    // Xoá các bảng liên quan
+    await prisma.images.deleteMany({ where: { product_id: products_id } });
     await prisma.wishlist_items.deleteMany({
       where: { product_id: products_id },
     });
-
     await prisma.product_compares.deleteMany({
       where: { product_id: products_id },
     });
-
     await prisma.product_reviews.deleteMany({
       where: { product_id: products_id },
     });
 
+    // Xoá sản phẩm
     return await prisma.products.delete({
       where: { products_id },
     });
@@ -690,7 +767,7 @@ const productRepository = {
 
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
-      where: { product_id: productId,status: "approved" },
+      where: { product_id: productId, status: "approved" },
       orderBy: { created_at: "desc" },
       include: {
         user: {
@@ -724,9 +801,11 @@ const productRepository = {
     // Lọc theo tên user
     if (user_name) {
       where.user = {
-        name: {
-          contains: user_name,
-          lte: "insensitive",
+        is: {
+          name: {
+            contains: user_name,
+            lte: "insensitive",
+          },
         },
       };
     }
@@ -734,9 +813,11 @@ const productRepository = {
     // Lọc theo tên product
     if (product_name) {
       where.product = {
-        name: {
-          contains: product_name,
-          lte: "insensitive",
+        is: {
+          name: {
+            contains: product_name,
+            lte: "insensitive",
+          },
         },
       };
     }
@@ -748,10 +829,30 @@ const productRepository = {
 
     // Search nội dung
     if (search) {
-      where.content = {
-        contains: search,
-        lte: "insensitive",
-      };
+      where.OR = [
+        {
+          content: {
+            contains: search,
+            lte: "insensitive",
+          },
+        },
+        {
+          user: {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        },
+        {
+          product: {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        },
+      ];
     }
 
     // Tính skip & take cho phân trang
@@ -791,7 +892,7 @@ const productRepository = {
         user: {
           select: {
             name: true,
-            email:true,
+            email: true,
             phone: true,
             avatar: true,
             ship_addresses: true,
@@ -800,7 +901,7 @@ const productRepository = {
         product: {
           select: {
             name: true,
-            short_desc:true,
+            short_desc: true,
             product_variants: {
               select: {
                 size: { select: { number_size: true } },
@@ -813,15 +914,14 @@ const productRepository = {
     });
     return data;
   },
-async getStatusReview(product_reviews_id, status) {
-  return await prisma.product_reviews.update({
-    where: { product_reviews_id },
-    data: { status },
-  });
-},
+  async getStatusReview(product_reviews_id, status) {
+    return await prisma.product_reviews.update({
+      where: { product_reviews_id },
+      data: { status },
+    });
+  },
 
-
-  async createReview({ user_id, product_id, rating, content,status }) {
+  async createReview({ user_id, product_id, rating, content, status }) {
     return await prisma.product_reviews.create({
       data: {
         user_id,
@@ -1284,7 +1384,6 @@ async getStatusReview(product_reviews_id, status) {
     filters = {},
   }) {
     const skip = (page - 1) * limit;
-
     const andConditions = [];
 
     if (filters.productName) {

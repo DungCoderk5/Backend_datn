@@ -9,6 +9,7 @@ const categoryController = require('../adapter/api/controllers/categoryControlle
 const postController = require('../adapter/api/controllers/postController');
 const dashboarController = require('../adapter/api/controllers/dashboarController');
 const brandController = require('../adapter/api/controllers/brandController');
+const provinceController = require("../adapter/api/controllers/provinceController");
 const paymentController = require("../adapter/api/controllers/paymentController");
 const voucherController = require('../adapter/api/controllers/voucherController');
 const cookieParser = require("cookie-parser"); 
@@ -45,5 +46,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 app.use('/payment',paymentController);
 
+app.use("/province", provinceController);
+
 app.use('/voucher', voucherController)
+
 module.exports = app; 

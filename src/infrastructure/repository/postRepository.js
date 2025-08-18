@@ -5,6 +5,7 @@ const postRepository = {
     page = 1,
     limit = 10,
     title = "",
+    id,
     status,
     sortBy = "created_at", // created_at, updated_at, or title
     sortOrder = "desc", // asc or desc
@@ -14,6 +15,7 @@ const postRepository = {
 
     const whereClause = {
       AND: [
+        id ? { post_id: Number(id) } : {},
         title
           ? {
               title: {
