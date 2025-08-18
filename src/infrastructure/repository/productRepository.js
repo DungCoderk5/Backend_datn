@@ -106,38 +106,46 @@ const productRepository = {
       },
     };
   },
- async delete(products_id) {
-  // Lấy tất cả color_id từ variants
-  const variantColors = await prisma.product_variants.findMany({
-    where: { product_id: products_id },
-    select: { color_id: true },
-  });
-
-  const colorIds = [...new Set(variantColors.map(v => v.color_id).filter(Boolean))];
-
-  // Xoá product_variants
-  await prisma.product_variants.deleteMany({
-    where: { product_id: products_id },
-  });
-
-  // Xoá colors (nếu cần)
-  if (colorIds.length > 0) {
-    await prisma.colors.deleteMany({
-      where: { id: { in: colorIds } },
+  async delete(products_id) {
+    // Lấy tất cả color_id từ variants
+    const variantColors = await prisma.product_variants.findMany({
+      where: { product_id: products_id },
+      select: { color_id: true },
     });
-  }
 
-  // Xoá các bảng liên quan
-  await prisma.images.deleteMany({ where: { product_id: products_id } });
-  await prisma.wishlist_items.deleteMany({ where: { product_id: products_id } });
-  await prisma.product_compares.deleteMany({ where: { product_id: products_id } });
-  await prisma.product_reviews.deleteMany({ where: { product_id: products_id } });
+    const colorIds = [
+      ...new Set(variantColors.map((v) => v.color_id).filter(Boolean)),
+    ];
 
-  // Xoá sản phẩm
-  return await prisma.products.delete({
-    where: { products_id },
-  });
-},
+    // Xoá product_variants
+    await prisma.product_variants.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    // Xoá colors (nếu cần)
+    if (colorIds.length > 0) {
+      await prisma.colors.deleteMany({
+        where: { id: { in: colorIds } },
+      });
+    }
+
+    // Xoá các bảng liên quan
+    await prisma.images.deleteMany({ where: { product_id: products_id } });
+    await prisma.wishlist_items.deleteMany({
+      where: { product_id: products_id },
+    });
+    await prisma.product_compares.deleteMany({
+      where: { product_id: products_id },
+    });
+    await prisma.product_reviews.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    // Xoá sản phẩm
+    return await prisma.products.delete({
+      where: { products_id },
+    });
+  },
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -759,7 +767,7 @@ const productRepository = {
 
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
-      where: { product_id: productId,status: "approved" },
+      where: { product_id: productId, status: "approved" },
       orderBy: { created_at: "desc" },
       include: {
         user: {
@@ -860,7 +868,7 @@ const productRepository = {
         user: {
           select: {
             name: true,
-            email:true,
+            email: true,
             phone: true,
             avatar: true,
             ship_addresses: true,
@@ -869,7 +877,7 @@ const productRepository = {
         product: {
           select: {
             name: true,
-            short_desc:true,
+            short_desc: true,
             product_variants: {
               select: {
                 size: { select: { number_size: true } },
@@ -882,15 +890,14 @@ const productRepository = {
     });
     return data;
   },
-async getStatusReview(product_reviews_id, status) {
-  return await prisma.product_reviews.update({
-    where: { product_reviews_id },
-    data: { status },
-  });
-},
+  async getStatusReview(product_reviews_id, status) {
+    return await prisma.product_reviews.update({
+      where: { product_reviews_id },
+      data: { status },
+    });
+  },
 
-
-  async createReview({ user_id, product_id, rating, content,status }) {
+  async createReview({ user_id, product_id, rating, content, status }) {
     return await prisma.product_reviews.create({
       data: {
         user_id,
@@ -1120,72 +1127,97 @@ async getStatusReview(product_reviews_id, status) {
     return deleted;
   },
 
-async createOrder({
-  orders_id, 
-  user_id,
-  total_price,
-  shipping_address_id,
-  payment_method_id,
-  coupons_id,
-  comment,
-  items,
-  shipping_fee,
-  payment_status = "PROCESSING", 
-}) {
-  const orderData = {
+  async createOrder({
+    orders_id,
     user_id,
-    total_amount: total_price,
-    status: "pending",              
-    payment_method_id,
+    total_price,
     shipping_address_id,
+    payment_method_id,
     coupons_id,
     comment,
-    shipping_fee: shipping_fee ?? 0,
-    payment_status,                 
-    order_items: {
-      create: items.map((item) => ({
-        variant: {
-          connect: { product_variants_id: item.variant_id },
-        },
-        quantity: item.quantity,
-        unit_price: item.price,
-      })),
-    },
-  };
-
-  // Nếu có orders_id (vd: khi callback ZaloPay trả về) thì gắn vào
-  if (orders_id) {
-    orderData.orders_id = orders_id;
-  }
-
-  return await prisma.orders.create({
-    data: orderData,
-    include: {
-      user: true, 
-      shipping_address: true, 
-      payment_method: true, 
-      coupon: true, 
+    items,
+    shipping_fee,
+    payment_status = "PROCESSING",
+  }) {
+    const orderData = {
+      user_id,
+      total_amount: total_price,
+      status: "pending",
+      payment_method_id,
+      shipping_address_id,
+      coupons_id,
+      comment,
+      shipping_fee: shipping_fee ?? 0,
+      payment_status,
       order_items: {
-        include: {
+        create: items.map((item) => ({
           variant: {
+            connect: { product_variants_id: item.variant_id },
+          },
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
+      },
+    };
+
+    if (orders_id) {
+      orderData.orders_id = orders_id;
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // 1. Tạo đơn hàng
+      const order = await tx.orders.create({
+        data: orderData,
+        include: {
+          user: true,
+          shipping_address: true,
+          payment_method: true,
+          coupon: true,
+          order_items: {
             include: {
-              product: {
+              variant: {
                 include: {
-                  images: {
-                    select: { url: true },
-                    take: 1,
+                  product: {
+                    include: {
+                      images: { select: { url: true }, take: 1 },
+                    },
                   },
+                  color: true,
+                  size: true,
                 },
               },
-              color: true,
-              size: true,
             },
           },
         },
-      },
-    },
-  });
-},
+      });
+
+      // 2. Check & Giảm tồn kho
+      for (const item of items) {
+        // ✅ Kiểm tra tồn kho trước
+        const variant = await tx.product_variants.findUnique({
+          where: { product_variants_id: item.variant_id },
+        });
+
+        if (!variant || variant.stock_quantity < item.quantity) {
+          throw new Error(
+            `Sản phẩm ${variant?.name || item.variant_id} không đủ hàng`
+          );
+        }
+
+        // ✅ Giảm tồn kho
+        await tx.product_variants.update({
+          where: { product_variants_id: item.variant_id },
+          data: {
+            stock_quantity: {
+              decrement: item.quantity,
+            },
+          },
+        });
+      }
+
+      return order;
+    });
+  },
   async getVoucherByCode(code) {
     return await prisma.coupons.findFirst({
       where: {
@@ -1460,7 +1492,6 @@ async createOrder({
       }),
       prisma.products.count({ where }),
     ]);
-
 
     return {
       products,
