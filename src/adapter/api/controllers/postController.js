@@ -16,8 +16,8 @@ const {
   createCategoryPostHandler,
   deleteCategoryPostHandler,
   updateCategoryHandler,
-  getCategoryPostIdHandler
-  
+  getCategoryPostIdHandler,
+  getPostsByCategoryHandler,
 } = require('../../../application/post/postHttpHandler');
 
 router.get('/', getAllPostsHandler);
@@ -34,5 +34,6 @@ router.delete('/delete-category/:id', deleteCategoryPostHandler);
 router.put('/update-category/:id',updateCategoryHandler
 );
 router.get('/category/byCategoryId/:id', getCategoryPostIdHandler);
+router.get("/postbycategory", getPostsByCategoryHandler);
 
 module.exports = router;
