@@ -106,38 +106,46 @@ const productRepository = {
       },
     };
   },
- async delete(products_id) {
-  // Lấy tất cả color_id từ variants
-  const variantColors = await prisma.product_variants.findMany({
-    where: { product_id: products_id },
-    select: { color_id: true },
-  });
-
-  const colorIds = [...new Set(variantColors.map(v => v.color_id).filter(Boolean))];
-
-  // Xoá product_variants
-  await prisma.product_variants.deleteMany({
-    where: { product_id: products_id },
-  });
-
-  // Xoá colors (nếu cần)
-  if (colorIds.length > 0) {
-    await prisma.colors.deleteMany({
-      where: { id: { in: colorIds } },
+  async delete(products_id) {
+    // Lấy tất cả color_id từ variants
+    const variantColors = await prisma.product_variants.findMany({
+      where: { product_id: products_id },
+      select: { color_id: true },
     });
-  }
 
-  // Xoá các bảng liên quan
-  await prisma.images.deleteMany({ where: { product_id: products_id } });
-  await prisma.wishlist_items.deleteMany({ where: { product_id: products_id } });
-  await prisma.product_compares.deleteMany({ where: { product_id: products_id } });
-  await prisma.product_reviews.deleteMany({ where: { product_id: products_id } });
+    const colorIds = [
+      ...new Set(variantColors.map((v) => v.color_id).filter(Boolean)),
+    ];
 
-  // Xoá sản phẩm
-  return await prisma.products.delete({
-    where: { products_id },
-  });
-},
+    // Xoá product_variants
+    await prisma.product_variants.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    // Xoá colors (nếu cần)
+    if (colorIds.length > 0) {
+      await prisma.colors.deleteMany({
+        where: { id: { in: colorIds } },
+      });
+    }
+
+    // Xoá các bảng liên quan
+    await prisma.images.deleteMany({ where: { product_id: products_id } });
+    await prisma.wishlist_items.deleteMany({
+      where: { product_id: products_id },
+    });
+    await prisma.product_compares.deleteMany({
+      where: { product_id: products_id },
+    });
+    await prisma.product_reviews.deleteMany({
+      where: { product_id: products_id },
+    });
+
+    // Xoá sản phẩm
+    return await prisma.products.delete({
+      where: { products_id },
+    });
+  },
   async findAll({ page = 1, limit = 20 }) {
     const skip = (page - 1) * limit;
 
@@ -759,7 +767,7 @@ const productRepository = {
 
   async findReviewsByProductId(productId) {
     return await prisma.product_reviews.findMany({
-      where: { product_id: productId,status: "approved" },
+      where: { product_id: productId, status: "approved" },
       orderBy: { created_at: "desc" },
       include: {
         user: {
@@ -793,9 +801,11 @@ const productRepository = {
     // Lọc theo tên user
     if (user_name) {
       where.user = {
-        name: {
-          contains: user_name,
-          lte: "insensitive",
+        is: {
+          name: {
+            contains: user_name,
+            lte: "insensitive",
+          },
         },
       };
     }
@@ -803,9 +813,11 @@ const productRepository = {
     // Lọc theo tên product
     if (product_name) {
       where.product = {
-        name: {
-          contains: product_name,
-          lte: "insensitive",
+        is: {
+          name: {
+            contains: product_name,
+            lte: "insensitive",
+          },
         },
       };
     }
@@ -817,10 +829,30 @@ const productRepository = {
 
     // Search nội dung
     if (search) {
-      where.content = {
-        contains: search,
-        lte: "insensitive",
-      };
+      where.OR = [
+        {
+          content: {
+            contains: search,
+            lte: "insensitive",
+          },
+        },
+        {
+          user: {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        },
+        {
+          product: {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        },
+      ];
     }
 
     // Tính skip & take cho phân trang
@@ -860,7 +892,7 @@ const productRepository = {
         user: {
           select: {
             name: true,
-            email:true,
+            email: true,
             phone: true,
             avatar: true,
             ship_addresses: true,
@@ -869,7 +901,7 @@ const productRepository = {
         product: {
           select: {
             name: true,
-            short_desc:true,
+            short_desc: true,
             product_variants: {
               select: {
                 size: { select: { number_size: true } },
@@ -882,15 +914,14 @@ const productRepository = {
     });
     return data;
   },
-async getStatusReview(product_reviews_id, status) {
-  return await prisma.product_reviews.update({
-    where: { product_reviews_id },
-    data: { status },
-  });
-},
+  async getStatusReview(product_reviews_id, status) {
+    return await prisma.product_reviews.update({
+      where: { product_reviews_id },
+      data: { status },
+    });
+  },
 
-
-  async createReview({ user_id, product_id, rating, content,status }) {
+  async createReview({ user_id, product_id, rating, content, status }) {
     return await prisma.product_reviews.create({
       data: {
         user_id,
@@ -1462,7 +1493,6 @@ async getStatusReview(product_reviews_id, status) {
       }),
       prisma.products.count({ where }),
     ]);
-
 
     return {
       products,

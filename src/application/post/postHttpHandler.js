@@ -17,11 +17,13 @@ async function getAllPostsHandler(req, res) {
     const title = req.query.title || "";
     const status =
       req.query.status !== undefined ? Number(req.query.status) : undefined;
+      const id = req.query.id;
     const sortBy = req.query.sortBy || "created_at";
     const sortOrder = req.query.sortOrder === "asc" ? "asc" : "desc";
     const result = await getAllPostsUsecase({
       page,
       limit,
+      id,
       title,
       status,
       sortBy,
