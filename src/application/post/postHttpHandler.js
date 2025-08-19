@@ -9,7 +9,10 @@ const getPostCategoryUsecase = require("../../infrastructure/usecase/post/getPos
 const createCategoryPostUsecase = require("../../infrastructure/usecase/post/createCategoryPostUsecase");
 const deleteCategoryPostUsecase = require("../../infrastructure/usecase/post/deleteCategoryPostUseCase");
 const updateCategoryUsecase = require("../../infrastructure/usecase/post/updateCategoryPostUseCase");
-const getCategoryPostIdUseCase = require("../../infrastructure/usecase/post/getCategoryPostIdUseCase")
+const getCategoryPostIdUseCase = require("../../infrastructure/usecase/post/getCategoryPostIdUseCase");
+const updateViewPostUsecase = require("../../infrastructure/usecase/post/updateViewPostUseCase");
+const getFeaturedPostUsecase = require("../../infrastructure/usecase/post/getFeaturedPostUsecase");
+
 async function getAllPostsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -301,8 +304,38 @@ async function getCategoryPostIdHandler(req, res) {
     });
   }
 }
+async function updateViewPostHandler(req, res) {
+  try {
+    const { post_id } = req.params; 
+    if (!post_id) {
+      return res.status(400).json({ error: "post_id is required" });
+    }
 
+    const updatedPost = await updateViewPostUsecase(post_id);
 
+    res.status(200).json({
+      message: "Cập nhật lượt xem thành công",
+      data: updatedPost,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+async function getFeaturedPost(req, res) {
+  try {
+    const categories = await getFeaturedPostUsecase();
+    res.json({
+      success: true,
+      data: categories,
+    });
+  } catch (error) {
+    console.error("Error getFeaturedCategories:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+}
 module.exports = {
   getAllPostsHandler,
   addPostHandler,
@@ -316,5 +349,7 @@ module.exports = {
   createCategoryPostHandler,
   deleteCategoryPostHandler,
   updateCategoryHandler,
-  getCategoryPostIdHandler
+  getCategoryPostIdHandler,
+  updateViewPostHandler,
+  getFeaturedPost
 };

@@ -86,7 +86,7 @@ const postRepository = {
     if (name) {
       where.name = {
         contains: name,
-        lte: "insensitive", 
+        lte: "insensitive",
       };
     }
 
@@ -184,7 +184,7 @@ const postRepository = {
 
   async findByCate(category_post_id) {
     return await prisma.posts.findMany({
-      where: {category_post_id},
+      where: { category_post_id },
       select: {
         post_id: true,
         title: true,
@@ -212,7 +212,7 @@ const postRepository = {
       },
     });
   },
-  async createCategory({ name, slug, parent_id, }) {
+  async createCategory({ name, slug, parent_id }) {
     return await prisma.categories_post.create({
       data: {
         name,
@@ -227,23 +227,34 @@ const postRepository = {
     });
   },
   async updateCategory(category_post_id, data) {
-    
     return await prisma.categories_post.update({
       where: { category_post_id },
       data,
     });
   },
-async findCategoryById(category_post_id) {
-  return await prisma.categories_post.findUnique({
-    where: { category_post_id: Number(category_post_id) },
-     }
-   
-   
-  );
-}
-
-
-
+  async findCategoryById(category_post_id) {
+    return await prisma.categories_post.findUnique({
+      where: { category_post_id: Number(category_post_id) },
+    });
+  },
+  async updateViewPost(post_id) {
+    return await prisma.posts.update({
+      where: { post_id: Number(post_id) },
+      data: { view: { increment: 1 } },
+    });
+  },
+  async findFeaturedPost(){
+     return await prisma.posts.findMany({
+    where: {
+      view: {
+        gt: 10, 
+      },
+    },
+    orderBy: {
+      view: "desc", 
+    },
+  });
+  }
 };
 
 module.exports = postRepository;
