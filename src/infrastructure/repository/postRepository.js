@@ -5,6 +5,7 @@ const postRepository = {
     page = 1,
     limit = 10,
     title = "",
+    id,
     status,
     sortBy = "created_at", // created_at, updated_at, or title
     sortOrder = "desc", // asc or desc
@@ -14,6 +15,7 @@ const postRepository = {
 
     const whereClause = {
       AND: [
+        id ? { post_id: Number(id) } : {},
         title
           ? {
               title: {
@@ -235,7 +237,6 @@ const postRepository = {
       where: { category_post_id: Number(category_post_id) },
     });
   },
-
   async findByCategory({
     page = 1,
     limit = 10,
@@ -294,6 +295,46 @@ const postRepository = {
       totalPages: Math.ceil(total / limit),
     };
   },
+  async updateViewPost(post_id) {
+    return await prisma.posts.update({
+      where: { post_id: Number(post_id) },
+      data: { view: { increment: 1 } },
+    });
+  },
+  async findFeaturedPost(page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
+
+  const posts = await prisma.posts.findMany({
+    where: {
+      view: {
+        gt: 10, // chỉ lấy bài có view > 10
+      },
+    },
+    orderBy: {
+      view: "desc", // sắp xếp view giảm dần
+    },
+    skip,
+    take: limit,
+  });
+
+  const total = await prisma.posts.count({
+    where: {
+      view: {
+        gt: 10,
+      },
+    },
+  });
+
+  return {
+    data: posts,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
 };
 
 module.exports = postRepository;

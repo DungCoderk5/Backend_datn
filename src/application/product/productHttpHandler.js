@@ -36,7 +36,6 @@ const getAllProductReviewUsecase = require("../../infrastructure/usecase/product
 const getProductAdminUsecase = require("../../infrastructure/usecase/product/getProductAdminUsecase.js");
 const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
 const getStatusReviewUsecase = require("../../infrastructure/usecase/product/getStatusReviewUsecase");
-
 const prisma = require("../../shared/prisma");
 const slugify = require("slugify");
 const crypto = require("crypto");

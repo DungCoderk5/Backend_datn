@@ -828,9 +828,11 @@ const productRepository = {
     // Lọc theo tên user
     if (user_name) {
       where.user = {
-        name: {
-          contains: user_name,
-          lte: "insensitive",
+        is: {
+          name: {
+            contains: user_name,
+            lte: "insensitive",
+          },
         },
       };
     }
@@ -838,9 +840,11 @@ const productRepository = {
     // Lọc theo tên product
     if (product_name) {
       where.product = {
-        name: {
-          contains: product_name,
-          lte: "insensitive",
+        is: {
+          name: {
+            contains: product_name,
+            lte: "insensitive",
+          },
         },
       };
     }
@@ -852,10 +856,30 @@ const productRepository = {
 
     // Search nội dung
     if (search) {
-      where.content = {
-        contains: search,
-        lte: "insensitive",
-      };
+      where.OR = [
+        {
+          content: {
+            contains: search,
+            lte: "insensitive",
+          },
+        },
+        {
+          user: {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        },
+        {
+          product: {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        },
+      ];
     }
 
     // Tính skip & take cho phân trang
