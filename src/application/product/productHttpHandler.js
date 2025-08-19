@@ -29,9 +29,50 @@ const updateProductUsecase = require("../../infrastructure/usecase/product/updat
 const deleteProductUsecase = require("../../infrastructure/usecase/product/deleteProductUsecase");
 const getCouponsUsecase = require("../../infrastructure/usecase/product/getCouponsUsecase");
 const getUserVouchersUsecase = require("../../infrastructure/usecase/product/getUserVouchersUsecase");
+const getAllProductVariantUsecase = require("../../infrastructure/usecase/product/getAllProductVariantUsecase");
+const getAllSizesUsecase = require("../../infrastructure/usecase/product/getAllSizesUsecase");
+const getAllGendersUsecase = require("../../infrastructure/usecase/product/getAllGendersUsecase");
 const getAllProductReviewUsecase = require("../../infrastructure/usecase/product/getAllProductReviewUseCase");
+const getProductAdminUsecase = require("../../infrastructure/usecase/product/getProductAdminUsecase.js");
 const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
-const getStatusReviewUsecase = require('../../infrastructure/usecase/product/getStatusReviewUsecase');
+const getStatusReviewUsecase = require("../../infrastructure/usecase/product/getStatusReviewUsecase");
+const prisma = require("../../shared/prisma");
+const slugify = require("slugify");
+const crypto = require("crypto");
+async function getProductAdminHandler(req, res) {
+  try {
+    const productId = parseInt(req.params.id, 10);
+
+    if (isNaN(productId)) {
+      return res.status(400).json({ error: "ID sản phẩm không hợp lệ" });
+    }
+
+    const product = await getProductAdminUsecase(productId);
+    res.status(200).json(product);
+  } catch (error) {
+    console.error("[Handler] Lỗi getProductDetail:", error.message);
+    res.status(error.status || 404).json({ error: error.message });
+  }
+}
+
+async function getAllSizesHandler(req, res) {
+  try {
+    const result = await getAllSizesUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllSizes:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy tất cả size." });
+  }
+}
+async function getAllGendersHandler(req, res) {
+  try {
+    const result = await getAllGendersUsecase();
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllGenders:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy tất cả gender." });
+  }
+}
 
 async function getAllProductsHandler(req, res) {
   try {
@@ -43,6 +84,52 @@ async function getAllProductsHandler(req, res) {
     res.status(200).json(result);
   } catch (error) {
     console.error("[Handler] Lỗi getAllProducts:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách sản phẩm." });
+  }
+}
+async function getAllProductVariantHandler(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 5,
+      sortField = "created_at",
+      sortOrder = "desc",
+      productCode,
+      productName,
+      brandId,
+      categoryId,
+      minImportPrice,
+      maxImportPrice,
+      minSalePrice,
+      maxSalePrice,
+      minQuantity,
+      maxQuantity,
+    } = req.query;
+
+    const filters = {
+      productCode,
+      productName,
+      brandId: brandId ? Number(brandId) : undefined,
+      categoryId: categoryId ? Number(categoryId) : undefined,
+      minImportPrice: minImportPrice ? Number(minImportPrice) : undefined,
+      maxImportPrice: maxImportPrice ? Number(maxImportPrice) : undefined,
+      minSalePrice: minSalePrice ? Number(minSalePrice) : undefined,
+      maxSalePrice: maxSalePrice ? Number(maxSalePrice) : undefined,
+      minQuantity: minQuantity ? Number(minQuantity) : undefined,
+      maxQuantity: maxQuantity ? Number(maxQuantity) : undefined,
+    };
+
+    const result = await getAllProductVariantUsecase({
+      page: Number(page),
+      limit: Number(limit),
+      sortField,
+      sortOrder,
+      filters,
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi Variant:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách sản phẩm." });
   }
 }
@@ -97,20 +184,43 @@ async function getOrderHandler(req, res) {
   const userId = parseInt(req.params.userId);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-
   const skip = (page - 1) * limit;
 
-  try {
-    const orders = await getOrdersByUserUsecase({ userId, skip, take: limit });
+  const filters = {
+  status: req.query.status || null,
+  payment_method_id: req.query.payment_method_id
+    ? parseInt(req.query.payment_method_id)
+    : null,
+  date_from: req.query.date_from || null,
+  date_to: req.query.date_to || null,
+};
 
-    return res.status(200).json({
-      data: orders,
+
+  const sort = {
+    field: req.query.sortField || "created_at",
+    direction: req.query.sortDirection || "desc",
+  };
+
+  const search = req.query.search || "";
+
+  try {
+    const orders = await getOrdersByUserUsecase({
+      userId,
+      skip,
+      page,
+      take: limit,
+      filters,
+      sort,
+      search,
     });
+
+    return res.status(200).json({ data: orders });
   } catch (error) {
     console.error("[Handler] Lỗi lấy đơn hàng theo user:", error);
     return res.status(500).json({ error: "Lỗi máy chủ khi lấy đơn hàng." });
   }
 }
+
 
 async function deleteProductHandler(req, res) {
   try {
@@ -350,38 +460,61 @@ async function getProductsByGenderHandler(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+// Hàm tạo SKU duy nhất
+async function generateUniqueSKU(baseSKU) {
+  let sku = baseSKU;
+  let counter = 1;
 
-async function addProductHandler(req, res) {
-  try {
-    const data = req.body;
-    const create = await addProductUsecase(data);
-    res
-      .status(200)
-      .json({ message: "tạo sản phẩm thành công", product: create });
-  } catch (error) {
-    console.error("Lỗi khi lấy thêm sản phẩm:", error);
-    res.status(500).json({ error: "Internal server error" });
+  while (true) {
+    const exists = await prisma.product_variants.findFirst({
+      where: { sku },
+    });
+
+    if (!exists) return sku; // Không trùng → dùng luôn
+
+    sku = `${baseSKU}-${counter}`;
+    counter++;
   }
 }
 
-const updateProductHandler = async (req, res) => {
-  try {
-    const products_id = parseInt(req.params.id);
-    const data = req.body;
-
-    if (!products_id || !data) {
-      return res.status(400).json({ error: "Thiếu dữ liệu cập nhật." });
-    }
-
-    const result = await updateProductUsecase({ products_id, data });
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error("Lỗi khi cập nhật sản phẩm:", error.message);
-    return res
-      .status(500)
-      .json({ error: "Đã xảy ra lỗi khi cập nhật sản phẩm." });
+async function generateUniqueSKU(baseSKU) {
+  let sku = baseSKU;
+  let count = 1;
+  const maxAttempts = 100;
+  while (count <= maxAttempts) {
+    const existing = await prisma.product_variants.findFirst({
+      where: { sku },
+    });
+    if (!existing) break;
+    sku = `${baseSKU}-${count}`;
+    count++;
   }
-};
+  if (count > maxAttempts) {
+    throw new Error("Không thể tạo SKU duy nhất sau 100 lần thử");
+  }
+  return sku;
+}
+async function addProductHandler(req, res) {
+  try {
+    const result = await addProductUsecase(req);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi addProduct:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi thêm sản phẩm." });
+  }
+}
+async function updateProductHandler(req, res) {
+  try {
+    const result = await updateProductUsecase(req);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("[Handler] Lỗi updateProduct:", error);
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Lỗi máy chủ khi cập nhật sản phẩm." });
+  }
+}
+
 
 async function addToCart(req, res) {
   try {
@@ -735,7 +868,12 @@ module.exports = {
   deleteProductHandler,
   getCouponsHandler,
   getUserVouchersHandler,
+  getAllProductVariantHandler,
+  getAllSizesHandler,
+  getAllGendersHandler,
+  generateUniqueSKU,
+  getProductAdminHandler,
   getAllProductReviewHandler,
   getByIdReviewHandler,
-  getStatusReviewHandler
+  getStatusReviewHandler,
 };
