@@ -20,7 +20,7 @@ async function getAllPostsHandler(req, res) {
     const title = req.query.title || "";
     const status =
       req.query.status !== undefined ? Number(req.query.status) : undefined;
-      const id = req.query.id;
+    const id = req.query.id;
     const sortBy = req.query.sortBy || "created_at";
     const sortOrder = req.query.sortOrder === "asc" ? "asc" : "desc";
     const result = await getAllPostsUsecase({
@@ -159,9 +159,16 @@ async function updatePostHandler(req, res) {
 
     const thumbnail = req.file ? req.file.filename : oldPost.thumbnail;
 
-    const newCategoryPostId = category_post_id !== undefined && category_post_id !== null ? Number(category_post_id) : oldPost.category_post_id;
-    const newAuthorId = author_id !== undefined && author_id !== null ? Number(author_id) : oldPost.author_id;
-    const newStatus = status !== undefined && status !== null ? Number(status) : oldPost.status;
+    const newCategoryPostId =
+      category_post_id !== undefined && category_post_id !== null
+        ? Number(category_post_id)
+        : oldPost.category_post_id;
+    const newAuthorId =
+      author_id !== undefined && author_id !== null
+        ? Number(author_id)
+        : oldPost.author_id;
+    const newStatus =
+      status !== undefined && status !== null ? Number(status) : oldPost.status;
 
     const result = await updatePostUsecase(post_id, {
       title: title !== undefined ? title : oldPost.title,
@@ -174,14 +181,14 @@ async function updatePostHandler(req, res) {
       status: newStatus,
     });
 
-    res.status(200).json({ message: "Cập nhật bài viết thành công.", data: result });
+    res
+      .status(200)
+      .json({ message: "Cập nhật bài viết thành công.", data: result });
   } catch (error) {
     console.error("[Handler] Lỗi updatePost:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật bài viết." });
   }
 }
-
-
 
 async function addPostHandler(req, res) {
   try {
@@ -220,8 +227,6 @@ async function upLoadHandler(req, res) {
   try {
     const file = req.file;
 
-
-
     const fileName = file.filename;
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const imageUrl = `${baseUrl}/uploads/blog/${fileName}`;
@@ -232,15 +237,21 @@ async function upLoadHandler(req, res) {
     return res.status(500).json({ error: "Đã xảy ra lỗi khi tải ảnh." });
   }
 }
-async function createCategoryPostHandler(req,res) {
+async function createCategoryPostHandler(req, res) {
   try {
     const { name, slug, parent_id } = req.body;
 
     if (!name) {
-      return res.status(400).json({ error: "Tên danh mục không được để trống." });
+      return res
+        .status(400)
+        .json({ error: "Tên danh mục không được để trống." });
     }
 
-    const newCategory = await createCategoryPostUsecase({ name, slug, parent_id });
+    const newCategory = await createCategoryPostUsecase({
+      name,
+      slug,
+      parent_id,
+    });
 
     res.status(201).json({
       message: "Tạo danh mục bài viết thành công.",
@@ -250,7 +261,6 @@ async function createCategoryPostHandler(req,res) {
     console.error("[Handler] Lỗi createCategoryPost:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi tạo danh mục bài viết." });
   }
-  
 }
 async function deleteCategoryPostHandler(req, res) {
   try {
@@ -285,7 +295,7 @@ async function updateCategoryHandler(req, res) {
     res.status(500).json({
       error: error.message || "Lỗi máy chủ khi cập nhật danh mục.",
     });
-  };
+  }
 }
 async function getCategoryPostIdHandler(req, res) {
   try {
@@ -295,18 +305,18 @@ async function getCategoryPostIdHandler(req, res) {
 
     return res.status(200).json({
       success: true,
-      data: category
+      data: category,
     });
   } catch (error) {
     return res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 }
 async function updateViewPostHandler(req, res) {
   try {
-    const { post_id } = req.params; 
+    const { post_id } = req.params;
     if (!post_id) {
       return res.status(400).json({ error: "post_id is required" });
     }
@@ -323,10 +333,12 @@ async function updateViewPostHandler(req, res) {
 }
 async function getFeaturedPost(req, res) {
   try {
-    const categories = await getFeaturedPostUsecase();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const result = await getFeaturedPostUsecase({ page, limit });
     res.json({
       success: true,
-      data: categories,
+      data: result,
     });
   } catch (error) {
     console.error("Error getFeaturedCategories:", error);
@@ -351,5 +363,5 @@ module.exports = {
   updateCategoryHandler,
   getCategoryPostIdHandler,
   updateViewPostHandler,
-  getFeaturedPost
+  getFeaturedPost,
 };

@@ -243,18 +243,41 @@ const postRepository = {
       data: { view: { increment: 1 } },
     });
   },
-  async findFeaturedPost(){
-     return await prisma.posts.findMany({
+  async findFeaturedPost(page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
+
+  const posts = await prisma.posts.findMany({
     where: {
       view: {
-        gt: 10, 
+        gt: 10, // chỉ lấy bài có view > 10
       },
     },
     orderBy: {
-      view: "desc", 
+      view: "desc", // sắp xếp view giảm dần
+    },
+    skip,
+    take: limit,
+  });
+
+  const total = await prisma.posts.count({
+    where: {
+      view: {
+        gt: 10,
+      },
     },
   });
-  }
+
+  return {
+    data: posts,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
 };
 
 module.exports = postRepository;
