@@ -5,7 +5,6 @@ const qs = require("qs");
 const productRepository = require("../../repository/productRepository");
 const userRepository = require("../../repository/userRepository");
 const { renderOrderEmail } = require("../../../utils/orderEmailTemplate");
-
 // ✅ Map lưu app_trans_id ↔ order_id thực
 const transIdMap = new Map();
 
@@ -82,12 +81,20 @@ module.exports = {
         ); // Lấy full chi tiết để gửi
         const html = renderOrderEmail(fullOrder);
         if (fullOrder.user?.email) {
+          // Lấy ngày & tháng từ thời điểm đặt hàng (created_at)
+          const orderDate = moment(order.created_at);
+          const day = orderDate.format("DD"); // Ngày
+          const month = orderDate.format("MM"); // Tháng
+
+          const customSubject = `Đơn hàng TERA${month}${day}${order.orders_id} của bạn đã đươc xác nhận`;
+
           await userRepository.sendMail({
             to: fullOrder.user.email,
-            subject: ` Đơn hàng #${order.orders_id} của bạn đã được xác nhận`,
+            subject: customSubject,
             html,
           });
         }
+
         return {
           return_code: 1,
           return_message: "success",
