@@ -10,7 +10,7 @@ const createCategoryPostUsecase = require("../../infrastructure/usecase/post/cre
 const deleteCategoryPostUsecase = require("../../infrastructure/usecase/post/deleteCategoryPostUseCase");
 const updateCategoryUsecase = require("../../infrastructure/usecase/post/updateCategoryPostUseCase");
 const getCategoryPostIdUseCase = require("../../infrastructure/usecase/post/getCategoryPostIdUseCase");
-const updateViewPostUsecase = require("../../infrastructure/usecase/post/updateViewPostUseCase");
+const updateViewPostUsecase = require("../../infrastructure/usecase/post/updateViewPostUsecase");
 const getFeaturedPostUsecase = require("../../infrastructure/usecase/post/getFeaturedPostUsecase");
 
 async function getAllPostsHandler(req, res) {
