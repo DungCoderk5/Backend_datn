@@ -629,19 +629,29 @@ async function addToCompareHandler(req, res) {
     const { user_id, product_id } = req.body;
 
     if (!user_id || !product_id) {
-      return res.status(400).json({ error: "Thiếu user_id hoặc product_id" });
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu user_id hoặc product_id",
+      });
     }
 
-    const result = await addToCompareUsecase({ user_id, product_id });
+    const data = await addToCompareUsecase({ user_id, product_id });
 
     return res.status(200).json({
-      message: "Đã thêm sản phẩm vào danh sách so sánh",
-      data: result,
+      success: true,
+      message: "Đã thêm vào danh sách so sánh.",
+      data,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ error: error.message });
+    console.error("🔥 Lỗi addToCompare:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
   }
 }
+
 
 async function removeFromCompareHandler(req, res) {
   try {
