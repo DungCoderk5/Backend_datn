@@ -6,7 +6,7 @@ const getPostByIdUsecase = require("../../infrastructure/usecase/post/getPostByI
 const getPostBySlugUsecase = require("../../infrastructure/usecase/post/getPostBySlugUsecase");
 const getPostByCategoryUsecase = require("../../infrastructure/usecase/post/getPostByCategoryUsecase");
 const getPostCategoryUsecase = require("../../infrastructure/usecase/post/getPostCategoryUsecase");
-const createCategoryPostUsecase = require("../../infrastructure/usecase/post/createCategoryPostUseCase");
+const createCategoryPostUsecase = require("../../infrastructure/usecase/post/createCategoryPostUsecase");
 const deleteCategoryPostUsecase = require("../../infrastructure/usecase/post/deleteCategoryPostUseCase");
 const updateCategoryUsecase = require("../../infrastructure/usecase/post/updateCategoryPostUseCase");
 

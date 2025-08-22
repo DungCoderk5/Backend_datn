@@ -37,6 +37,7 @@ class GoogleAuthUsecase {
         email: userInfo.email,
         name: userInfo.name,
         phone: userInfo.phone,
+        role: userFromDB.role || "user",
         // address: userInfo.address,
       },
       jwtSecret,
