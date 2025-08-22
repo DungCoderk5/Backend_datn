@@ -23,7 +23,7 @@ class GoogleAuthUsecase {
     const userInfo = await this.repository.verifyIdToken(tokenData.id_token);
     let userFromDB = await userRepository.findByUsernameOrEmail(userInfo.email);
     if (!userFromDB) {
-    userFromDB = await userRepository.create({
+      userFromDB = await userRepository.create({
         email: userInfo.email,
         name: userInfo.name,
         avatar: userInfo.picture,
@@ -37,6 +37,7 @@ class GoogleAuthUsecase {
         email: userInfo.email,
         name: userInfo.name,
         phone: userInfo.phone,
+        role: userFromDB.role || "user",
         // address: userInfo.address,
       },
       jwtSecret,
