@@ -11,7 +11,7 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
   if (!user) throw new Error("Tài khoản không tồn tại");
   if (!user.status) throw new Error("Tài khoản đã bị khóa");
 
-  // 2. Kiểm tra password
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Mật khẩu không đúng");
 
@@ -40,6 +40,13 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
   return {
     message: "Đăng nhập thành công",
     token,
+
+    user: {
+      id: user.user_id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   };
 }
 
