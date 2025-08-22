@@ -53,6 +53,7 @@ class GoogleAuthUsecase {
       .setExpirationTime("24h")
       .sign(secretKey);
 
+
     return { token: appToken, user: userInfo };
   }
 }

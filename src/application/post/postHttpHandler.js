@@ -10,9 +10,9 @@ const createCategoryPostUsecase = require("../../infrastructure/usecase/post/cre
 const deleteCategoryPostUsecase = require("../../infrastructure/usecase/post/deleteCategoryPostUseCase");
 const updateCategoryUsecase = require("../../infrastructure/usecase/post/updateCategoryPostUseCase");
 const getCategoryPostIdUseCase = require("../../infrastructure/usecase/post/getCategoryPostIdUseCase");
+const getPostsByCategoryUsecase = require("../../infrastructure/usecase/post/getPostsByCategoryUsecase");
 const updateViewPostUsecase = require("../../infrastructure/usecase/post/updateViewPostUsecase");
 const getFeaturedPostUsecase = require("../../infrastructure/usecase/post/getFeaturedPostUsecase");
-
 async function getAllPostsHandler(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -314,13 +314,35 @@ async function getCategoryPostIdHandler(req, res) {
     });
   }
 }
+async function getPostsByCategoryHandler(req, res) {
+  try {
+    const { page, limit, categoryId, slug, sortBy, sortOrder } = req.query;
+
+    const result = await getPostsByCategoryUsecase({
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      slug,
+      sortBy,
+      sortOrder,
+    });
+
+    res.status(200).json({
+      message: "Lấy bài viết theo danh mục thành công.",
+      ...result, // { posts, total, currentPage, totalPages }
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi getPostsByCategory:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy bài viết theo danh mục." });
+  }
+}
+
 async function updateViewPostHandler(req, res) {
   try {
     const { post_id } = req.params;
     if (!post_id) {
       return res.status(400).json({ error: "post_id is required" });
     }
-
     const updatedPost = await updateViewPostUsecase(post_id);
 
     res.status(200).json({
@@ -362,6 +384,7 @@ module.exports = {
   deleteCategoryPostHandler,
   updateCategoryHandler,
   getCategoryPostIdHandler,
+  getPostsByCategoryHandler,
   updateViewPostHandler,
   getFeaturedPost,
 };

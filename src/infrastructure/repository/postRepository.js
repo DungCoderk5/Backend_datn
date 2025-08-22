@@ -237,6 +237,64 @@ const postRepository = {
       where: { category_post_id: Number(category_post_id) },
     });
   },
+  async findByCategory({
+    page = 1,
+    limit = 10,
+    categoryId,
+    slug,
+    sortBy = "created_at",
+    sortOrder = "desc",
+  }) {
+    const skip = (page - 1) * limit;
+
+    const whereClause = {
+      AND: [
+        categoryId ? { category_post_id: categoryId } : {},
+        slug
+          ? {
+              category_post: {
+                slug: slug,
+              },
+            }
+          : {},
+      ],
+    };
+
+    const allowedSortFields = ["title", "created_at", "updated_at"];
+    const sortField = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "created_at";
+    const sortDirection = sortOrder === "asc" ? "asc" : "desc";
+
+    const [posts, total] = await Promise.all([
+      prisma.posts.findMany({
+        skip,
+        take: limit,
+        where: whereClause,
+        orderBy: {
+          [sortField]: sortDirection,
+        },
+        include: {
+          category_post: true,
+          author: {
+            select: {
+              user_id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+      }),
+      prisma.posts.count({ where: whereClause }),
+    ]);
+
+    return {
+      posts,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
   async updateViewPost(post_id) {
     return await prisma.posts.update({
       where: { post_id: Number(post_id) },
@@ -277,7 +335,6 @@ const postRepository = {
     },
   };
 }
-
 };
 
 module.exports = postRepository;
