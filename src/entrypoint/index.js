@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use(cors({
-  origin: 'http://localhost:3001',  
+  origin: 'https://terashoes.store',  
   credentials: true                
 }));
 app.set('trust proxy', false);

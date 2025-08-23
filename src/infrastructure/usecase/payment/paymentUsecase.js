@@ -21,7 +21,7 @@ module.exports = {
 
     const embed_data = {
       order_data,
-      redirecturl: `http://localhost:3001/checkout?payment=success`, // Không truyền orderId ở đây nữa
+      redirecturl: `https://terashoes.store/checkout?payment=success`, // Không truyền orderId ở đây nữa
     };
 
     const order = {
@@ -74,7 +74,7 @@ module.exports = {
         await productRepository.clearCart(order.user_id);
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
 
-        const redirectUrl = `http://localhost:3001/checkout?payment=success&orderId=${order.orders_id}`;
+        const redirectUrl = `https://terashoes.store/checkout?payment=success&orderId=${order.orders_id}`;
         // 📩 Gửi email
         const fullOrder = await userRepository.getOrderDetailById(
           order.orders_id

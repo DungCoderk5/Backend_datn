@@ -61,7 +61,7 @@ async function googleCallback(req, res) {
     const client_id =
       "235575927586-1ldvr8n16m7ose9db21aa0nvqhnb9m0a.apps.googleusercontent.com";
     const client_secret = "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";
-    const redirect_uri = "http://localhost:3001/google/callback";
+    const redirect_uri = "https://terashoes.store/google/callback";
     const jwtSecret = process.env.JWT_SECRET || "YOUR_JWT_SECRET";
 
     const result = await googleAuthUsecase.handleGoogleLogin(
