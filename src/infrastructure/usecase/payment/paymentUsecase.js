@@ -5,7 +5,8 @@ const qs = require("qs");
 const productRepository = require("../../repository/productRepository");
 const userRepository = require("../../repository/userRepository");
 const { renderOrderEmail } = require("../../../utils/orderEmailTemplate");
-
+const FRONTEND_URL = process.env.FRONTEND_URL
+const CALLBACK_URL = process.env.CALLBACK_URL
 // ✅ Map lưu app_trans_id ↔ order_id thực
 const transIdMap = new Map();
 
@@ -22,7 +23,7 @@ module.exports = {
 
     const embed_data = {
       order_data,
-      redirecturl: `http://localhost:3001/checkout?payment=success`, // Không truyền orderId ở đây nữa
+      redirecturl: `${FRONTEND_URL}/checkout?payment=success`, // Không truyền orderId ở đây nữa
     };
 
     const order = {
@@ -34,7 +35,7 @@ module.exports = {
       embed_data: JSON.stringify(embed_data),
       amount,
       description: `Thanh toán đơn hàng`,
-      callback_url: "https://866311514d5d.ngrok-free.app/payment/callback",
+      callback_url: `${CALLBACK_URL}/payment/callback`,
     };
 
     const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
@@ -71,7 +72,7 @@ module.exports = {
         await productRepository.clearCart(order.user_id);
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
 
-        const redirectUrl = `http://localhost:3001/checkout?payment=success&orderId=${order.orders_id}`;
+        const redirectUrl = `${FRONTEND_URL}/checkout?payment=success&orderId=${order.orders_id}`;
         // 📩 Gửi email
         const fullOrder = await userRepository.getOrderDetailById(
           order.orders_id
