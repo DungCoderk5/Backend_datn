@@ -17,13 +17,13 @@ const cookieParser = require("cookie-parser");
 const cors = require('cors');
 const path = require("path");
 const app = express();
-
+const FRONTEND_URL = process.env.FRONTEND_URL
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
 app.use(cors({
-  origin: 'http://localhost:3001',  
+  origin: `${FRONTEND_URL}`,  
   credentials: true                
 }));
 app.set('trust proxy', false);
