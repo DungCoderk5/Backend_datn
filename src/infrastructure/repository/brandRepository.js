@@ -21,8 +21,9 @@ const brandRepository = {
       where.brand_id = Number(id);
     }
     if (name) {
-      where.name = { contains: name, mode: "insensitive" };
+      where.name = { contains: name }; // Prisma 6.x mặc định case-insensitive với SQLite và PostgreSQL
     }
+
     if (status !== undefined && status !== "") {
       where.status = Number(status);
     }
@@ -30,10 +31,11 @@ const brandRepository = {
     if (keyword) {
       const lowerKeyword = keyword.toLowerCase();
       where.OR = [
-        { name: { contains: lowerKeyword, mode: "insensitive" } },
-        !isNaN(Number(keyword)) ? { brand_id: Number(keyword) } : null,
-        !isNaN(Number(keyword)) ? { status: Number(keyword) } : null,
-      ].filter(Boolean);
+  { name: { contains: lowerKeyword } }, // chỉ cần contains
+  !isNaN(Number(keyword)) ? { brand_id: Number(keyword) } : null,
+  !isNaN(Number(keyword)) ? { status: Number(keyword) } : null,
+].filter(Boolean);
+
     }
 
     const [data, total] = await Promise.all([
@@ -91,6 +93,11 @@ const brandRepository = {
   async delete(brand_id) {
     return await prisma.brands.delete({
       where: { brand_id: Number(brand_id) },
+    });
+  },
+  async findAllWithoutPaging() {
+    return await prisma.brands.findMany({
+      orderBy: { created_at: "desc" }, // hoặc theo thứ tự bạn muốn
     });
   },
 };

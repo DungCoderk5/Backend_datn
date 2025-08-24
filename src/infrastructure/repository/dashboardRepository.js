@@ -396,6 +396,7 @@ const dashboardRepository = {
       shipping_address: {
         select: {
           address_line: true,
+          phone:true,
         },
       },
       payment_method: {

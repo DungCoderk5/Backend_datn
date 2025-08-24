@@ -27,10 +27,9 @@ const sendResetPassUsecase = require("../../infrastructure/usecase/user/sendRese
 const ResetPassUsecase = require("../../infrastructure/usecase/user/ResetPassUsecase");
 const updateOrderStatusUsecase = require("../../infrastructure/usecase/user/updateOrderStatusUsecase");
 const addUserVoucherUsecase = require("../../infrastructure/usecase/user/addUserVoucherUsecase");
-
-
-
-
+const getAllUsersUsecase = require("../../infrastructure/usecase/user/getAllUserUsecase");
+const updateUsersUsecase = require("../../infrastructure/usecase/user/updateUsersUsecase");
+const FRONTEND_URL = process.env.FRONTEND_URL
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -62,7 +61,7 @@ async function googleCallback(req, res) {
     const client_id =
       "235575927586-1ldvr8n16m7ose9db21aa0nvqhnb9m0a.apps.googleusercontent.com";
     const client_secret = "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";
-    const redirect_uri = "http://localhost:3001/google/callback";
+    const redirect_uri = `${FRONTEND_URL}/google/callback`;
     const jwtSecret = process.env.JWT_SECRET || "YOUR_JWT_SECRET";
 
     const result = await googleAuthUsecase.handleGoogleLogin(
@@ -412,6 +411,64 @@ async function addUserVoucherHandler(req, res) {
     res.status(500).json({ error: "Lỗi khi lưu mã giảm giá cho người dùng." });
   }
 }
+async function getAllUsersHandler(req, res) {
+  try {
+    const {
+      page,
+      limit,
+      sortField,
+      sortDirection,
+      role,
+      status,
+      name,
+      email,
+      user_id,
+      phone,
+      search,
+    } = req.query;
+
+    const filters = { role, status, name, email, user_id, phone };
+
+    if (search) {
+      filters.search = search;
+    }
+
+    const result = await getAllUsersUsecase({
+      page,
+      limit,
+      sortField: sortField || "created_at",
+      sortDirection: sortDirection === "asc" ? "asc" : "desc",
+      filters,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi getAllUsers:", error);
+    res.status(500).json({ error: "Lỗi khi lấy danh sách người dùng." });
+  }
+}
+
+async function updateUsersHandler(req, res) {
+  const userId = req.params.userId;
+
+  const { role, status } = req.body;
+
+  try {
+    const updated = await updateUsersUsecase(userId, { role, status });
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật người dùng thành công.",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("[Handler] Lỗi updateUser:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật người dùng." });
+  }
+}
 module.exports = {
   loginHandler,
   logoutHandler,
@@ -437,5 +494,7 @@ module.exports = {
   sendResetPassHandler,
   ResetPassHandler,
   updateOrderStatusHandler,
-  addUserVoucherHandler
+  addUserVoucherHandler,
+  getAllUsersHandler,
+  updateUsersHandler,
 };
