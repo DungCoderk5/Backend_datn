@@ -1,11 +1,12 @@
 // loginUsecase.js
 const bcrypt = require("bcrypt");
-const { SignJWT } = require("jose");
+
 const userRepository = require("../../repository/userRepository");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
 async function loginUsecase({ usernameOrEmail, password }, res) {
+  const { SignJWT } = await import("jose");
   // 1. Lấy user
   const user = await userRepository.findByUsernameOrEmail(usernameOrEmail);
   if (!user) throw new Error("Tài khoản không tồn tại");
