@@ -10,7 +10,7 @@ const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 async function registerUsecase(data, res) {
   const { name, email, password, phone } = data;
-const { jwtVerify } = await import("jose");
+  const { SignJWT } = await import("jose");
   const existingUser = await prisma.users.findUnique({
     where: { email },
   });
