@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `posts` ADD COLUMN `view` INTEGER NULL DEFAULT 0;

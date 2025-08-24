@@ -12,6 +12,7 @@ const brandController = require('../adapter/api/controllers/brandController');
 const provinceController = require("../adapter/api/controllers/provinceController");
 const paymentController = require("../adapter/api/controllers/paymentController");
 const voucherController = require('../adapter/api/controllers/voucherController');
+const chatAIController = require('../adapter/api/controllers/chatAIController');
 const cookieParser = require("cookie-parser"); 
 const cors = require('cors');
 const path = require("path");
@@ -49,5 +50,6 @@ app.use('/payment',paymentController);
 app.use("/province", provinceController);
 
 app.use('/voucher', voucherController)
+app.use('/chatAI', chatAIController)
 
 module.exports = app; 
