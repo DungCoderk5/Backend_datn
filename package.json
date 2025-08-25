@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/entrypoint/server.js",
-    "start": "nodemon src/entrypoint/server.js",
+    "start": "node src/entrypoint/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
