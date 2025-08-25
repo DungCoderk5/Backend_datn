@@ -12,17 +12,18 @@ const provinceController = require("../adapter/api/controllers/provinceControlle
 const paymentController = require("../adapter/api/controllers/paymentController");
 <<<<<<< Updated upstream
 const voucherController = require('../adapter/api/controllers/voucherController');
+const chatAIController = require('../adapter/api/controllers/chatAIController');
 const cookieParser = require("cookie-parser"); 
 const cors = require('cors');
 const path = require("path");
 const app = express();
-
+const FRONTEND_URL = process.env.FRONTEND_URL
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
 app.use(cors({
-  origin: 'http://localhost:3001',  
+  origin: `${FRONTEND_URL}`,  
   credentials: true                
 }));
 app.set('trust proxy', false);
@@ -48,9 +49,13 @@ app.set("trust proxy", false);
 app.use(cookieParser());
 app.use(bodyParser.json());
 
+<<<<<<< HEAD
 app.use("/", userController);
 
 app.use("/product", productController);
+=======
+app.use('/user', userController);
+>>>>>>> origin/gomcode/24/8
 
 app.use("/category", categoryController);
 
@@ -68,9 +73,13 @@ app.use("/province", provinceController);
 
 <<<<<<< Updated upstream
 app.use('/voucher', voucherController)
+<<<<<<< HEAD
 =======
 app.use("/voucher", voucherController);
 app.use("/chatAI", chatAIController);
 >>>>>>> Stashed changes
+=======
+app.use('/chatAI', chatAIController)
+>>>>>>> origin/gomcode/24/8
 
 module.exports = app;

@@ -5,6 +5,8 @@ const qs = require("qs");
 const productRepository = require("../../repository/productRepository");
 const userRepository = require("../../repository/userRepository");
 const { renderOrderEmail } = require("../../../utils/orderEmailTemplate");
+const FRONTEND_URL = process.env.FRONTEND_URL
+const CALLBACK_URL = process.env.CALLBACK_URL
 
 // ✅ Map lưu app_trans_id ↔ order_id thực
 const transIdMap = new Map();
@@ -22,7 +24,7 @@ module.exports = {
 
     const embed_data = {
       order_data,
-      redirecturl: `http://localhost:3001/checkout?payment=success`, // Không truyền orderId ở đây nữa
+      redirecturl: `${FRONTEND_URL}/checkout?payment=success`, // Không truyền orderId ở đây nữa
     };
 
     const order = {
@@ -34,7 +36,7 @@ module.exports = {
       embed_data: JSON.stringify(embed_data),
       amount,
       description: `Thanh toán đơn hàng`,
-      callback_url: "https://866311514d5d.ngrok-free.app/payment/callback",
+      callback_url: `${CALLBACK_URL}/payment/callback`,  
     };
 
     const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
@@ -66,24 +68,36 @@ module.exports = {
       const status = await module.exports.checkStatus(dataJson.app_trans_id);
 
       if (status.return_code === 1) {
-        const order = await productRepository.createOrder(orderData);
-        await productRepository.updatePaymentStatus(order.orders_id, "pending");
+        // ép trạng thái thanh toán thành PAID
+        const order = await productRepository.createOrder({
+          ...orderData,
+          payment_status: "PAID",
+        });
+
         await productRepository.clearCart(order.user_id);
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
 
-        const redirectUrl = `http://localhost:3001/checkout?payment=success&orderId=${order.orders_id}`;
+        const redirectUrl = `${FRONTEND_URL}/checkout?payment=success&orderId=${order.orders_id}`;
         // 📩 Gửi email
         const fullOrder = await userRepository.getOrderDetailById(
           order.orders_id
         ); // Lấy full chi tiết để gửi
         const html = renderOrderEmail(fullOrder);
         if (fullOrder.user?.email) {
+          // Lấy ngày & tháng từ thời điểm đặt hàng (created_at)
+          const orderDate = moment(order.created_at);
+          const day = orderDate.format("DD"); // Ngày
+          const month = orderDate.format("MM"); // Tháng
+
+          const customSubject = `Đơn hàng TERA${month}${day}${order.orders_id} của bạn đã đươc xác nhận`;
+
           await userRepository.sendMail({
             to: fullOrder.user.email,
-            subject: `✅ Đơn hàng #${order.orders_id} của bạn đã được xác nhận`,
+            subject: customSubject,
             html,
           });
         }
+
         return {
           return_code: 1,
           return_message: "success",

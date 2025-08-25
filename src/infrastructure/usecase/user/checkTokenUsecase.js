@@ -1,7 +1,10 @@
-const jwt = require("jsonwebtoken");
+const { jwtVerify } = require("jose");
 const userRepository = require("../../repository/userRepository");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
+
+// jose yêu cầu key dạng Uint8Array
+const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 async function checkTokenUsecase(req) {
   let token = req.cookies?.token;
@@ -16,11 +19,15 @@ async function checkTokenUsecase(req) {
       token = parts[1];
     }
   }
-  if (!token) throw new Error("Token không tồn tại");
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await userRepository.findById(decoded.userId);
+  if (!token) throw new Error("Token không tồn tại");
+
+  try {
+    // Xác minh JWT
+    const { payload } = await jwtVerify(token, secretKey);
+
+    // Lấy user từ DB
+    const user = await userRepository.findById(payload.userId);
     if (!user) throw new Error("Người dùng không tồn tại");
 
     if (!user.status) throw new Error("Tài khoản đã bị khóa");

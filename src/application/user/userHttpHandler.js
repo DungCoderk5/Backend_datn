@@ -29,7 +29,7 @@ const updateOrderStatusUsecase = require("../../infrastructure/usecase/user/upda
 const addUserVoucherUsecase = require("../../infrastructure/usecase/user/addUserVoucherUsecase");
 const getAllUsersUsecase = require("../../infrastructure/usecase/user/getAllUserUsecase");
 const updateUsersUsecase = require("../../infrastructure/usecase/user/updateUsersUsecase");
-
+const FRONTEND_URL = process.env.FRONTEND_URL
 // Tạo repository và usecase
 const googleAuthRepository = new GoogleAuthRepository();
 const googleAuthUsecase = new GoogleAuthUsecase(googleAuthRepository);
@@ -61,7 +61,7 @@ async function googleCallback(req, res) {
     const client_id =
       "235575927586-1ldvr8n16m7ose9db21aa0nvqhnb9m0a.apps.googleusercontent.com";
     const client_secret = "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";
-    const redirect_uri = "http://localhost:3001/google/callback";
+    const redirect_uri = `${FRONTEND_URL}/google/callback`;
     const jwtSecret = process.env.JWT_SECRET || "YOUR_JWT_SECRET";
 
     const result = await googleAuthUsecase.handleGoogleLogin(

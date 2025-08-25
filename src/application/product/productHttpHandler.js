@@ -514,20 +514,37 @@ async function updateProductHandler(req, res) {
       .json({ error: error.message || "Lỗi máy chủ khi cập nhật sản phẩm." });
   }
 }
-
-
-async function addToCart(req, res) {
+const addToCart = async (req, res) => {
   try {
-    const data = req.body;
-    const cart = await addToCartUsecase(data);
-    res
-      .status(200)
-      .json({ message: "thêm sản phẩm vào giỏ hàng thành công", cart: cart });
+    const { user_id, productVariantId, quantity } = req.body;
+
+    if (!user_id || !productVariantId || !quantity) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu user_id, productVariantId hoặc quantity",
+      });
+    }
+
+    const cart = await addToCartUsecase({
+      user_id,
+      variant_id: productVariantId,
+      quantity,
+    });
+
+    // Nếu backend trả lỗi, status 400
+    if (cart.success === false) {
+      return res.status(400).json(cart);
+    }
+
+    return res.status(200).json(cart);
   } catch (error) {
-    console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Lỗi khi thêm sản phẩm vào giỏ:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Có lỗi xảy ra khi thêm sản phẩm",
+    });
   }
-}
+};
 
 async function searchProductsHandler(req, res) {
   try {
@@ -629,19 +646,29 @@ async function addToCompareHandler(req, res) {
     const { user_id, product_id } = req.body;
 
     if (!user_id || !product_id) {
-      return res.status(400).json({ error: "Thiếu user_id hoặc product_id" });
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu user_id hoặc product_id",
+      });
     }
 
-    const result = await addToCompareUsecase({ user_id, product_id });
+    const data = await addToCompareUsecase({ user_id, product_id });
 
     return res.status(200).json({
-      message: "Đã thêm sản phẩm vào danh sách so sánh",
-      data: result,
+      success: true,
+      message: "Đã thêm vào danh sách so sánh.",
+      data,
     });
   } catch (error) {
-    return res.status(error.statusCode || 500).json({ error: error.message });
+    console.error("🔥 Lỗi addToCompare:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Lỗi hệ thống",
+    });
   }
 }
+
 
 async function removeFromCompareHandler(req, res) {
   try {
