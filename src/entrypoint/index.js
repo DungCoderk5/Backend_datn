@@ -30,7 +30,7 @@ app.set('trust proxy', false);
 app.use(cookieParser());
 app.use(bodyParser.json());
 
-app.use('/', userController);
+app.use('/user', userController);
 
 
 app.use('/product', productController);
