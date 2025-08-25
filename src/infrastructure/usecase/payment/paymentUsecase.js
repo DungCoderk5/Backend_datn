@@ -76,7 +76,6 @@ module.exports = {
 
         await productRepository.clearCart(order.user_id);
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
-
         const redirectUrl = `${FRONTEND_URL}/checkout?payment=success&orderId=${order.orders_id}`;
         // 📩 Gửi email
         const fullOrder = await userRepository.getOrderDetailById(
