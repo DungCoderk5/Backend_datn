@@ -10,24 +10,6 @@ const dashboarController = require("../adapter/api/controllers/dashboarControlle
 const brandController = require("../adapter/api/controllers/brandController");
 const provinceController = require("../adapter/api/controllers/provinceController");
 const paymentController = require("../adapter/api/controllers/paymentController");
-<<<<<<< Updated upstream
-const voucherController = require('../adapter/api/controllers/voucherController');
-const chatAIController = require('../adapter/api/controllers/chatAIController');
-const cookieParser = require("cookie-parser"); 
-const cors = require('cors');
-const path = require("path");
-const app = express();
-const FRONTEND_URL = process.env.FRONTEND_URL
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
-app.use(cors({
-  origin: `${FRONTEND_URL}`,  
-  credentials: true                
-}));
-app.set('trust proxy', false);
-=======
 const voucherController = require("../adapter/api/controllers/voucherController");
 const chatAIController = require("../adapter/api/controllers/chatAIController");
 const cookieParser = require("cookie-parser");
@@ -45,17 +27,12 @@ app.use(
   })
 );
 app.set("trust proxy", false);
->>>>>>> Stashed changes
 app.use(cookieParser());
 app.use(bodyParser.json());
-
-<<<<<<< HEAD
 app.use("/", userController);
 
 app.use("/product", productController);
-=======
-app.use('/user', userController);
->>>>>>> origin/gomcode/24/8
+app.use("/user", userController);
 
 app.use("/category", categoryController);
 
@@ -70,16 +47,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../../uploads")));
 app.use("/payment", paymentController);
 
 app.use("/province", provinceController);
-
-<<<<<<< Updated upstream
-app.use('/voucher', voucherController)
-<<<<<<< HEAD
-=======
 app.use("/voucher", voucherController);
 app.use("/chatAI", chatAIController);
->>>>>>> Stashed changes
-=======
-app.use('/chatAI', chatAIController)
->>>>>>> origin/gomcode/24/8
 
 module.exports = app;
