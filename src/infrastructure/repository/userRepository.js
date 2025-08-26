@@ -12,12 +12,18 @@ const transporter = nodemailer.createTransport({
 });
 
 async function updateOrderStatus(orderId, status) {
+  const dataToUpdate = {
+    status,
+    updated_at: new Date(),
+  };
+
+ if (status === "completed") {
+    dataToUpdate.payment_status = "PAID"; // ✅ phải dùng chữ HOA
+  }
+
   return await prisma.orders.update({
     where: { orders_id: orderId },
-    data: {
-      status,
-      updated_at: new Date(),
-    },
+    data: dataToUpdate,
   });
 }
 
