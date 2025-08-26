@@ -37,8 +37,6 @@ const getProductAdminUsecase = require("../../infrastructure/usecase/product/get
 const getByIdReviewUsecase = require("../../infrastructure/usecase/product/getByIdReviewUseCase");
 const getStatusReviewUsecase = require("../../infrastructure/usecase/product/getStatusReviewUsecase");
 const prisma = require("../../shared/prisma");
-const slugify = require("slugify");
-const crypto = require("crypto");
 async function getProductAdminHandler(req, res) {
   try {
     const productId = parseInt(req.params.id, 10);

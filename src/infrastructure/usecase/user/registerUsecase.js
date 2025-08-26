@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const { SignJWT } = require("jose");
+
 const prisma = require("../../../shared/prisma");
 const userRepository = require("../../repository/userRepository");
 
@@ -10,7 +10,7 @@ const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 async function registerUsecase(data, res) {
   const { name, email, password, phone } = data;
-
+  const { SignJWT } = await import("jose");
   const existingUser = await prisma.users.findUnique({
     where: { email },
   });

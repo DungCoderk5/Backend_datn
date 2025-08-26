@@ -1,8 +1,9 @@
 // src/usecases/googleAuthUsecase.js
-const { SignJWT } = require("jose");
+
 const userRepository = require("../../repository/userRepository");
 
 class GoogleAuthUsecase {
+   
   constructor(repository) {
     this.repository = repository;
   }
@@ -15,8 +16,9 @@ class GoogleAuthUsecase {
     jwtSecret
   ) {
     // jose yêu cầu secret dạng Uint8Array
+     const { SignJWT } = await import("jose");
     const secretKey = new TextEncoder().encode(jwtSecret);
-
+    
     // Lấy token từ Google
     const tokenData = await this.repository.exchangeCodeForToken(
       code,

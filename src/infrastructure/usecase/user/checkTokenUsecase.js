@@ -1,4 +1,4 @@
-const { jwtVerify } = require("jose");
+
 const userRepository = require("../../repository/userRepository");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
@@ -8,7 +8,7 @@ const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 async function checkTokenUsecase(req) {
   let token = req.cookies?.token;
-
+  const { jwtVerify } = await import("jose");
   if (!token && req.body?.token) {
     token = req.body.token;
   }
