@@ -308,7 +308,8 @@ const dashboardRepository = {
       (a, b) => b.sold_count - a.sold_count
     );
 
-    return sorted;
+    // chỉ lấy 5 sản phẩm bán chạy nhất
+    return sorted.slice(0, 5);
   },
   async getPendingOrders() {
     return await prisma.orders.findMany({
@@ -344,101 +345,101 @@ const dashboardRepository = {
     });
   },
   async getOrdersWithFilters({
-  page = 1,
-  limit = 10,
-  search = "",
-  status,
-  categoryId = null,
-  sortField = "created_at", // mặc định sắp xếp theo ngày đặt
-  sortOrder = "desc",       // mặc định giảm dần
-}) {
-  const offset = (page - 1) * limit;
+    page = 1,
+    limit = 10,
+    search = "",
+    status,
+    categoryId = null,
+    sortField = "created_at", // mặc định sắp xếp theo ngày đặt
+    sortOrder = "desc", // mặc định giảm dần
+  }) {
+    const offset = (page - 1) * limit;
 
-  // Mapping sortField từ client sang đúng field Prisma
-  const sortMapping = {
-    name: { user: { name: sortOrder } },
-    phone: { user: { phone: sortOrder } },
-    created_at: { created_at: sortOrder },
-  };
+    // Mapping sortField từ client sang đúng field Prisma
+    const sortMapping = {
+      name: { user: { name: sortOrder } },
+      phone: { user: { phone: sortOrder } },
+      created_at: { created_at: sortOrder },
+    };
 
-  return await prisma.orders.findMany({
-    skip: offset,
-    take: limit,
-    orderBy: sortMapping[sortField] || { created_at: "desc" }, // nếu không khớp thì fallback
-    where: {
-      status: status || undefined,
-      user: {
-        OR: [
-          { name: { contains: search, lte: "insensitive" } },
-          { phone: { contains: search, lte: "insensitive" } },
-        ],
-      },
-      order_items: categoryId
-        ? {
-            some: {
-              variant: {
-                product: {
-                  categories_id: Number(categoryId),
-                },
-              },
-            },
-          }
-        : undefined,
-    },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
-          phone: true,
+    return await prisma.orders.findMany({
+      skip: offset,
+      take: limit,
+      orderBy: sortMapping[sortField] || { created_at: "desc" }, // nếu không khớp thì fallback
+      where: {
+        status: status || undefined,
+        user: {
+          OR: [
+            { name: { contains: search, lte: "insensitive" } },
+            { phone: { contains: search, lte: "insensitive" } },
+          ],
         },
-      },
-      shipping_address: {
-        select: {
-          address_line: true,
-          phone:true,
-        },
-      },
-      payment_method: {
-        select: {
-          name_method: true,
-        },
-      },
-      order_items: {
-        select: {
-          quantity: true,
-          unit_price: true,
-          variant: {
-            select: {
-              product: {
-                select: {
-                  name: true,
-                  category: {
-                    select: {
-                      categories_id: true,
-                      name: true,
-                    },
+        order_items: categoryId
+          ? {
+              some: {
+                variant: {
+                  product: {
+                    categories_id: Number(categoryId),
                   },
                 },
               },
-              color: {
-                select: {
-                  name_color: true,
-                  images: true,
+            }
+          : undefined,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        shipping_address: {
+          select: {
+            address_line: true,
+            phone: true,
+          },
+        },
+        payment_method: {
+          select: {
+            name_method: true,
+          },
+        },
+        order_items: {
+          select: {
+            quantity: true,
+            unit_price: true,
+            variant: {
+              select: {
+                product: {
+                  select: {
+                    name: true,
+                    category: {
+                      select: {
+                        categories_id: true,
+                        name: true,
+                      },
+                    },
+                  },
                 },
-              },
-              size: {
-                select: {
-                  number_size: true,
+                color: {
+                  select: {
+                    name_color: true,
+                    images: true,
+                  },
+                },
+                size: {
+                  select: {
+                    number_size: true,
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
-},
+    });
+  },
   async countOrdersWithFilters({ search = "", status, categoryId = null }) {
     return await prisma.orders.count({
       where: {
@@ -463,8 +464,8 @@ const dashboardRepository = {
       },
     });
   },
-  async findAllCategoryProduct(){
+  async findAllCategoryProduct() {
     return await prisma.categories.findMany();
-  }
+  },
 };
 module.exports = dashboardRepository;
