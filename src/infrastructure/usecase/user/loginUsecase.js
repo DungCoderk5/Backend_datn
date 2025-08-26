@@ -40,7 +40,6 @@ async function loginUsecase({ usernameOrEmail, password }, res) {
   return {
     message: "Đăng nhập thành công",
     token,
-
     user: {
       id: user.user_id,
       name: user.name,
