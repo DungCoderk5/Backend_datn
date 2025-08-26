@@ -32,7 +32,6 @@ app.use(bodyParser.json());
 
 app.use('/user', userController);
 
-
 app.use('/product', productController);
 
 app.use('/category', categoryController);

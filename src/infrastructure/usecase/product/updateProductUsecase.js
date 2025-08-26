@@ -73,50 +73,56 @@ async function updateProductUsecase(req) {
     });
   }
 
-// Map ảnh variant: key = mã màu bỏ # + lowercase
-const colorImageMap = {};
-req.files.forEach((file) => {
-  if (file.fieldname.startsWith("variant_image_")) {
-    const codeColorKey = file.fieldname
-      .replace("variant_image_", "")
-      .replace(/^#/, "")
-      .toLowerCase()
-      .split("-")[0];
+  // Map ảnh variant: key = mã màu bỏ # + lowercase
+  const colorImageMap = {};
+  req.files.forEach((file) => {
+    if (file.fieldname.startsWith("variant_image_")) {
+      const codeColorKey = file.fieldname
+        .replace("variant_image_", "")
+        .replace(/^#/, "")
+        .toLowerCase()
+        .split("-")[0];
 
-    colorImageMap[codeColorKey] = file.filename;
-  }
-});
-
-console.log("DEBUG - colorImageMap:", colorImageMap);
-
-// Danh sách màu duy nhất từ variants
-const uniqueColors = [
-  ...new Set(
-    data.product_variants.map((v) => {
-      let baseColor = v.code_color.split("-")[0].toLowerCase();
-      if (!baseColor.startsWith("#")) {
-        baseColor = `#${baseColor.replace(/^#/, "")}`;
-      }
-      return baseColor;
-    })
-  ),
-];
-
-console.log("DEBUG - uniqueColors:", uniqueColors);
-
-// Validate ảnh cho màu mới
-for (let codeColor of uniqueColors) {
-  const codeWithoutHash = codeColor.replace(/^#/, "").toLowerCase();
-  console.log(`DEBUG - Checking color: ${codeColor}, key: ${codeWithoutHash}`);
-  
-  const colorExists = await prisma.colors.findFirst({
-    where: { code_color: codeColor },
+      colorImageMap[codeColorKey] = file.filename;
+    }
   });
 
-  if (!colorExists && !colorImageMap[codeWithoutHash]) {
-    throw { status: 400, message: `Màu ${codeColor} chưa có ảnh` };
+  console.log("DEBUG - colorImageMap:", colorImageMap);
+
+  // Danh sách màu duy nhất từ variants
+  const uniqueColors = [
+    ...new Set(
+      data.product_variants.map((v) => {
+        let baseColor = v.code_color.split("-")[0].toLowerCase();
+        if (!baseColor.startsWith("#")) {
+          baseColor = `#${baseColor.replace(/^#/, "")}`;
+        }
+        return baseColor;
+      })
+    ),
+  ];
+
+  console.log("DEBUG - uniqueColors:", uniqueColors);
+
+  for (let codeColor of uniqueColors) {
+    const codeWithoutHash = codeColor.replace(/^#/, "").toLowerCase();
+
+    const colorExists = await prisma.colors.findFirst({
+      where: { code_color: codeColor },
+      select: { name_color: true }, // lấy tên màu
+    });
+
+    if (!colorExists && !colorImageMap[codeWithoutHash]) {
+      throw { status: 400, message: `Màu ${codeColor} chưa có ảnh` };
+    }
+
+    if (colorExists && !colorImageMap[codeWithoutHash]) {
+      throw {
+        status: 400,
+        message: `Màu ${colorExists.name_color} chưa có ảnh`,
+      };
+    }
   }
-}
 
   // Slug mới
   data.slug = slugify(data.name, { lower: true, strict: true });
@@ -195,7 +201,6 @@ for (let codeColor of uniqueColors) {
       // Nếu không có ảnh mới → giữ ảnh cũ, không làm gì
     }
     colorToColorRecordMap[baseColor] = colorRecord;
-
   }
 
   // Xóa variants cũ
@@ -235,22 +240,23 @@ for (let codeColor of uniqueColors) {
     })),
   });
   // Sau khi tạo variants mới, xoá các màu không còn dùng
-await prisma.colors.deleteMany({
-  where: {
-    id: {
-      in: existingColors
-        .filter(c => 
-          !data.product_variants.some(v => {
-            let baseColor = v.code_color.split("-")[0];
-            if (!baseColor.startsWith("#"))
-              baseColor = `#${baseColor.replace(/^#/, "")}`;
-            return c.code_color === baseColor;
-          })
-        )
-        .map(c => c.id)
-    }
-  }
-});
+  await prisma.colors.deleteMany({
+    where: {
+      id: {
+        in: existingColors
+          .filter(
+            (c) =>
+              !data.product_variants.some((v) => {
+                let baseColor = v.code_color.split("-")[0];
+                if (!baseColor.startsWith("#"))
+                  baseColor = `#${baseColor.replace(/^#/, "")}`;
+                return c.code_color === baseColor;
+              })
+          )
+          .map((c) => c.id),
+      },
+    },
+  });
 
   // Trả về sản phẩm đầy đủ sau update
   return await prisma.products.findUnique({
