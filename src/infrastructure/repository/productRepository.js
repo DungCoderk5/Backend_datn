@@ -959,32 +959,32 @@ const productRepository = {
       },
     });
   },
-async addToComparelist({ user_id, product_id }) {
-  const existing = await prisma.product_compares.findFirst({
-    where: { user_id, product_id },
-  });
+  async addToComparelist({ user_id, product_id }) {
+    const existing = await prisma.product_compares.findFirst({
+      where: { user_id, product_id },
+    });
 
-  if (existing) {
-    const error = new Error();
-    error.message = "Sản phẩm đã có trong danh sách so sánh.";
-    error.statusCode = 409;
-    throw error;
-  }
+    if (existing) {
+      const error = new Error();
+      error.message = "Sản phẩm đã có trong danh sách so sánh.";
+      error.statusCode = 409;
+      throw error;
+    }
 
-  const count = await prisma.product_compares.count({ where: { user_id } });
-  if (count >= 3) {
-    const error = new Error();
-    error.message = "Chỉ được so sánh tối đa 3 sản phẩm.";
-    error.statusCode = 403;
-    throw error;
-  }
+    const count = await prisma.product_compares.count({ where: { user_id } });
+    if (count >= 3) {
+      const error = new Error();
+      error.message = "Chỉ được so sánh tối đa 3 sản phẩm.";
+      error.statusCode = 403;
+      throw error;
+    }
 
-  const comparelistItem = await prisma.product_compares.create({
-    data: { user_id, product_id },
-  });
+    const comparelistItem = await prisma.product_compares.create({
+      data: { user_id, product_id },
+    });
 
-  return comparelistItem;
-},
+    return comparelistItem;
+  },
 
   async filteredProducts({
     keyword,
@@ -1175,7 +1175,15 @@ async addToComparelist({ user_id, product_id }) {
 
     return deleted;
   },
-
+  // repository/productRepository.js
+  async increaseCouponUsedCount(couponId) {
+    return await prisma.coupons.update({
+      where: { coupons_id: couponId },
+      data: {
+        used_count: { increment: 1 }, // Prisma hỗ trợ increment
+      },
+    });
+  },
   async createOrder({
     orders_id,
     user_id,

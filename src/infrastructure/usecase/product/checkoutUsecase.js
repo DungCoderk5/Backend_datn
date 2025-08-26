@@ -85,9 +85,15 @@ async function prepareOrderData({
   };
 }
 
-// Hàm tạo đơn hàng (COD hoặc callback ZaloPay)
 async function createOrderFromData(orderData) {
-  return await productRepository.createOrder(orderData);
+  const order = await productRepository.createOrder(orderData);
+
+  // Nếu đơn hàng có coupon thì tăng used_count
+  if (orderData.coupons_id) {
+    await productRepository.increaseCouponUsedCount(orderData.coupons_id);
+  }
+
+  return order;
 }
 
 module.exports = {

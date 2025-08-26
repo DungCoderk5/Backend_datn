@@ -5,8 +5,8 @@ const qs = require("qs");
 const productRepository = require("../../repository/productRepository");
 const userRepository = require("../../repository/userRepository");
 const { renderOrderEmail } = require("../../../utils/orderEmailTemplate");
-const FRONTEND_URL = process.env.FRONTEND_URL
-const CALLBACK_URL = process.env.CALLBACK_URL
+const FRONTEND_URL = process.env.FRONTEND_URL;
+const CALLBACK_URL = process.env.CALLBACK_URL;
 
 // ✅ Map lưu app_trans_id ↔ order_id thực
 const transIdMap = new Map();
@@ -36,7 +36,7 @@ module.exports = {
       embed_data: JSON.stringify(embed_data),
       amount,
       description: `Thanh toán đơn hàng`,
-      callback_url: `${CALLBACK_URL}/payment/callback`,  
+      callback_url: `${CALLBACK_URL}/payment/callback`,
     };
 
     const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
@@ -73,7 +73,9 @@ module.exports = {
           ...orderData,
           payment_status: "PAID",
         });
-
+        if (order.coupons_id) {
+          await productRepository.increaseCouponUsedCount(order.coupons_id);
+        }
         await productRepository.clearCart(order.user_id);
         transIdMap.set(dataJson.app_trans_id, order.orders_id);
         const redirectUrl = `${FRONTEND_URL}/checkout?payment=success&orderId=${order.orders_id}`;

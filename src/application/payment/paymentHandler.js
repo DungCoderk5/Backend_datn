@@ -44,8 +44,10 @@ module.exports = {
         });
       }
 
-      const order = await productRepository.createOrder(orderData);
+      // ✅ COD: dùng createOrderFromData để tự động tăng used_count
+      const order = await checkoutUsecase.createOrderFromData(orderData);
       await productRepository.clearCart(user_id);
+
       console.log(JSON.stringify(order, null, 2));
 
       // 📩 Gửi email
